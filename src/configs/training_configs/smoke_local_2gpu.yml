@@ -1,0 +1,78 @@
+# Local smoke test on 2x H100, ~100-200 steps.
+# Goal: verify env / dataloader / forward+backward / wandb / token accounting.
+# Not for any quality measurement — just a "does it run" config.
+
+# Dataset (local arrow shards via LocalArrowDataset shim)
+data_path: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-hldy-nlp/BERT_TRAINING_SERVICE/platform/dataset/embedded-language-flows/openwebtext-t5/main"
+max_length: 1024
+
+# Encoder
+encoder_model_name: t5-small
+latent_mean: 0.0
+latent_std: 0.2
+
+# Model
+model: ELF-L          # 652M — full target size, paper-sweep ablations all run on this
+bottleneck_dim: 128
+num_time_tokens: 4
+num_self_cond_cfg_tokens: 4
+num_model_mode_tokens: 4
+
+# Denoiser objective (paper)
+denoiser_p_mean: -1.5
+denoiser_p_std: 0.8
+denoiser_noise_scale: 2.0
+t_eps: 0.05
+time_schedule: "logit_normal"
+
+# Decoder objective (paper)
+decoder_prob: 0.2
+decoder_noise_scale: 5.0
+decoder_p_mean: 0.8
+decoder_p_std: 0.8
+
+# Conditioning / CFG (paper)
+self_cond_prob: 0.5
+
+# Training: tiny batch / short run.
+# ELF-L (652M) at max_length=1024 is the memory-binding constraint here.
+# We pick local bs that fits on a single 80G H100 with a small headroom.
+epochs: 1                 # we'll kill after ~100 steps anyway
+global_batch_size: 16     # 8 per GPU @ 2 GPUs — small to avoid OOM during smoke
+grad_accum_steps: 1
+blr: 0.001
+weight_decay: 0.0
+warmup_epochs: null
+warmup_steps: 50          # short warmup so we see lr ramp during smoke
+optimizer: muon
+
+# Memory / perf
+use_bf16: true
+use_compile: false        # skip torch.compile for fastest first-step iteration
+gradient_checkpointing: true   # ELF-L is heavier; gc helps but slows step ~20%
+num_workers: 2
+
+# EMA
+ema_decay1: 0.9999
+
+# Sampling — disable for smoke (don't run generation at end of epoch)
+sampling_configs_path: null
+num_samples: 0
+
+# Logging
+log_freq: 10              # log every 10 steps so we see something quickly
+save_freq: 999            # don't save during smoke
+eval_freq: 999
+
+# Output
+output_dir: "outputs/smoke_local_2gpu_ELF-L"
+hf_repo_id: null
+resume: null
+
+# Wandb (off by default for smoke; flip on if you want to verify the curves)
+use_wandb: false
+wandb_project: elf-pro
+wandb_run_name: smoke_local_2gpu
+
+# Misc
+seed: 42

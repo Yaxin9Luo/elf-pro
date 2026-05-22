@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>ELF 代码精读 & elf-pro 改进点清单</title>
+<style>
+  :root {
+    --fg: #1a1a1a;
+    --bg: #fcfcfa;
+    --muted: #666;
+    --accent: #b85c00;
+    --accent2: #2e6e2e;
+    --warn: #b03030;
+    --code-bg: #f3f0e8;
+    --border: #e0d8c8;
+    --table-stripe: #f7f3ea;
+    --tag-bg: #ece4d2;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg); color: var(--fg);
+    line-height: 1.65;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 28px 80px; }
+  h1 { font-size: 28px; margin: 0 0 4px; letter-spacing: -0.5px; }
+  h2 { font-size: 21px; margin: 44px 0 14px; padding-bottom: 6px; border-bottom: 2px solid var(--accent); }
+  h3 { font-size: 16px; margin: 24px 0 8px; color: var(--accent); }
+  h4 { font-size: 14px; margin: 18px 0 6px; color: var(--accent2); }
+  .subtitle { color: var(--muted); margin: 0 0 24px; font-size: 13px; }
+  p, li { font-size: 14px; }
+  code, pre, .mono { font-family: "JetBrains Mono", "Menlo", monospace; font-size: 12.5px; }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border);
+    padding: 12px 14px; border-radius: 6px; overflow-x: auto;
+    line-height: 1.5;
+  }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0 18px; font-size: 13px; }
+  th, td { padding: 8px 10px; border: 1px solid var(--border); text-align: left; vertical-align: top; }
+  th { background: var(--tag-bg); }
+  tbody tr:nth-child(even) { background: var(--table-stripe); }
+  .tag {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 11.5px; font-weight: 600; background: var(--tag-bg); color: #5a4520;
+    margin-right: 6px;
+  }
+  .tag-perf { background: #e8d8d0; color: #8a3a18; }
+  .tag-speed { background: #d4e3e3; color: #1f5a5a; }
+  .tag-scale { background: #d8e2cf; color: #3a5a20; }
+  .tag-risk { background: #f0d4d4; color: #8b2020; }
+  .tag-easy  { background: #e2e0d0; color: #5a5a30; }
+  .tag-med   { background: #e6d8b8; color: #6b4f10; }
+  .tag-hard  { background: #d8c8b8; color: #5a3a10; }
+  .callout {
+    border-left: 3px solid var(--accent);
+    padding: 10px 14px; margin: 14px 0;
+    background: #f8efde;
+  }
+  .callout.green { border-color: var(--accent2); background: #ecf5e8; }
+  .callout.red { border-color: var(--warn); background: #f8e8e6; }
+  .pipe-svg { display: block; margin: 10px auto; max-width: 100%; }
+  .grid-2 {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 14px; margin: 14px 0;
+  }
+  .card {
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 14px 16px; background: #fff;
+  }
+  .toc { background: #fff; border: 1px solid var(--border); padding: 14px 18px; border-radius: 6px; }
+  .toc ol { margin: 0; padding-left: 24px; }
+  .toc a { color: var(--fg); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+  small.dim { color: var(--muted); }
+  .file-ref { color: var(--accent2); font-family: monospace; font-size: 12px; }
+  .issue-id {
+    display: inline-block; min-width: 28px;
+    background: var(--accent); color: #fff;
+    padding: 1px 6px; border-radius: 3px;
+    font-weight: 600; font-size: 11.5px;
+    margin-right: 6px;
+  }
+  hr { border: none; border-top: 1px dashed var(--border); margin: 32px 0; }
+  @media (max-width: 720px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>ELF 代码精读 & elf-pro 改进点清单</h1>
+<p class="subtitle">读完 <code>model.py</code> · <code>train_step.py</code> · <code>sampling_utils.py</code>（外加 <code>config.py</code> / <code>layers.py</code> 的关键部分）后整理。 目标：在 ELF 路线上，做到 <strong>性能更好、速度更快、规模更大</strong>。</p>
+
+<div class="toc">
+  <strong>目录</strong>
+  <ol>
+    <li><a href="#overview">一、ELF 一句话回顾</a></li>
+    <li><a href="#math">二、训练目标 / Self-Cond / CFG / 采样器 — 公式 + 代码对应</a></li>
+    <li><a href="#archi">三、模型骨架（model.py）拆解</a></li>
+    <li><a href="#train">四、训练循环（train_step.py）拆解</a></li>
+    <li><a href="#sample">五、采样器（sampling_utils.py）拆解</a></li>
+    <li><a href="#issues">六、可改进点清单（按 perf / speed / scale 分类）</a></li>
+    <li><a href="#plan">七、elf-pro 推荐路线图</a></li>
+  </ol>
+</div>
+
+<!-- ==================================================================== -->
+<h2 id="overview">一、ELF 一句话回顾</h2>
+
+<p>ELF (Embedded Language Flows) 是<strong>连续 embedding 空间里的 flow matching 语言模型</strong>。整条流水线：</p>
+
+<svg class="pipe-svg" viewBox="0 0 1000 200" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, sans-serif" font-size="13">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#b85c00"/>
+    </marker>
+  </defs>
+  <!-- boxes -->
+  <g>
+    <rect x="20" y="60" width="120" height="60" rx="6" fill="#ece4d2" stroke="#b85c00"/>
+    <text x="80" y="86" text-anchor="middle">tokens</text>
+    <text x="80" y="104" text-anchor="middle" font-size="11" fill="#666">input_ids</text>
+
+    <rect x="180" y="60" width="140" height="60" rx="6" fill="#fff" stroke="#666"/>
+    <text x="250" y="86" text-anchor="middle">T5 encoder</text>
+    <text x="250" y="104" text-anchor="middle" font-size="11" fill="#666">frozen, 冻死</text>
+
+    <rect x="360" y="60" width="120" height="60" rx="6" fill="#fff" stroke="#666"/>
+    <text x="420" y="86" text-anchor="middle">x₀ (B,S,512)</text>
+    <text x="420" y="104" text-anchor="middle" font-size="11" fill="#666">embedding</text>
+
+    <rect x="520" y="60" width="160" height="60" rx="6" fill="#d4e3e3" stroke="#2e6e2e"/>
+    <text x="600" y="80" text-anchor="middle">ELF Transformer</text>
+    <text x="600" y="98" text-anchor="middle" font-size="11" fill="#1f5a5a">v(z, t) 速度场</text>
+    <text x="600" y="113" text-anchor="middle" font-size="11" fill="#1f5a5a">+ decoder head</text>
+
+    <rect x="720" y="20" width="120" height="50" rx="6" fill="#fff" stroke="#666"/>
+    <text x="780" y="45" text-anchor="middle">L2 denoiser</text>
+    <text x="780" y="60" text-anchor="middle" font-size="11" fill="#666">flow matching</text>
+
+    <rect x="720" y="110" width="120" height="50" rx="6" fill="#fff" stroke="#666"/>
+    <text x="780" y="135" text-anchor="middle">CE decoder</text>
+    <text x="780" y="150" text-anchor="middle" font-size="11" fill="#666">x → vocab</text>
+
+    <rect x="880" y="60" width="100" height="60" rx="6" fill="#ece4d2" stroke="#b85c00"/>
+    <text x="930" y="86" text-anchor="middle">token</text>
+    <text x="930" y="104" text-anchor="middle" font-size="11" fill="#666">final t=1</text>
+  </g>
+  <!-- arrows -->
+  <line x1="140" y1="90" x2="178" y2="90" stroke="#b85c00" stroke-width="1.6" marker-end="url(#arr)"/>
+  <line x1="320" y1="90" x2="358" y2="90" stroke="#b85c00" stroke-width="1.6" marker-end="url(#arr)"/>
+  <line x1="480" y1="90" x2="518" y2="90" stroke="#b85c00" stroke-width="1.6" marker-end="url(#arr)"/>
+  <line x1="680" y1="80" x2="718" y2="50" stroke="#b85c00" stroke-width="1.6" marker-end="url(#arr)"/>
+  <line x1="680" y1="100" x2="718" y2="135" stroke="#b85c00" stroke-width="1.6" marker-end="url(#arr)"/>
+  <line x1="840" y1="135" x2="880" y2="100" stroke="#b85c00" stroke-width="1.6" marker-end="url(#arr)"/>
+</svg>
+
+<p><strong>关键设计决策</strong>：</p>
+<ul>
+  <li>tokenizer / encoder 是 <strong>冻住的 T5-small</strong>（不参与训练）</li>
+  <li>训练时一个 batch 里每条样本随机走 <strong>L2 denoiser 分支</strong>（flow matching, 80%）或 <strong>CE decoder 分支</strong>（cross-entropy at t=1, 20%）</li>
+  <li>采样时只用 denoiser 的速度场积分到 t=1，最后用 decoder 头映射到 token</li>
+  <li>有 <strong>Self-Conditioning</strong>（前一步 x_pred 作为输入）+ <strong>SC-CFG</strong>（self-cond CFG，把 sc 当作条件做 CFG 引导）</li>
+</ul>
+
+<!-- ==================================================================== -->
+<h2 id="math">二、训练目标 / Self-Cond / CFG / 采样器</h2>
+
+<h3>2.1 Flow matching 插值 & velocity 目标</h3>
+
+<p><span class="file-ref">sampling_utils.py:11-17 (add_noise)</span> · <span class="file-ref">train_step.py:120-121</span></p>
+
+<pre>
+z = t · x₀ + (1 − t) · ε · denoiser_noise_scale          # add_noise
+v_target = (x₀ − z) / clamp(1 − t, t_eps)                # train_step.py:121
+</pre>
+
+<p>注意：<strong>这里和经典 RF 有两点不同</strong>：</p>
+<ul>
+  <li><code>denoiser_noise_scale</code> 默认 1.0，但配置里是 <code>config</code> 字段，可以 ≠ 1（"分布扩展"），默认配 OWT 时 paper 似乎用了 2.0</li>
+  <li><code>t_eps = 5e-2</code>，避免 t→1 时除 0；意味着<strong>最后 5% 的 t 段被裁掉</strong>，是个隐性 boundary。</li>
+</ul>
+
+<h3>2.2 Loss：CE / L2 混合（per-example branching）</h3>
+
+<p><span class="file-ref">train_step.py:104-110, 195-260</span> — 每条样本独立伯努利采 <code>decoder_step_active∈{0,1}</code>：</p>
+<pre>
+decoder_step_active ~ Bernoulli(decoder_prob)            # 默认 0.5（OWT 配置 0.2）
+denoiser_t = t                                            # ε~logit_normal
+decoder_t  = 1                                            # 始终 t=1
+t_mixed = active·1 + (1-active)·t                        # 一次 forward 同时跑两套
+z_mixed = active·decoder_z + (1-active)·denoiser_z
+
+decoder_z = λ_t · x₀ + (1-λ_t) · noise · decoder_noise_scale,  λ_t = sigmoid(z_decoder)
+</pre>
+
+<div class="callout">
+<strong>Insight：</strong> 同一份 forward 两个 head 同时算（<code>output, decoder_logits = model(...)</code>），按 mask 选用，<strong>计算量没翻倍</strong>。但前向需要做 2 次「shared uncond + cond」（self-cond），实际每个 step 是 <strong>3 次 forward + 1 次 backward</strong>（具体见 §4.2）。
+</div>
+
+<h3>2.3 Self-Conditioning</h3>
+
+<p>核心想法：把上一步的 <code>x_pred</code> 拼到当前 <code>z</code> 后面作为输入（input dim = 2·encoder_dim）。<span class="file-ref">model.py:88-89, 172-174</span>：</p>
+<pre>
+self.self_cond_proj = Linear(2·encoder_dim → encoder_dim)
+if x.shape[-1] == 2·encoder_dim:
+    x = self_cond_proj(x)                                 # (z, x_pred) -> hidden
+</pre>
+
+<p>训练时：以 <code>self_cond_prob</code>（默认 0.5）启用，启用时 x_pred 来自一次 <strong>停止梯度</strong>的 forward；不启用时填 0。</p>
+
+<h3>2.4 SC-CFG（self-conditioning classifier-free guidance）</h3>
+
+<p>这是 ELF 的特色：把 <strong>"用不用 self-cond"</strong> 当作 CFG 的"条件 vs 无条件"。<span class="file-ref">train_step.py:175-184</span></p>
+<pre>
+v_cond   = forward(z, x_pred)         # 用 self-cond
+v_uncond = forward(z, 0)              # 不用 self-cond
+sc_w     ~ log-uniform[0.5, 5.0]      # SC-CFG scale, sample_cfg_scale
+v_target_guided = v_target + (1 - 1/sc_w) · (v_cond - v_uncond)
+</pre>
+
+<p>等价于把 v_target 朝 "更靠 self-cond 的方向" 拉。<strong>训练时直接监督 guided target</strong>，避免推理时再做两次 forward。这相当于把 SC-CFG <strong>蒸馏进了模型</strong>，是 ELF 一个聪明的工程优化。</p>
+
+<h3>2.5 采样器：ODE 与 SDE</h3>
+
+<p><span class="file-ref">sampling_utils.py:211-251</span></p>
+
+<table>
+  <tr><th>采样器</th><th>更新规则</th><th>关键参数</th></tr>
+  <tr>
+    <td>ODE (Euler)</td>
+    <td><code>z_{t+h} = z_t + (t_next - t) · v_pred</code></td>
+    <td>无</td>
+  </tr>
+  <tr>
+    <td>SDE (hybrid churn)</td>
+    <td>
+      α = 1 − γ·h ；
+      <code>z_back = α·z + (1-α)·ε</code>（向后注入噪声）
+      然后再用 <code>z_back, t_back=α·t</code> 走一步 Euler
+    </td>
+    <td>γ (sde_gamma)</td>
+  </tr>
+</table>
+
+<div class="callout red">
+<strong>注意一个 bug-like 行为：</strong> <span class="file-ref">sampling_utils.py:240-243</span> SDE 的随机噪声在 GPU 上<strong>没用 generator</strong>（<code>torch.randn(..., device=z.device)</code>），CPU 才用。这意味着 SDE 采样结果在 GPU 上<strong>不可严格复现</strong>，跑 ablation 时要么自己注入 generator，要么 fix seed 在 CPU。
+</div>
+
+<!-- ==================================================================== -->
+<h2 id="archi">三、模型骨架（model.py）拆解</h2>
+
+<h3>3.1 ELF Block — 标准 pre-norm transformer block</h3>
+
+<table>
+  <tr><th>组件</th><th>实现</th><th>备注</th></tr>
+  <tr><td>Norm</td><td>RMSNorm</td><td>没用 LayerNorm（好）</td></tr>
+  <tr><td>Attention</td><td>MHA + qk_norm（RMSNorm on q/k）+ <strong>1D RoPE</strong></td><td>没 GQA、没 Flash-Attn 显式调用（依赖 SDPA backend）</td></tr>
+  <tr><td>FFN</td><td>SwiGLU，hidden 用 <code>int(hidden·mlp_ratio·2/3)</code></td><td>跟 Llama 一致</td></tr>
+  <tr><td>位置编码</td><td>RoPE，前缀 token（time / sc-cfg / mode）放在 "empty"  位置（cos=1,sin=0，不旋转）</td><td>设计干净</td></tr>
+  <tr><td>Causal mask</td><td><strong>没有！</strong> 双向 attention</td><td>flow matching diffusion 一致设计，但是 <strong>性能可能受限</strong>，见 §6 #P5</td></tr>
+  <tr><td>Dropout</td><td>只在中间 50% 层（<code>q1≤i&lt;q3</code>）启用</td><td>一种正则放置技巧</td></tr>
+  <tr><td>Grad ckpt</td><td>可选，全模型粒度</td><td></td></tr>
+</table>
+
+<h3>3.2 模型尺寸</h3>
+
+<table>
+  <tr><th>变体</th><th>depth</th><th>hidden</th><th>heads</th><th>非 encoder 参数量（估算）</th></tr>
+  <tr><td>ELF-B</td><td>12</td><td>768</td><td>12</td><td>~105 M</td></tr>
+  <tr><td>ELF-M</td><td>24</td><td>1056</td><td>16</td><td>~342 M</td></tr>
+  <tr><td>ELF-L</td><td>32</td><td>1280</td><td>16</td><td>~652 M</td></tr>
+</table>
+
+<p><strong>注意</strong>：<code>encoder_dim</code> = 512（T5-small），<code>vocab_size</code> = 32128（T5）。模型最大才 652M，<strong>距离主流 LM 至少差一个数量级</strong>，有大量 scale up 空间。</p>
+
+<h3>3.3 输入路径（带 prefix tokens）</h3>
+
+<svg viewBox="0 0 950 220" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system" font-size="12">
+  <g>
+    <rect x="20" y="80" width="120" height="50" fill="#fff" stroke="#666"/>
+    <text x="80" y="100" text-anchor="middle">[z, x_pred]</text>
+    <text x="80" y="118" text-anchor="middle" font-size="11" fill="#666">2·512 → 512</text>
+
+    <rect x="170" y="80" width="120" height="50" fill="#fff" stroke="#666"/>
+    <text x="230" y="100" text-anchor="middle">BottleneckProj</text>
+    <text x="230" y="118" text-anchor="middle" font-size="11" fill="#666">512 → 128 → hidden</text>
+
+    <!-- prefix -->
+    <rect x="320" y="20" width="80" height="40" fill="#ece4d2" stroke="#b85c00"/>
+    <text x="360" y="44" text-anchor="middle">mode tk × 4</text>
+    <rect x="410" y="20" width="80" height="40" fill="#ece4d2" stroke="#b85c00"/>
+    <text x="450" y="44" text-anchor="middle">time tk × 4</text>
+    <rect x="500" y="20" width="80" height="40" fill="#ece4d2" stroke="#b85c00"/>
+    <text x="540" y="44" text-anchor="middle">sc-cfg tk × 4</text>
+
+    <rect x="320" y="80" width="320" height="50" fill="#d4e3e3" stroke="#2e6e2e"/>
+    <text x="480" y="100" text-anchor="middle">prefix(12) + main_seq</text>
+    <text x="480" y="118" text-anchor="middle" font-size="11" fill="#1f5a5a">RoPE: prefix 不旋转</text>
+
+    <rect x="660" y="80" width="120" height="50" fill="#d8e2cf" stroke="#3a5a20"/>
+    <text x="720" y="100" text-anchor="middle">N · ELFBlock</text>
+    <text x="720" y="118" text-anchor="middle" font-size="11" fill="#3a5a20">双向 attn</text>
+
+    <rect x="800" y="40" width="130" height="40" fill="#fff" stroke="#666"/>
+    <text x="865" y="64" text-anchor="middle" font-size="11">final_layer (v)</text>
+    <rect x="800" y="100" width="130" height="40" fill="#fff" stroke="#666"/>
+    <text x="865" y="124" text-anchor="middle" font-size="11">decoder_head (logits)</text>
+  </g>
+  <line x1="140" y1="105" x2="170" y2="105" stroke="#b85c00" marker-end="url(#arr)"/>
+  <line x1="290" y1="105" x2="320" y2="105" stroke="#b85c00" marker-end="url(#arr)"/>
+  <line x1="640" y1="105" x2="660" y2="105" stroke="#b85c00" marker-end="url(#arr)"/>
+  <line x1="780" y1="100" x2="800" y2="60" stroke="#b85c00" marker-end="url(#arr)"/>
+  <line x1="780" y1="110" x2="800" y2="120" stroke="#b85c00" marker-end="url(#arr)"/>
+</svg>
+
+<p><strong>有意思的 trick：</strong></p>
+<ul>
+  <li><strong>Bottleneck text proj</strong>（layers.py:115-124）：<code>512→128→hidden</code>，把 T5 latent 先压到 128 维再扩张。这是 <strong>降参数 + 降 lr-sensitivity 的妙招</strong>，但也是潜在的 information bottleneck，见 §6 #P3。</li>
+  <li><strong>Mode tokens</strong>（model.py:181-196）：每条样本独立 gate（<code>mode_tokens × decoder_step_active</code>），让模型「知道」当前是 denoiser 还是 decoder 模式。</li>
+  <li><strong>Decoder unembedding 也走 bottleneck</strong>（model.py:131-140）：<code>hidden→512(GELU)→vocab</code>，和 input proj 不绑权重（论文里 "shared-weight" 是指 <em>decoder mapping</em> 在 t=1 一步到位的概念，不是字面权重共享）。</li>
+</ul>
+
+<!-- ==================================================================== -->
+<h2 id="train">四、训练循环（train_step.py）拆解</h2>
+
+<h3>4.1 一个 step 的完整数据流</h3>
+
+<ol>
+  <li><strong>编码</strong>：<code>input_ids → x₀</code> via 冻 T5 encoder（bf16，no grad）</li>
+  <li><strong>采时间</strong>：<code>t ~ logit_normal(P_mean=0.8, P_std=0.8)</code>，重尾偏向 t≈1（接近 clean）</li>
+  <li><strong>构噪</strong>：<code>denoiser_z = t·x₀ + (1-t)·ε</code>；<code>decoder_z = λ_t·x₀ + (1-λ_t)·ε·decoder_noise_scale</code></li>
+  <li><strong>per-example 选支</strong>：每条样本独立选 decoder/denoiser → mixed input</li>
+  <li><strong>self-cond init forward</strong>（<code>compute_shared_uncond</code>, line 142-151）：<code>z + zeros</code> 跑一遍，得 <code>x_pred_init</code>，<strong>no_grad</strong></li>
+  <li><strong>self-cond cond forward</strong>（<code>get_sc_cond_and_uncond</code>, line 153-173）：<code>z + x_pred_init</code> 跑一遍，得 <code>v_cond</code>，<strong>no_grad</strong></li>
+  <li><strong>构造 guided v_target</strong>：<code>v_target + (1-1/sc_w)·(v_cond - v_uncond)</code></li>
+  <li><strong>主 forward</strong>（line 224-230）：<code>(z_mixed, x_pred_cond)</code> + <code>t_mixed</code>，同时出 <code>v_pred</code> 和 <code>decoder_logits</code></li>
+  <li><strong>合 loss</strong>：<code>(ce·ce_mask + l2·l2_mask) / total_mask</code>，单分母</li>
+  <li><strong>backward + clip + EMA</strong></li>
+</ol>
+
+<h3>4.2 Forward 次数（重要！）</h3>
+
+<table>
+  <tr><th>场景</th><th>每个 step 的 forward 次数</th></tr>
+  <tr><td>self_cond_prob = 0, sc_cfg_tokens = 0</td><td><strong>1</strong>（主）</td></tr>
+  <tr><td>self_cond_prob &gt; 0, sc_cfg_tokens = 0</td><td><strong>2</strong>（init no_grad + 主）</td></tr>
+  <tr><td>self_cond_prob &gt; 0, sc_cfg_tokens &gt; 0（默认）</td><td><strong>3</strong>（uncond no_grad + cond no_grad + 主）</td></tr>
+</table>
+
+<div class="callout red">
+<strong>这是 ELF 训练慢的核心原因之一。</strong> 每个 optimizer step 实际有 <strong>2 次 no-grad forward + 1 次主 forward + backward</strong>。如果 backward 占比 ≈ forward 的 2x，那理论上一个 step 的算力是 <code>2F + 1F + 2F = 5F</code>，其中 <strong>2/5 = 40% 的算力花在 no-grad self-cond 前向上</strong>。这是 §6 #S1 的来源。
+</div>
+
+<h3>4.3 优化器配置</h3>
+
+<ul>
+  <li>默认 <code>optimizer = "muon"</code>（Keller Jordan 的 Muon）</li>
+  <li>可切 AdamW，β=(0.9, 0.95)，wd=0.0</li>
+  <li>blr=5e-5（base lr，effective = blr · batch_size / 256）</li>
+  <li>lr schedule = constant（这其实<strong>很激进</strong>，没 warmup-decay）</li>
+  <li>EMA decay = 0.9999（单条 EMA）</li>
+  <li>grad clip = 1.0</li>
+</ul>
+
+<!-- ==================================================================== -->
+<h2 id="sample">五、采样器（sampling_utils.py）拆解</h2>
+
+<h3>5.1 默认采样配置</h3>
+
+<table>
+  <tr><th>任务</th><th>采样器</th><th>steps</th><th>cfg</th><th>sc-cfg</th><th>schedule</th></tr>
+  <tr><td>OWT 无条件 (paper)</td><td>SDE (γ=1.5)</td><td>32</td><td>—</td><td>3</td><td>logit_normal</td></tr>
+  <tr><td>OWT 无条件 (备选)</td><td>SDE (γ=1.0)</td><td>64</td><td>—</td><td>3</td><td>logit_normal</td></tr>
+  <tr><td>WMT/XSum 条件</td><td>ODE</td><td>64</td><td>2</td><td>1</td><td>logit_normal</td></tr>
+</table>
+
+<h3>5.2 推理时 forward 次数</h3>
+
+<table>
+  <tr><th>条件</th><th>每步 forward 次数</th></tr>
+  <tr><td>无 self-cond, cfg=1</td><td>1</td></tr>
+  <tr><td>有 self-cond, cfg=1, sc-cfg≠1</td><td><strong>1</strong>（sc-cfg 蒸馏在权重里，只跑 cond 那一支）</td></tr>
+  <tr><td>有 self-cond, cfg≠1（条件生成）</td><td><strong>2</strong>（cond + uncond）</td></tr>
+</table>
+
+<div class="callout green">
+<strong>这是 ELF 真正的工程亮点：</strong> 推理时 <strong>SC-CFG 不需要双 forward</strong>，因为它已经被监督到训练 target 里。这给 elf-pro 的 speed 优化定了基线 — 想超过 ELF 的速度，只能从「采样步数 / 模型本身效率」下手。
+</div>
+
+<!-- ==================================================================== -->
+<h2 id="issues">六、可改进点清单</h2>
+
+<p>以下每条标注：<span class="tag tag-perf">PERF</span> = 性能 / <span class="tag tag-speed">SPEED</span> = 速度 / <span class="tag tag-scale">SCALE</span> = 规模；以及难度（<span class="tag tag-easy">易</span>/<span class="tag tag-med">中</span>/<span class="tag tag-hard">难</span>）和风险。</p>
+
+<h3>6.1 性能维度（Gen.PPL ↓ / Entropy ↑ / 任务指标 ↑）</h3>
+
+<table>
+<tr><th width="40">#</th><th>问题</th><th>诊断</th><th>改进建议</th><th>难度</th></tr>
+
+<tr>
+<td><span class="issue-id">P1</span></td>
+<td>encoder 是 <strong>T5-small</strong>，512 维，旧</td>
+<td>T5-small 是 2019 paper、English-only、句法/语义表示落后于现代 encoder。整个 ELF 的 latent 空间天花板就在这。</td>
+<td>换 <strong>更强 encoder</strong>：① <code>gemma-2b-encoder</code>（如果存在）；② 自训一个 sentencepiece + Llama-tokenizer + small encoder；③ 用 <strong>BGE-M3 / E5-mistral</strong> 这种 sentence encoder（语义更紧致）；④ 干脆 <strong>跟模型联训</strong>（小步长 + lr scaling，破除"冻死"假设）</td>
+<td><span class="tag tag-med">中</span></td>
+</tr>
+
+<tr>
+<td><span class="issue-id">P2</span></td>
+<td>双向 attention，没有 causal 信息</td>
+<td>denoiser 可以双向看（合理）；但<strong>decoder 头也是双向</strong>，做 t=1 离散映射时丢失了 token 顺序的因果先验。AR 语言建模本质上是单向，强制双向会损失 1-3 点 PPL。</td>
+<td>① 引入 <strong>hybrid mask</strong>：denoiser 双向，decoder 头改 causal；② 或者尝试 <strong>prefix-LM</strong> 风格：condition 双向，target 因果。这是 elf-pro 一个明确的"原创性贡献点"。</td>
+<td><span class="tag tag-med">中</span></td>
+</tr>
+
+<tr>
+<td><span class="issue-id">P3</span></td>
+<td>Bottleneck dim = 128 太小</td>
+<td>T5-small 512维 → 强行压到 128维 → 768/1056/1280 hidden。压 4x 是为了省 input proj 的参数，但<strong>对语义敏感的语言任务可能丢信息</strong>。OOC：image diffusion 用类似 trick 是可以的，因为像素冗余高；语言不一样。</td>
+<td>① ablate <code>bottleneck_dim ∈ {128, 256, 512(=no-bottleneck)}</code>；② 或者用 <strong>低秩 adapter</strong>（LoRA-style）替代 bottleneck，参数量可控同时保留 full-rank capacity。</td>
+<td><span class="tag tag-easy">易</span></td>
+</tr>
+
+<tr>
+<td><span class="issue-id">P4</span></td>
+<td><code>t_eps = 5e-2</code> 裁掉 5% 高 t 段</td>
+<td>v_target 在 t→1 时数值爆炸（除以 1-t），所以裁掉。但<strong>裁掉的恰好是离 clean 最近的一段</strong>，对最终输出质量很关键。</td>
+<td>① 改用 <strong>x-prediction parameterization</strong>（直接预测 x₀），训练更稳；② 或者 <strong>logit-snr loss weighting</strong>（EDM 风格），让 boundary 自然过渡。</td>
+<td><span class="tag tag-med">中</span></td>
+</tr>
+
+<tr>
+<td><span class="issue-id">P5</span></td>
+<td>SC-CFG 把训练 target 拉向 cond，但 <code>sc_w</code> 是 log-uniform [0.5, 5]</td>
+<td>采样时 <code>sc_w=3</code>，但训练时 sc_w 跨度大且<strong>同一 batch 不同样本不同 sc_w</strong>，可能让模型学到一个过于"保守"的 target。</td>
+<td>① 改成 <strong>schedule-conditional sc_w</strong>（早期小、后期大），更贴近采样轨迹；② 或者训练时直接采固定 sc_w=3，看是否提升。</td>
+<td><span class="tag tag-easy">易</span></td>
+</tr>
+
+<tr>
+<td><span class="issue-id">P6</span></td>
+<td>decoder 分支用 <strong>logit-normal noise</strong>，但 P_mean=0.8 偏向 λ→1（很 clean）</td>
+<td>decoder 永远在 t=1 训练，但 z 又加 logit-normal 噪声混合 — 这是 ELF 论文里的 trick（让 decoder 更鲁棒），但 P_mean=0.8 → λ≈0.69 偏 clean，<strong>鲁棒性可能不够</strong>。</td>
+<td>ablate decoder λ 分布：① 加大 P_std；② P_mean 调到 0；③ uniform。</td>
+<td><span class="tag tag-easy">易</span></td>
+</tr>
+
+<tr>
+<td><span class="issue-id">P7</span></td>
+<td>EMA 只有一条 (decay 0.9999)</td>
+<td>"single EMA" — paper 报的指标几乎肯定是 EMA 权重的。但 EDM2 的经验是<strong>双 EMA + post-hoc EMA-rate sweep</strong>能再提 1-2 点。</td>
+<td>加第二条 EMA (e.g., 0.999)，eval 时 ensemble 或 sweep 选最优。</td>
+<td><span class="tag tag-easy">易</span></td>
+</tr>
+
+</table>
+
+<h3>6.2 速度维度（训练吞吐 + 采样步数）</h3>
+
+<table>
+<tr><th width="40">#</th><th>问题</th><th>诊断</th><th>改进建议</th><th>难度</th></tr>
+
+<tr>
+<td><span class="issue-id">S1</span></td>
+<td>训练一个 step 要 <strong>3 次 forward</strong>（2 次 no-grad self-cond + 1 次主）</td>
+<td>见 §4.2。是 ELF 训练慢的最大原因。</td>
+<td><strong>elf-pro 的 speed 头号目标</strong>。可选方案：
+<ol>
+  <li><strong>合 batch trick</strong>：把 uncond/cond 两次 no_grad forward 合成一个 2B 的 batch（layout 相同 → 一次 SDPA），<strong>预期省 30% wall-clock</strong>。</li>
+  <li><strong>降低 self_cond_prob</strong>：从 0.5 → 0.25，砍掉一半 self-cond 触发，但要小心性能。</li>
+  <li><strong>cache uncond forward</strong>：在 grad-accum 步内复用 uncond hidden（不 100% equivalent，但接近）。</li>
+  <li><strong>fused single-pass SC training</strong>：用 <em>mean-field self-cond</em>（共享 trunk 出双头），避开重复前向 — 这是个研究 idea。</li>
+</ol>
+</td>
+<td><span class="tag tag-med">中</span> ~ <span class="tag tag-hard">难</span></td>
+</tr>
+
+<tr>
+<td><span class="issue-id">S2</span></td>
+<td>采样 32 步 SDE 偏多</td>
+<td>32 步 SDE → 模型 forward 32 次（条件生成更是 64×2=128 次）。</td>
+<td>① <strong>Consistency distillation / shortcut models</strong>：把 32 步压到 4-8 步；② <strong>DPM-Solver/Heun</strong> 高阶求解器，理论上 16 步达 32 步质量；③ <strong>flow matching specific：MeanFlow / IMM</strong>（最新工作），1-2 步生成。</td>
+<td><span class="tag tag-hard">难</span></td>
+</tr>
+
+<tr>
+<td><span class="issue-id">S3</span></td>
+<td>没有 Flash-Attn 显式调用，依赖 SDPA backend</td>
+<td><code>F.scaled_dot_product_attention</code> 在 PyTorch 2.x 上自动选 backend，但 BF16 + 长序列下未必命中 flash-attn-3。</td>
+<td>① 升级 PyTorch ≥2.5 / 用 <code>torch.nn.attention.SDPBackend.FLASH_ATTENTION</code> 显式指定；② 或者直接接入 <code>flash-attn</code> 的 cu_seqlens 接口（尤其变长 batch 时）。</td>
+<td><span class="tag tag-easy">易</span></td>
+</tr>
+
+<tr>
+<td><span class="issue-id">S4</span></td>
+<td>没有 GQA</td>
+<td>MHA 在大模型 scale 时 KV 占内存、attention 慢。Llama3 / Qwen 都是 GQA。</td>
+<td>scale up 时换 <strong>GQA (kv_heads = heads/4 或 heads/8)</strong>。inference 还能省一倍 KV bandwidth。</td>
+<td><span class="tag tag-easy">易</span></td>
+</tr>
+
+<tr>
+<td><span class="issue-id">S5</span></td>
+<td>双向 attention 不能 KV-cache</td>
+<td>采样时每步要重算所有 token 的 attention。</td>
+<td>跟 P2 联动：如果改 prefix-LM，target 端因果就能 KV-cache（在生成式应用场景里这是大杀器）。</td>
+<td><span class="tag tag-med">中</span></td>
+</tr>
+
+<tr>
+<td><span class="issue-id">S6</span></td>
+<td>SDPA 没用 FlashAttention 的 varlen 接口</td>
+<td>OWT 是固定 max_length 的 padded batch，但条件生成（XSum）长度差异大 → padding 占算力。</td>
+<td>变长场景启用 <strong>flash-attn varlen</strong> + cu_seqlens；padded scenario 不用动。</td>
+<td><span class="tag tag-med">中</span></td>
+</tr>
+
+</table>
+
+<h3>6.3 规模维度（推到 1B+ 并保 scaling law）</h3>
+
+<table>
+<tr><th width="40">#</th><th>问题</th><th>诊断</th><th>改进建议</th><th>难度</th></tr>
+
+<tr>
+<td><span class="issue-id">L1</span></td>
+<td>最大才 ELF-L 652M，远低于 1B+ 阈值</td>
+<td>论文显示 ELF-L vs ELF-M 上 PPL 反而<strong>变差</strong>（23.3 vs 21.7），暗示已撞到某种瓶颈（数据量？lr schedule？bottleneck dim？）</td>
+<td>elf-pro 的 scale up 目标至少做到 <strong>1B / 3B / 7B 三个点</strong>。要先<strong>诊断 ELF-L 退化原因</strong>（很可能是 P3 bottleneck 或 lr_schedule=constant 或 OWT 数据量太小 → 过拟合）。</td>
+<td><span class="tag tag-hard">难</span></td>
+</tr>
+
+<tr>
+<td><span class="issue-id">L2</span></td>
+<td>OWT 数据集太小（~9B tokens）</td>
+<td>5 epoch on OWT ≈ 45B tokens — 在 1B+ 模型规模下严重过拟合。</td>
+<td>换更大 corpus：<strong>SlimPajama / Dolma / FineWeb-Edu</strong>。要重做数据 pipeline（pre-tokenize + sharded arrow）。</td>
+<td><span class="tag tag-med">中</span></td>
+</tr>
+
+<tr>
+<td><span class="issue-id">L3</span></td>
+<td>固定 max_length=128</td>
+<td>OWT 配置 128 token — 这是 toy 长度。现代 LM 至少 2K-4K context。flow matching 在长序列上的稳定性是 <strong>未被回答的研究问题</strong>。</td>
+<td>① 推到 max_length=2048+，研究 RoPE 缩放（pt_seq_len/ft_seq_len）；② 也是个 paper-worthy contribution。</td>
+<td><span class="tag tag-hard">难</span></td>
+</tr>
+
+<tr>
+<td><span class="issue-id">L4</span></td>
+<td>lr schedule = "constant"，warmup_steps=5000 之后就 flat</td>
+<td>scale up 时 constant lr 几乎肯定会发散或停滞。Muon 也不能救。</td>
+<td>切 <strong>cosine + min_ratio=0.1</strong> 或 <strong>WSD (warmup-stable-decay)</strong>。后者在大模型预训练里是新主流。</td>
+<td><span class="tag tag-easy">易</span></td>
+</tr>
+
+<tr>
+<td><span class="issue-id">L5</span></td>
+<td>没有 ZeRO / FSDP</td>
+<td>看 train.py 是普通 DDP（待验证）。1B+ 不开 ZeRO-2 直接 OOM。</td>
+<td>引入 <strong>FSDP2</strong> 或 <strong>DeepSpeed ZeRO-3 + activation checkpointing</strong>。你的仓库 <code>laionface-tokenzier</code> 已经有现成的 DeepSpeed pipeline，可以借鉴。</td>
+<td><span class="tag tag-med">中</span></td>
+</tr>
+
+<tr>
+<td><span class="issue-id">L6</span></td>
+<td>没有 MoE 路径</td>
+<td>当前是 dense transformer，scale 到 7B+ 时 dense 的 compute/quality 比远不如 MoE。</td>
+<td>可选支线：实现 <strong>MoE-ELF</strong>（DeepSeek-style fine-grained MoE），把 active params 控制在 1B 以内但 total params 7B+。这是高风险但有故事的方向。</td>
+<td><span class="tag tag-hard">难</span></td>
+</tr>
+
+<tr>
+<td><span class="issue-id">L7</span></td>
+<td>μP / 初始化没显式做</td>
+<td>scale up 跨多档时，没用 μP 会导致每档都要重调 lr。</td>
+<td>用 <strong>μP / Spectral parameterization</strong>，或者至少 <strong>inverse-sqrt depth scaling</strong>，让 ELF-B 调出来的 lr 直接迁移到 ELF-XL。</td>
+<td><span class="tag tag-med">中</span></td>
+</tr>
+
+</table>
+
+<!-- ==================================================================== -->
+<h2 id="plan">七、elf-pro 推荐路线图</h2>
+
+<div class="grid-2">
+<div class="card">
+<h4>Phase 0 — 复现 baseline（1 周）</h4>
+<ul>
+  <li>跑通 ELF-B on OWT，对齐 Gen.PPL ≈ 24, Entropy ≈ 5.15</li>
+  <li>跑通 ELF-M / ELF-L，重现 ELF-L PPL 退化现象</li>
+  <li>建立训练吞吐 baseline（tokens/sec/GPU）和采样 wall-clock baseline</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Phase 1 — 速度先行（1-2 周）</h4>
+<ul>
+  <li>S1：合并 uncond+cond no-grad forward → 一次 2B forward</li>
+  <li>S3：显式 Flash-Attn-3</li>
+  <li>S4：GQA</li>
+  <li><strong>目标：单 step 训练 wall-clock -30%~-40%</strong></li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Phase 2 — 性能升档（2-3 周）</h4>
+<ul>
+  <li>P2：hybrid mask（denoiser 双向 + decoder causal）</li>
+  <li>P3：bottleneck ablation</li>
+  <li>P7：双 EMA</li>
+  <li>P4：x-pred parameterization 或 EDM-style loss weight</li>
+  <li><strong>目标：ELF-B Gen.PPL 24 → ≤ 21</strong></li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Phase 3 — Scale Up（4-6 周）</h4>
+<ul>
+  <li>L4：cosine / WSD lr</li>
+  <li>L5：FSDP2</li>
+  <li>L7：μP</li>
+  <li>L2：FineWeb-Edu / SlimPajama 数据</li>
+  <li>L3：context 扩到 2K</li>
+  <li>训出 <strong>elf-pro 1B / 3B</strong>，给 paper-grade scaling curve</li>
+  <li>S2 (蒸馏 / few-step) 作为可选支线</li>
+</ul>
+</div>
+</div>
+
+<h3>7.1 「全面超越 ELF」三个具体打击点（建议作为 paper claim）</h3>
+
+<div class="callout green">
+<ol>
+  <li><strong>Speed</strong>：训练 step 加速 30%+（S1 合 batch + S3/S4），采样步数从 32 → 8 同质量（S2 蒸馏）；</li>
+  <li><strong>Performance</strong>：在 ELF-B 同等参数和数据下 Gen.PPL ≤ 21（vs ELF 的 24.1），来自 P2 hybrid mask + P3 bottleneck + P7 双 EMA 的组合；</li>
+  <li><strong>Scale</strong>：把 ELF 推到 1B / 3B 规模，画出干净的 scaling curve（vs ELF 在 ELF-L 退化），证明 flow matching 语言模型 <strong>能 scale</strong>。</li>
+</ol>
+</div>
+
+<h3>7.2 风险与回避</h3>
+
+<table>
+<tr><th>风险</th><th>缓解</th></tr>
+<tr>
+  <td>SC-CFG 的"训练蒸馏"机制依赖精确数学，改动 self-cond 路径要小心</td>
+  <td>所有 self-cond / sc-cfg 相关改动都在 ELF-B + OWT 上 ablation 一遍</td>
+</tr>
+<tr>
+  <td>Flow matching 在 1B+ 长 context 上没有先例</td>
+  <td>分阶段 scale：128 → 512 → 2K，每档至少跑 short run 验证 loss 稳定</td>
+</tr>
+<tr>
+  <td>双向 attention 改 hybrid 可能破坏 paper 报的指标</td>
+  <td>纯 ablation：保留 baseline 的纯双向作为对照</td>
+</tr>
+<tr>
+  <td>FSDP2 / Muon 在大规模没充分验证</td>
+  <td>scale up 时切 AdamW + FSDP2 作为保底；Muon 留 ELF-B 验证</td>
+</tr>
+</table>
+
+<hr>
+
+<p style="color: var(--muted); font-size: 12px;">
+代码位于 <code>/projects/elf-pro/src/</code>，对应 commit <code>b29d883</code>（pytorch_elf 分支 init torch version）。
+本报告基于 ~1700 行核心 PyTorch 代码（model 240 + train_step 283 + sampling_utils 251 + layers 256 + config 216 + 余）+ 上游 README。下一步：复现 ELF-B baseline，然后按 Phase 1 动手。
+</p>
+
+</div>
+</body>
+</html>

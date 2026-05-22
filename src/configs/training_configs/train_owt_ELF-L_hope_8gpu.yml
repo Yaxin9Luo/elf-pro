@@ -1,0 +1,90 @@
+# ELF-L / OpenWebText training config for HOPE single-node 8-GPU runs.
+#
+# Derived from `train_owt_ELF-L.yml`. The two changes vs. the local config are
+#   1. `data_path` points at the dolphinfs mirror of `embedded-language-flows/openwebtext-t5`
+#      (no HF download from inside the cluster).
+#   2. `output_dir` writes back to dolphinfs so the run survives container teardown.
+#
+# Hyperparameters (epochs / global_batch_size / blr / warmup / muon) match the
+# paper's ELF-L OWT recipe: 5 epochs, global batch 512, base LR 1e-3 with 0.5
+# warmup epochs, Muon optimizer, logit-normal time schedule.
+#
+# Per-device batch math (informational; train.py derives it from
+# `global_batch_size / world`):
+#   world = 1 node * 8 GPUs = 8
+#   local_batch = 512 / 8 = 64    (grad_accum_steps = 1)
+# ELF-L is 652M params; at max_length=1024, local_batch=64 likely won't fit
+# without `gradient_checkpointing: true` (set below). If you still hit OOM,
+# bump `grad_accum_steps` to 2 (local_batch=32, ~2x step time).
+
+# Dataset (cluster-local mirror)
+data_path: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/native_mm/luoyaxin03/projects/elf-pro/data/embedded-language-flows/openwebtext-t5/main"
+max_length: 1024
+
+# Encoder
+encoder_model_name: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/native_mm/luoyaxin03/projects/elf-pro/models/t5-small"
+tokenizer_name: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/native_mm/luoyaxin03/projects/elf-pro/models/t5-small"
+latent_mean: 0.0
+latent_std: 0.2
+
+# Model architecture
+model: ELF-L  # ELF-B, ELF-M
+bottleneck_dim: 128
+num_time_tokens: 4
+num_self_cond_cfg_tokens: 4
+num_model_mode_tokens: 4
+
+# Denoiser objective
+denoiser_p_mean: -1.5
+denoiser_p_std: 0.8
+denoiser_noise_scale: 2.0
+t_eps: 0.05
+time_schedule: "logit_normal"
+
+# Decoder objective
+decoder_prob: 0.2
+decoder_noise_scale: 5.0
+decoder_p_mean: 0.8
+decoder_p_std: 0.8
+
+# Conditioning / CFG
+self_cond_prob: 0.5
+
+# Training (optimizer + schedule). Paper recipe: ELF-L OWT, 5 epochs, GB=512,
+# blr=1e-3, 0.5-epoch warmup, Muon. effective_lr = blr * (GB * grad_accum) / 256.
+epochs: 5
+global_batch_size: 512
+grad_accum_steps: 1
+blr: 0.001
+weight_decay: 0.0
+warmup_epochs: 0.5
+warmup_steps: -1  # -1 falls back to warmup_epochs
+optimizer: muon  # "adamw" or "muon"
+use_bf16: true
+gradient_checkpointing: true   # required for ELF-L on local_batch=64 to fit
+
+# EMA
+ema_decay1: 0.9999
+
+# Sampling
+sampling_configs_path: "src/configs/sampling_configs/uncond_sampling_configs.yml"
+num_samples: 1000
+
+# Logging & Checkpointing
+log_freq: 100
+save_freq: 1
+eval_freq: 1
+
+# Output (dolphinfs mirror so checkpoints survive container exit)
+output_dir: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/outputs/elf_l-owt-hope-8gpu"
+hf_repo_id: null
+resume: null
+
+# Wandb
+use_wandb: false   # HOPE platform provides its own viz; keep wandb off
+wandb_project: elf
+wandb_entity: null
+wandb_run_name: elf_l-owt-hope-8gpu
+
+# Misc
+seed: 42

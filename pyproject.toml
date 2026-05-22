@@ -1,0 +1,39 @@
+[project]
+name = "elf-pro"
+version = "0.1.0"
+description = "ELF-Pro: Embedded Language Flows, scaled up and faster."
+readme = "README.md"
+requires-python = ">=3.9,<3.13"
+dependencies = [
+    "torch>=2.4.0",
+    "numpy>=1.26.4,<2.0.0",
+    "PyYAML>=6.0.1",
+    "tqdm>=4.66.0",
+    "einops>=0.7.0",
+    "transformers>=4.41.2,<4.45.0",
+    "datasets>=2.19.0",
+    "huggingface-hub>=0.23.0",
+    "sacrebleu>=2.4.0",
+    "rouge-score>=0.1.2",
+    "wandb>=0.16.6",
+    "muon-optimizer>=0.1.0",
+    "sentencepiece>=0.2.0",
+    "protobuf>=3.20",
+    "accelerate>=0.30.0",
+]
+
+[tool.uv]
+# Install PyTorch from the CUDA 12.4 wheel index (fwd-compat with CUDA 12.2 driver).
+# We pin the index to ensure GPU wheels are picked instead of CPU-only.
+[[tool.uv.index]]
+name = "pypi-tuna"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
+
+[[tool.uv.index]]
+name = "pytorch-cu124-sjtu"
+url = "https://mirror.sjtu.edu.cn/pytorch-wheels/cu124"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu124-sjtu" }

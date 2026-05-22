@@ -1,0 +1,47 @@
+# Python build / cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Virtualenvs / pip targets
+.venv/
+.local/
+.shared-pylibs/
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Model weights (auto-downloaded from HuggingFace via --checkpoint_path / encoder_model_name)
+models/
+
+# Datasets (auto-downloaded from HuggingFace; cluster runs use dolphinfs absolute paths)
+data/
+
+# Training outputs (checkpoints, generation samples, launch logs, migration logs)
+outputs/
+wandb/
+
+# Submit / cluster runtime artifacts
+submit/hope_builtin_logs/
+submit/hope_builtin_logs2/
+submit/hope_direct_logs/
+submit/hope_monitor_logs/
+
+# Secrets / env
+.env
+.env.*
+*.key
+*.pem
+credentials*
+
+# OS
+Thumbs.db

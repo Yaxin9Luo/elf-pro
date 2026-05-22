@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>elf-pro 研究路线 — NFE↓ 主菜 / Context↑ / PPL↑</title>
+<style>
+  :root {
+    --fg: #1a1a1a;
+    --bg: #fcfcfa;
+    --muted: #666;
+    --accent: #b85c00;
+    --accent2: #2e6e2e;
+    --accent3: #1f5a8a;
+    --warn: #b03030;
+    --code-bg: #f3f0e8;
+    --border: #e0d8c8;
+    --table-stripe: #f7f3ea;
+    --tag-bg: #ece4d2;
+    --headline-bg: #fff4e0;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg); color: var(--fg);
+    line-height: 1.65;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 28px 80px; }
+  h1 { font-size: 28px; margin: 0 0 4px; letter-spacing: -0.5px; }
+  h2 { font-size: 21px; margin: 44px 0 14px; padding-bottom: 6px; border-bottom: 2px solid var(--accent); }
+  h3 { font-size: 16px; margin: 24px 0 8px; color: var(--accent); }
+  h4 { font-size: 14px; margin: 18px 0 6px; color: var(--accent2); }
+  .subtitle { color: var(--muted); margin: 0 0 24px; font-size: 13px; }
+  p, li { font-size: 14px; }
+  code, pre, .mono { font-family: "JetBrains Mono", "Menlo", monospace; font-size: 12.5px; }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border);
+    padding: 12px 14px; border-radius: 6px; overflow-x: auto;
+    line-height: 1.5;
+  }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0 18px; font-size: 13px; }
+  th, td { padding: 8px 10px; border: 1px solid var(--border); text-align: left; vertical-align: top; }
+  th { background: var(--tag-bg); }
+  tbody tr:nth-child(even) { background: var(--table-stripe); }
+  .tag {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 11.5px; font-weight: 600; background: var(--tag-bg); color: #5a4520;
+    margin-right: 6px;
+  }
+  .tag-main  { background: #f4d8b8; color: #7a3f08; }
+  .tag-side  { background: #d8e2cf; color: #3a5a20; }
+  .tag-supp  { background: #d4e0e9; color: #1f4a6a; }
+  .tag-easy  { background: #e2e0d0; color: #5a5a30; }
+  .tag-med   { background: #e6d8b8; color: #6b4f10; }
+  .tag-hard  { background: #d8c8b8; color: #5a3a10; }
+  .tag-risk  { background: #f0d4d4; color: #8b2020; }
+  .callout {
+    border-left: 3px solid var(--accent);
+    padding: 10px 14px; margin: 14px 0;
+    background: #f8efde;
+  }
+  .callout.green  { border-color: var(--accent2); background: #ecf5e8; }
+  .callout.blue   { border-color: var(--accent3); background: #e6eef5; }
+  .callout.red    { border-color: var(--warn);    background: #f8e8e6; }
+  .headline {
+    background: var(--headline-bg);
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    padding: 16px 20px; margin: 18px 0 28px;
+  }
+  .headline strong { color: var(--accent); font-size: 15px; }
+  .pipe-svg { display: block; margin: 14px auto; max-width: 100%; }
+  .grid-2 {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 14px; margin: 14px 0;
+  }
+  .grid-3 {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px; margin: 14px 0;
+  }
+  .card {
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 14px 16px; background: #fff;
+  }
+  .card.main { border-color: var(--accent); border-width: 2px; }
+  .card.side { border-color: var(--accent2); }
+  .card.supp { border-color: var(--accent3); }
+  .toc { background: #fff; border: 1px solid var(--border); padding: 14px 18px; border-radius: 6px; }
+  .toc ol { margin: 0; padding-left: 24px; }
+  .toc a { color: var(--fg); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+  small.dim { color: var(--muted); }
+  .file-ref { color: var(--accent2); font-family: monospace; font-size: 12px; }
+  .issue-id {
+    display: inline-block; min-width: 28px;
+    background: var(--accent); color: #fff;
+    padding: 1px 6px; border-radius: 3px;
+    font-weight: 600; font-size: 11.5px;
+    margin-right: 6px;
+  }
+  .phase-box {
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 12px 16px; margin: 8px 0; background: #fff;
+  }
+  .phase-box.main { border-left: 4px solid var(--accent); }
+  .phase-box.side { border-left: 4px solid var(--accent2); }
+  .phase-box.supp { border-left: 4px solid var(--accent3); }
+  hr { border: none; border-top: 1px dashed var(--border); margin: 32px 0; }
+  @media (max-width: 720px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>elf-pro 研究路线</h1>
+<p class="subtitle">2026-05-22 · 与 <code>elf_code_review.html</code> 配套；后者是改进点全集（P/S/L issue），本文是 paper-track 的取舍与排序。</p>
+
+<div class="headline">
+  <strong>Paper main claim（决定）：</strong>
+  以 <strong>1-8 NFE 达到或超越 ELF 32-NFE 的生成质量</strong>，其中"NFE"指生成整段 max_length 序列所需的总 forward 次数（不是 per-token）。Context 扩展和 PPL 改进作为支撑性贡献，目的是为 distillation 提供更强的 teacher 并让故事完整。
+</div>
+
+<div class="toc">
+  <strong>目录</strong>
+  <ol>
+    <li><a href="#nfe-clarify">一、先把 "NFE" 这个词的语义钉死</a></li>
+    <li><a href="#three-axes">二、三条研究主轴：speed / scale / perf</a></li>
+    <li><a href="#coupling">三、三轴的耦合关系（关键）</a></li>
+    <li><a href="#main-nfe">四、主菜：NFE 到个位数 — 技术全景</a></li>
+    <li><a href="#side-context">五、支撑：context window 扩展</a></li>
+    <li><a href="#supp-ppl">六、支撑：PPL 性能提升</a></li>
+    <li><a href="#roadmap">七、路线图（Phase 1/2/3）</a></li>
+    <li><a href="#risks">八、风险与回避</a></li>
+    <li><a href="#nfe-deep">九、NFE 加速方向细化（ELF-only 的四个原创点）</a></li>
+  </ol>
+</div>
+
+<!-- ==================================================================== -->
+<h2 id="nfe-clarify">一、先把 "NFE" 这个词的语义钉死</h2>
+
+<div class="callout blue">
+<strong>NFE = Number of Function Evaluations，整段序列共享。</strong>
+ELF 报的 32 NFEs 不是 "一个 token 32 步"，而是 "整个 max_length=1024 的 latent 张量做 32 步 ODE/SDE 去噪"。每一步对 (B, 1024, d) 整段做一次双向 attention forward，生成完成后再加 1 次 DLM decode forward 得到 1024 个 token id。
+</div>
+
+<table>
+  <tr><th>范式</th><th>生成 1024 tokens 的 forward 次数</th><th>每次 forward 的算力</th></tr>
+  <tr><td>AR (GPT-2)</td><td>1024（kv-cache 让单步便宜）</td><td>O(S·d²)（增量）</td></tr>
+  <tr><td>ELF SDE-32</td><td><strong>~33</strong>（32 + 1 DLM）</td><td>O(S²·d) 整段双向 attention，单步重</td></tr>
+  <tr><td>elf-pro 目标</td><td><strong>≤9</strong>（8 + 1 DLM 或更少）</td><td>同上，仍是整段</td></tr>
+</table>
+
+<p>这意味着两件事：</p>
+<ol>
+  <li>"NFE↓" 不等于 "wall-clock 同比例↓"，因为 ELF 单次 forward 比 AR 重很多。但 NFE 是 paper 上最干净的 metric，与 solver / distillation 文献完全可比。</li>
+  <li>max_length 是固定预算 — 想生成更长的文本必须在训练时把 max_length 拉大，这就把 <strong>context 扩展</strong> 自然带成了 elf-pro 的支撑性贡献。</li>
+</ol>
+
+<!-- ==================================================================== -->
+<h2 id="three-axes">二、三条研究主轴：speed / scale / perf</h2>
+
+<div class="grid-3">
+  <div class="card main">
+    <span class="tag tag-main">主菜 · speed</span>
+    <h4>NFE → 个位数</h4>
+    <p>32 → 8 → 1-2，把生成成本降一个数量级。</p>
+    <p><strong>为什么是主菜：</strong> ELF 已经把 SC-CFG 蒸馏进权重了，等于做了"半个 distillation"，从这里走 NFE 蒸馏是天然延伸；paper 上的故事最锐利。</p>
+  </div>
+  <div class="card side">
+    <span class="tag tag-side">支撑 · scale</span>
+    <h4>Context 1K → 4K+</h4>
+    <p>RoPE 外推 + 长序列数值稳定性 + 双向 attention 的内存代价。</p>
+    <p><strong>为什么是支撑：</strong> Flow matching LM 在 4K+ 上没有先例，是开放问题；但本身是研究风险点，单独拿出来做主菜不安全。</p>
+  </div>
+  <div class="card supp">
+    <span class="tag tag-supp">支撑 · perf</span>
+    <h4>PPL 24 → ≤21</h4>
+    <p>P4 x-pred / P7 双 EMA / P5 SC-CFG sc_w 优化等。</p>
+    <p><strong>为什么是支撑：</strong> 直接给 NFE 蒸馏提供更强 teacher；本身在 ELF-B 同参数同数据下卷指标，paper 卖点不够锐但 ablation 价值高。</p>
+  </div>
+</div>
+
+<!-- ==================================================================== -->
+<h2 id="coupling">三、三轴的耦合关系（关键）</h2>
+
+<svg class="pipe-svg" viewBox="0 0 1000 280" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system" font-size="13">
+  <defs>
+    <marker id="arr2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#b85c00"/>
+    </marker>
+    <marker id="arrG" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#2e6e2e"/>
+    </marker>
+    <marker id="arrB" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#1f5a8a"/>
+    </marker>
+  </defs>
+
+  <!-- nodes -->
+  <rect x="60"  y="40"  width="200" height="70" rx="8" fill="#d4e0e9" stroke="#1f5a8a" stroke-width="2"/>
+  <text x="160" y="68" text-anchor="middle" font-weight="600">PPL 改进</text>
+  <text x="160" y="86" text-anchor="middle" font-size="11" fill="#1f4a6a">P4 x-pred / P7 双 EMA</text>
+  <text x="160" y="102" text-anchor="middle" font-size="11" fill="#1f4a6a">同参数下 24 → 21</text>
+
+  <rect x="400" y="40" width="200" height="70" rx="8" fill="#fff4e0" stroke="#b85c00" stroke-width="3"/>
+  <text x="500" y="68" text-anchor="middle" font-weight="600" fill="#7a3f08">NFE 蒸馏（主菜）</text>
+  <text x="500" y="86" text-anchor="middle" font-size="11" fill="#7a3f08">Consistency / Shortcut</text>
+  <text x="500" y="102" text-anchor="middle" font-size="11" fill="#7a3f08">32 → 8 → 1-2</text>
+
+  <rect x="740" y="40" width="200" height="70" rx="8" fill="#d8e2cf" stroke="#2e6e2e" stroke-width="2"/>
+  <text x="840" y="68" text-anchor="middle" font-weight="600">Context 扩展</text>
+  <text x="840" y="86" text-anchor="middle" font-size="11" fill="#3a5a20">1024 → 4096+</text>
+  <text x="840" y="102" text-anchor="middle" font-size="11" fill="#3a5a20">RoPE 外推 + 数值稳定</text>
+
+  <!-- arrows -->
+  <line x1="260" y1="75" x2="398" y2="75" stroke="#b85c00" stroke-width="2" marker-end="url(#arr2)"/>
+  <text x="329" y="65" text-anchor="middle" font-size="11" fill="#b85c00">提供更强 teacher</text>
+
+  <line x1="600" y1="75" x2="738" y2="75" stroke="#2e6e2e" stroke-width="2" marker-end="url(#arrG)"/>
+  <text x="669" y="65" text-anchor="middle" font-size="11" fill="#2e6e2e">让长 ctx wall-clock 可承受</text>
+
+  <line x1="160" y1="110" x2="160" y2="180" stroke="#1f5a8a" stroke-width="2" marker-end="url(#arrB)"/>
+  <line x1="160" y1="180" x2="840" y2="180" stroke="#1f5a8a" stroke-width="2"/>
+  <line x1="840" y1="180" x2="840" y2="115" stroke="#1f5a8a" stroke-width="2" marker-end="url(#arrB)"/>
+  <text x="500" y="170" text-anchor="middle" font-size="12" fill="#1f4a6a">P4 x-pred 同时是长序列数值稳定的前置</text>
+
+  <!-- bottom note -->
+  <text x="500" y="220" text-anchor="middle" font-size="13" fill="#5a4520" font-weight="600">主轴依赖：PPL 升 → 蒸馏 teacher 强 → NFE-8 时 quality 仍 ≥ baseline</text>
+  <text x="500" y="240" text-anchor="middle" font-size="13" fill="#5a4520" font-weight="600">辅助依赖：NFE 砍下来 → 长 context 采样总成本可控</text>
+  <text x="500" y="260" text-anchor="middle" font-size="13" fill="#5a4520" font-weight="600">基础设施：x-pred 参数化对 PPL 和 context 同时受益</text>
+</svg>
+
+<div class="callout">
+  <strong>结论性顺序：</strong> 先 PPL（Phase 1）→ 再 NFE（Phase 2）→ 最后 Context（Phase 3）。
+  这不是按主菜重要性排，而是按依赖关系排。Phase 2 的蒸馏需要 Phase 1 的更强 teacher；Phase 3 的长 context 需要 Phase 2 的 NFE 砍下来后才在算力上合理。
+</div>
+
+<!-- ==================================================================== -->
+<h2 id="main-nfe">四、主菜：NFE 到个位数 — 技术全景</h2>
+
+<h3>4.1 ELF 的天然蒸馏起点</h3>
+
+<p>ELF 已经做了一件等价于"半个 distillation"的事 — 把 <strong>SC-CFG guidance 蒸馏到训练 target</strong>（<code>train_step.py:175-184</code>）：</p>
+
+<pre>
+v_target_guided = v_target + (1 − 1/sc_w) · (v_cond − v_uncond)
+</pre>
+
+<p>这意味着推理时不需要双 forward 跑 CFG。这条机制的精神可以直接迁移到 NFE 蒸馏：把 "32 步 teacher 的轨迹" 当成监督信号，训练 student 让单步预测更激进的 v。</p>
+
+<h3>4.2 候选技术对比</h3>
+
+<table>
+<tr><th width="40">#</th><th>方案</th><th>NFE 目标</th><th>难度</th><th>paper 卖点</th><th>关键风险</th></tr>
+
+<tr>
+<td><span class="issue-id">M1</span></td>
+<td><strong>Heun / DPM-Solver-2/3</strong>（无训练，纯换 solver）</td>
+<td>16-8 同质量</td>
+<td><span class="tag tag-easy">易</span></td>
+<td>弱（工程加速）</td>
+<td>低 — 一阶 → 二阶 Euler 是经典做法，flow matching 有现成公式</td>
+</tr>
+
+<tr>
+<td><span class="issue-id">M2</span></td>
+<td><strong>Consistency Distillation (CM/LCM)</strong></td>
+<td>4-8</td>
+<td><span class="tag tag-med">中</span></td>
+<td>中（已有大量先例，但 LM 上少）</td>
+<td>需要 student + EMA target 双模型；训练 stable 性 OK</td>
+</tr>
+
+<tr>
+<td><span class="issue-id">M3</span></td>
+<td><strong>Reflow (Rectified Flow)</strong></td>
+<td>2-4</td>
+<td><span class="tag tag-med">中</span></td>
+<td>中（2023-24 老牌方案）</td>
+<td>要先 generate-then-retrain，迭代成本高</td>
+</tr>
+
+<tr>
+<td><span class="issue-id">M4</span></td>
+<td><strong>Shortcut / Flow-Map</strong></td>
+<td>1-4</td>
+<td><span class="tag tag-hard">难</span></td>
+<td><strong>强</strong>（flow matching LM 上没人做过）</td>
+<td>训练目标改造重；diffusion vision 有先例但 NLP 没人验过</td>
+</tr>
+
+<tr>
+<td><span class="issue-id">M5</span></td>
+<td><strong>MeanFlow / IMM</strong>（最新 2025 工作）</td>
+<td>1-2</td>
+<td><span class="tag tag-hard">难</span></td>
+<td><strong>极强</strong>（前沿，结合 SC-CFG 是新组合）</td>
+<td>论文较新，工程实现细节需自己摸；可能 numerical 难训</td>
+</tr>
+
+</table>
+
+<h3>4.3 推荐主线：M1 → M2 → (M4 或 M5)</h3>
+
+<div class="callout green">
+<strong>三段式打法：</strong>
+<ol>
+  <li><strong>M1 当地板</strong>：先把 Heun / DPM-Solver-2 接上，看 flow matching 一阶 vs 二阶在 ELF 上能从 32 步推到几步还保 PPL。这是"无训练"的免费收益，paper 里作为 baseline。</li>
+  <li><strong>M2 当主菜</strong>：用 Phase 1 训出来的 PPL=21 模型作 teacher，做 consistency distillation 到 8 步、4 步。这是 paper 的中坚证据。</li>
+  <li><strong>M4/M5 当锦上花</strong>：如果 M2 跑通且时间允许，进一步推到 1-2 步。这步成功就是顶会标配。</li>
+</ol>
+</div>
+
+<h3>4.4 落点（绿区，全在训练路径）</h3>
+
+<table>
+<tr><th>方案</th><th>主要修改文件</th><th>是否需新模型实例</th></tr>
+<tr><td>M1</td><td><code>sampling_utils.py:211-251</code> 加 <code>_heun_step</code> / <code>_dpm_solver_step</code></td><td>否</td></tr>
+<tr><td>M2</td><td><code>train_step.py</code> 复刻一份 student；<code>train.py</code> 加 EMA-as-target 逻辑</td><td>是 — student 与 frozen teacher</td></tr>
+<tr><td>M4/M5</td><td>同 M2 + 新 loss 形态</td><td>是</td></tr>
+</table>
+
+<!-- ==================================================================== -->
+<h2 id="side-context">五、支撑：context window 扩展（1K → 4K+）</h2>
+
+<h3>5.1 当前状态</h3>
+
+<ul>
+  <li>所有 OWT YAML <code>max_length: 1024</code>（paper 原始 128 那条 review doc 已过时）。</li>
+  <li>RoPE (<code>layers.py:50-96</code>) 是固定 <code>pt_seq_len = max_length</code>，<strong>没有 NTK / YaRN / longrope</strong>。</li>
+  <li>双向 attention → context↑ 直接吃 O(S²) attn 算力 + O(S·d) latent 内存；1K→4K 是 16× attn 算力。</li>
+</ul>
+
+<h3>5.2 开放问题（这就是 paper 的故事点）</h3>
+
+<table>
+<tr><th>问题</th><th>已知 / 未知</th><th>elf-pro 角度</th></tr>
+<tr>
+  <td>双向 RoPE 外推</td>
+  <td>AR 场景有 NTK/YaRN/longrope 一堆方案；双向 attention 上没人系统验证过</td>
+  <td><strong>原创性贡献点</strong> — 至少做 NTK + position-interpolation 两版对比</td>
+</tr>
+<tr>
+  <td>v-target 数值稳定性</td>
+  <td><code>v = (x − z) / clamp(1−t, t_eps)</code>，长序列 t≈1 段累积误差未知</td>
+  <td>由 P4 (x-prediction 参数化) 直接绕开 — 这是 PPL 工作和 context 工作共享的基础设施</td>
+</tr>
+<tr>
+  <td>Self-cond 在长序列上是否还能学</td>
+  <td>未知；x_pred_prev 维度从 1K→4K，attention 注意力分布漂移</td>
+  <td>需要 ablation：sc_prob ∈ {0.0, 0.25, 0.5} × max_length ∈ {1K, 2K, 4K}</td>
+</tr>
+<tr>
+  <td>训练显存</td>
+  <td>1K bf16 ELF-L 单卡 batch=64 已经要 grad-checkpoint；4K 要 FSDP2</td>
+  <td>L5 FSDP2 是 prerequisite</td>
+</tr>
+</table>
+
+<h3>5.3 推荐打法</h3>
+
+<ol>
+  <li><strong>1K → 2K（短跑验证）</strong>：保持 ELF-B / OWT，仅改 max_length=2048，跑 1 epoch 看 loss 是否仍单调下降。这一步验证"flow matching 在 2K 不发散"。</li>
+  <li><strong>2K → 4K（with RoPE 外推 ablation）</strong>：对比 (a) 直接增大 pt_seq_len 重训 (b) NTK-aware 缩放 (c) position interpolation。</li>
+  <li><strong>(可选) 切换语料</strong>：OWT 平均 ~700 tokens，2K 已经接近其上限；要做 4K 实验最好换 FineWeb-Edu 或 Dolma。</li>
+</ol>
+
+<!-- ==================================================================== -->
+<h2 id="supp-ppl">六、支撑：PPL 性能提升</h2>
+
+<p>这一轴是 <strong>同参数同数据下卷指标</strong>，目的是给 Phase 2 NFE 蒸馏提供更强的 teacher。所有改动都在你确认过的"绿区"内（<code>train_step.py</code> + 周边）。</p>
+
+<table>
+<tr><th width="40">#</th><th>改动</th><th>成本</th><th>预期收益</th><th>双重作用</th></tr>
+
+<tr>
+<td><span class="issue-id">P7</span></td>
+<td><strong>双 EMA + post-hoc sweep</strong></td>
+<td><span class="tag tag-easy">极低</span></td>
+<td>+1-2 PPL（EDM2 经验）</td>
+<td>—</td>
+</tr>
+
+<tr>
+<td><span class="issue-id">P4</span></td>
+<td><strong>x-prediction 参数化</strong>（直接预测 x₀，把 t→1 边界数值问题挪走）</td>
+<td><span class="tag tag-med">中</span></td>
+<td>训练数值更稳；t≈1 段质量提升</td>
+<td><strong>同时是 context 扩展的前置基础设施</strong></td>
+</tr>
+
+<tr>
+<td><span class="issue-id">P5</span></td>
+<td><strong>SC-CFG sc_w 分布优化</strong>（log-uniform[0.5,5] → schedule-conditional 或固定 3）</td>
+<td><span class="tag tag-easy">极低</span></td>
+<td>不确定；ablation 必做</td>
+<td>—</td>
+</tr>
+
+<tr>
+<td><span class="issue-id">P6</span></td>
+<td><strong>decoder λ 分布 sweep</strong>（P_mean / P_std / decoder_noise_scale）</td>
+<td><span class="tag tag-easy">极低</span></td>
+<td>未知；ablation 必做</td>
+<td>—</td>
+</tr>
+
+<tr>
+<td>—</td>
+<td><strong>S1 SC-CFG forward 合 batch</strong>（uncond + cond → 单次 2B forward）</td>
+<td><span class="tag tag-med">中</span></td>
+<td>训练 step -25~35%，质量等价</td>
+<td>不影响指标，纯加速 — 让 ablation 矩阵跑得起</td>
+</tr>
+
+</table>
+
+<div class="callout red">
+<strong>注意：</strong> review doc 里的 <strong>P2 hybrid mask</strong>（denoiser 双向 / decoder causal）和 <strong>P3 bottleneck ablate</strong> 不在用户确认的"绿区"，需要单独再讨论是否纳入；它们要改 <code>model.py</code> 的 attention mask 和 <code>BottleneckTextProj</code>。
+</div>
+
+<!-- ==================================================================== -->
+<h2 id="roadmap">七、路线图（Phase 1/2/3）</h2>
+
+<h3>7.1 Phase 0 — baseline 复现（先决条件，并行处理中）</h3>
+
+<div class="phase-box supp">
+<ul>
+  <li>由另一个 agent 处理：修复 HOPE 8gpu 上 dataset/tokenizer 加载 crash（HF HEAD 请求超时）。</li>
+  <li>跑通 ELF-B / ELF-M / ELF-L 三档 OWT，对齐 Gen.PPL ≈ 24 / 22 / 23（ELF-L 退化是已知现象，别试图修，留作 paper 里 scaling 分析的对照）。</li>
+  <li>建立训练吞吐基线（tokens/sec/GPU）和采样 wall-clock 基线（per-batch / per-sample）。</li>
+</ul>
+</div>
+
+<h3>7.2 Phase 1 — PPL teacher + 训练加速（绿区）</h3>
+
+<div class="phase-box supp">
+<ol>
+  <li><strong>1a · S1 合 batch</strong>（<span class="tag tag-med">中</span>）：把 self-cond 的两次 no-grad uncond/cond forward 合成一次 2B forward。预期 -25~35% 训练时间，无指标变化。</li>
+  <li><strong>1b · P7 双 EMA</strong>（<span class="tag tag-easy">易</span>）：加 <code>ema_decay2 = 0.999</code>，eval 时 sweep 选最优。</li>
+  <li><strong>1c · P4 x-prediction parameterization</strong>（<span class="tag tag-med">中</span>）：改 <code>net_out_to_v_x</code> 输出语义和 loss 形式，绕过 t→1 边界数值不稳。这一步是 context 扩展的前置。</li>
+  <li><strong>1d · P5/P6 ablate</strong>（<span class="tag tag-easy">易</span>）：SC-CFG sc_w 分布、decoder λ 分布。给 paper ablation 表填行。</li>
+  <li><strong>目标：ELF-B Gen.PPL 24 → ≤21</strong>，作为 Phase 2 蒸馏的 teacher。</li>
+</ol>
+</div>
+
+<h3>7.3 Phase 2 — NFE 蒸馏（主菜）</h3>
+
+<div class="phase-box main">
+<ol>
+  <li><strong>2a · M1 高阶 solver</strong>（<span class="tag tag-easy">易</span>）：Heun / DPM-Solver-2 接上，看 32→16→8 步的 PPL 退化曲线。无训练，纯采样器升级。</li>
+  <li><strong>2b · M2 Consistency Distillation</strong>（<span class="tag tag-med">中</span>）：用 Phase 1 PPL=21 teacher 蒸馏出 8-step / 4-step student。<strong>这是 paper 的中坚 claim</strong>。</li>
+  <li><strong>2c · M4/M5 Shortcut / MeanFlow</strong>（<span class="tag tag-hard">难</span>，可选）：进一步推到 1-2 NFE。如果 2b 跑通且时间允许就上，作为 paper 的"top-shelf"对比。</li>
+  <li><strong>目标：Pareto curve</strong> — 横轴 NFE ∈ {1, 2, 4, 8, 16, 32}，纵轴 Gen.PPL，证明 elf-pro 在每个 NFE 都打过 ELF baseline。</li>
+</ol>
+</div>
+
+<h3>7.4 Phase 3 — Context 扩展（支撑）</h3>
+
+<div class="phase-box side">
+<ol>
+  <li><strong>3a · max_length 1K → 2K</strong>：ELF-B 短跑验证 flow matching 在 2K 上 loss 仍稳定。</li>
+  <li><strong>3b · L5 FSDP2 + activation checkpointing</strong>（前置）：4K 训练显存需要 ZeRO-3 级别。</li>
+  <li><strong>3c · max_length 2K → 4K + RoPE 外推 ablation</strong>：对比直接重训 / NTK-aware / position interpolation；这是 paper 第三块 claim 的内容。</li>
+  <li><strong>3d · 数据切换</strong>：必要时换 FineWeb-Edu / SlimPajama。</li>
+  <li><strong>目标：</strong>elf-pro 在 4K context + 8 NFE 仍能产生连贯文本，PPL 与 1K baseline 可比。</li>
+</ol>
+</div>
+
+<h3>7.5 时间表（粗估，32 GPU 周级实验）</h3>
+
+<table>
+<tr><th>阶段</th><th>主要实验</th><th>每实验 wall-clock</th><th>累计周期</th></tr>
+<tr><td>Phase 0</td><td>baseline ×3 (B/M/L)</td><td>~5h（ELF-B 8gpu）/ ~15h（ELF-L）</td><td>~3 天</td></tr>
+<tr><td>Phase 1</td><td>S1 + P7 + P4 + P5/P6 ablation ~6 个 ELF-B run</td><td>~5h each</td><td>~1.5-2 周</td></tr>
+<tr><td>Phase 2</td><td>M1 (无训练) + M2 (~3 个 student run) + M4/M5 (1-2 个) </td><td>~5-10h each</td><td>~2-3 周</td></tr>
+<tr><td>Phase 3</td><td>2K 短跑 + 4K 长跑 + RoPE ablation</td><td>~24h+ for 4K full</td><td>~3-4 周</td></tr>
+</table>
+
+<!-- ==================================================================== -->
+<h2 id="risks">八、风险与回避</h2>
+
+<table>
+<tr><th>风险</th><th>缓解</th></tr>
+<tr>
+  <td><strong>SC-CFG 蒸馏机制和 NFE 蒸馏在数学上可能冲突</strong>（两套 distillation 叠加）</td>
+  <td>Phase 2a M1 阶段先验证 ELF baseline 在高阶 solver 下行为正常；Phase 2b M2 student 可以选择关掉 SC-CFG 重训，作为对照</td>
+</tr>
+<tr>
+  <td><strong>Phase 1 PPL 没卷动</strong>（P4 x-pred / P7 双 EMA 没拿到预期收益）</td>
+  <td>不影响主线 — Phase 2 仍然可以用 ELF baseline (PPL=24) 作为 teacher，只是最终 Pareto curve 的绝对值会差一点。Phase 1 是放大器不是 enabler</td>
+</tr>
+<tr>
+  <td><strong>Phase 3 长 context 数值不稳</strong></td>
+  <td>P4 x-pred 是公共前置；如果 P4 单独在 1K 上验证失败，Phase 3 的风险等级上升一档，需要单独立项</td>
+</tr>
+<tr>
+  <td><strong>32+ GPU 资源被占用 / 实验卡住</strong></td>
+  <td>Phase 1 全部 ablation 在 ELF-B 上做，8gpu 单 run ~5h；Phase 2 / 3 才需要 32 GPU</td>
+</tr>
+<tr>
+  <td><strong>Hybrid mask / GQA / encoder 升级（绿区外）的需求出现</strong></td>
+  <td>不主动碰；如果 Phase 1 的 PPL 卷不动，再回头讨论是否打开 P2/P3</td>
+</tr>
+</table>
+
+<!-- ==================================================================== -->
+<h2 id="nfe-deep">九、NFE 加速方向细化 — ELF-only 的四个原创点</h2>
+
+<p>§四给的 M1-M5 是 diffusion 加速文献的通用 menu。本节把它们落到 ELF 上，<strong>给四条只有 ELF 这种"连续 latent denoiser + 离散 DLM head + 共享 trunk"架构才能写出来的方向</strong>。每条都给出训练目标、落点文件、最小可行实验。</p>
+
+<div class="callout">
+<strong>统一直觉：</strong> ELF 比 vision diffusion 多了一个东西 — <strong>DLM head</strong>。它在训练时被强制对噪声鲁棒（<code>decoder_noise_scale=5.0</code>），也是采样最后一公里的"离散化函数"。<strong>NFE 加速的所有突破点几乎都来自把 DLM head 当 first-class citizen 用</strong>，而不是当一个被动的尾巴。</p>
+</div>
+
+<h3>9.1 一个反直觉：MTP 直接套不上来，但 MTP 的精神可以</h3>
+
+<p>DeepSeek-V3 / Meta MTP 那种 "每步多预测 K 个未来 token" 的设定，前提是 <strong>AR 一次只产 1 个 token</strong>。ELF 一次 forward 已经预测了全部 1024 token（更准确说：1024 个连续 latent，再被 DLM 一次性 argmax）。<strong>token 维度上 ELF 已经是 extreme MTP，没有空间再多预测</strong>。</p>
+
+<p>但 MTP 的本质不是 token，是<strong>"用辅助预测做 representation 正则"</strong>。这点在 ELF 上的同构对应是"多 t 时刻预测"：</p>
+
+<table>
+<tr><th>MTP（AR LM）</th><th>ELF 上的同构对应</th></tr>
+<tr><td>当前位置预测下 K 个 token</td><td>当前 (z, t) 预测下 K 个 t 时刻的 x_pred — 即 lookahead head</td></tr>
+<tr><td>训练时加 K 个辅助 head</td><td>训练时加 K 个辅助 t-anchor 损失（共享 trunk）</td></tr>
+<tr><td>强迫 hidden 编码长程语义</td><td>强迫 trunk 编码长程<strong>轨迹</strong>信息</td></tr>
+<tr><td>推理可丢可保留辅助 head</td><td>推理时可走"跳 K 步"路径 → 直接降 NFE</td></tr>
+</table>
+
+<!-- ============================================================= -->
+<h3 id="dir-A">9.2 方向 A — DLM-as-Confidence：token-level 自适应 NFE</h3>
+
+<p><span class="tag tag-main">主菜</span> <span class="tag tag-easy">易</span> 不动权重 / 0 训练成本</p>
+
+<h4>动机</h4>
+<p>一段文本里，"the / a / and" 几步就能定下来；专有名词、复杂搭配需要多步。MaskGIT 在离散 diffusion 里干过这事，<strong>ELF 因为有 DLM head 可以无缝迁移</strong>。</p>
+
+<h4>算法</h4>
+<pre>
+每步 i ∈ [0, N) 结束:
+  z̃_i ← ODE/SDE step
+  logits_i = DLM_head(z̃_i)              # (B, S, V)
+  conf_i   = softmax(logits_i).max(-1)   # (B, S), per-token confidence
+  frozen_mask ←  (conf_i > τ_i) | frozen_mask  # 累积"已锁定"位置
+
+  # 把已锁定 token 的 latent 替换为 embedding table 中对应 token 的 clean latent
+  token_ids = argmax(logits_i)
+  z̃_i[frozen_mask] ← x_clean_lookup(token_ids)[frozen_mask]
+  # 后续步骤这些位置不再 diffusion（用 restore_cond 框架，复用 cond_seq_mask）
+
+  if frozen_mask.all(): break  # 全部锁定 → 提前退出
+</pre>
+
+<h4>实际效果预期</h4>
+<p>每步 frozen 比例随 t 增大而上升，越后期 active token 越少。<strong>平均 NFE = 32 步对应 cost 的 1/3 ~ 1/5</strong>，因为后半段稀疏化严重。</p>
+
+<h4>训练目标</h4>
+<p><strong>不需要重训</strong> — 这是纯采样器改造。可选改进：在训练时对"高 confidence 但仍在 noise 中的 token"加一个一致性辅助 loss，让 DLM 早期就敢做高置信预测。</p>
+
+<h4>落点</h4>
+<ul>
+  <li><code>src/utils/sampling_utils.py</code>：在 <code>_ode_step / _sde_step</code> 内部插入 confidence gate；token freezing 用 <code>restore_cond</code> 框架（已有）。</li>
+  <li><code>src/utils/generation_utils.py</code>：<code>_generate_samples_single_batch</code> 主循环加 frozen_mask 状态。</li>
+  <li><code>src/configs/sampling_configs/*.yml</code>：加 <code>adaptive_nfe: true</code>、<code>conf_threshold</code> 字段。</li>
+</ul>
+
+<h4>第一个实验</h4>
+<p>拿 ELF baseline (32-step SDE, PPL≈24)，加 confidence gate 但不重训，sweep τ ∈ {0.5, 0.7, 0.9, 0.95}。横轴平均 NFE，纵轴 Gen.PPL。<strong>预期：τ=0.9 时平均 NFE ≈ 8-12，PPL 退化 &lt; 1</strong>。</p>
+
+<h4>风险</h4>
+<ul>
+  <li><strong>GPU batch 利用率下降</strong>：不同 sample 在不同步频被 freeze → batch 内不齐。缓解：用 mask 而不是 dynamic shape，被 freeze 的位置只是不更新但仍参与 attention（计算量没省，但 z̃ 不漂移）。真"省算力"要做 dynamic batching，是工程问题。</li>
+  <li><strong>早期 freeze 错误传播</strong>：t≈0.3 时 confidence 高但其实 token 错。缓解：confidence threshold 随 t 单调（早期严，后期宽）。</li>
+</ul>
+
+<!-- ============================================================= -->
+<h3 id="dir-B">9.3 方向 B — Token-CE Distillation：直接监督 token，不监督 latent</h3>
+
+<p><span class="tag tag-main">主菜</span> <span class="tag tag-med">中</span> 这是 paper 最锋利的卖点</p>
+
+<h4>动机：现有 distillation 文献的盲点</h4>
+
+<p>Consistency Models / LCM / Shortcut 在 vision 上做 distillation 时，loss 永远是 <strong>latent 空间的 L2 / LPIPS</strong>：</p>
+<pre>
+loss_CD = ‖f_student(z, t) − stop_grad(f_teacher(z, t'))‖²
+</pre>
+
+<p>这在 vision 上没问题，因为最终输出就是连续像素。但在 ELF 上：<strong>latent 一致 ≠ DLM argmax 出的 token 一致</strong>，因为 DLM 是非线性的。两个 latent 的 L2 距离 ε 在 token 空间可能跨过 argmax 边界。</p>
+
+<div class="callout green">
+<strong>洞察：</strong> ELF 的最终目标是 token id，应该<strong>直接监督 token 一致性</strong>，而不是 latent 一致性。这是 ELF 这种带 DLM head 的架构能写出、vision diffusion 写不出的 distillation 目标。
+</div>
+
+<h4>训练目标</h4>
+<pre>
+# Student: 1-step 或 K-step 模型
+# Teacher: ELF baseline 32-step (frozen, EMA weights)
+
+with torch.no_grad():
+    z̃_teacher = teacher_sample(z₀, n_steps=32)         # (B, S, 512)
+    tokens_teacher = argmax(DLM_teacher(z̃_teacher))    # (B, S)
+    # 或者更严格：用 32-step 期间的 token sequence 作为多步监督
+
+z̃_student = student_sample(z₀, n_steps=K)             # K ∈ {1, 2, 4, 8}
+logits_student = DLM_student(z̃_student)               # (B, S, V)
+
+# Token-level CE loss — 端到端对齐
+loss_CE = F.cross_entropy(logits_student, tokens_teacher)
+
+# 可选：附加 latent L2 作为正则
+loss_L2 = ‖z̃_student − z̃_teacher‖² · λ
+
+loss = loss_CE + λ · loss_L2
+</pre>
+
+<p><strong>关键设计点</strong>：</p>
+<ul>
+  <li>Teacher 和 student 共享 DLM head（或者用同一份 frozen DLM），保证"token 标签"语义不漂移。</li>
+  <li>Teacher 用 EMA 权重 + 32 步 ODE/SDE 完整生成，student 用主权重 + K 步。</li>
+  <li>这个目标天然兼容 SC-CFG（因为 DLM 已经吃过 SC-CFG 蒸馏的 trunk 表征）。</li>
+</ul>
+
+<h4>为什么这是 ELF-only 的 contribution</h4>
+<table>
+<tr><th>架构</th><th>能否做 token-CE distillation</th></tr>
+<tr><td>vision diffusion</td><td>没意义（输出本来就是连续像素）</td></tr>
+<tr><td>SEDD / Score-Entropy 离散 diffusion</td><td>原生就是 token CE，但他们没有 latent；不存在"latent vs token"的二选一</td></tr>
+<tr><td>continuous latent diffusion + retrieval decode（早期 LM diffusion）</td><td>不可微的最近邻，无法做 CE 蒸馏</td></tr>
+<tr><td><strong>ELF (continuous latent + 学好的 DLM)</strong></td><td><strong>独此一家</strong>：DLM 提供可微 token 监督</td></tr>
+</table>
+
+<h4>落点</h4>
+<ul>
+  <li>新建 <code>src/distill_step.py</code>：仿照 <code>train_step.py</code> 但改为 student-teacher 设置；teacher 用 EMA weights frozen，不参与 backward。</li>
+  <li>新建 <code>src/configs/training_configs/distill_*.yml</code>：标 <code>teacher_checkpoint</code>、<code>student_n_steps</code>、<code>distill_loss_weights</code>。</li>
+  <li><code>train.py</code> 加 distill mode 入口（参考 <code>--mode distill</code>）。</li>
+</ul>
+
+<h4>第一个实验</h4>
+<p>ELF-B teacher (Phase 1 训出来的 PPL=21 模型) + ELF-B student (相同初始化)，K ∈ {1, 4, 8}，对比三个 loss：</p>
+<ol>
+  <li>Latent L2 only（vanilla CD baseline）</li>
+  <li>Token CE only</li>
+  <li>Token CE + λ·Latent L2</li>
+</ol>
+<p><strong>预期：方案 (3) 在 K=4 上 PPL 退化 &lt; 2，方案 (1) 退化 &gt; 5</strong>。这条对比就是 paper 的中心实验。</p>
+
+<h4>风险</h4>
+<ul>
+  <li><strong>Token CE 梯度比 latent L2 稀疏</strong>（argmax 边界附近的 latent 被推得很弱）。缓解：早期训练用 (3) 混合 loss，后期切纯 CE。</li>
+  <li><strong>DLM head 在 1-step 粗糙 latent 上可能本来就乱码</strong>。需要先做 §9.5 的"DLM 鲁棒性 probe"验证可行性。</li>
+</ul>
+
+<!-- ============================================================= -->
+<h3 id="dir-C">9.4 方向 C — Lookahead-MTP / Step-Conditional Shortcut Head</h3>
+
+<p><span class="tag tag-main">主菜</span> <span class="tag tag-med">中</span> 推 1-step 的最有希望路径</p>
+
+<h4>动机</h4>
+<p>把 §9.1 表格落地：让模型一次 forward 就能预测"跨 d 步"的 z 变化，而不是只预测 instantaneous v。这是 Shortcut Models (Frans 2024) 的核心，但 <strong>在 LM diffusion 上还没人做过</strong>。</p>
+
+<h4>训练目标 — Step-conditional flow map</h4>
+
+<p>把模型的输入从 <code>(z, t)</code> 改成 <code>(z, t, d)</code>，其中 d ∈ {1, 2, 4, ..., N} 是 stride。模型学习 <strong>d 步以后的状态</strong>：</p>
+
+<pre>
+# 原始 ELF：单步速度场
+v_pred = model(z_t, t)
+# z_{t+h} = z_t + h · v_pred  对小 h 准确
+
+# Shortcut-ELF：直接预测 d 步以后的 x
+x_pred_d = model(z_t, t, d)              # 直接学 d 步终态
+target_d = z_{t + d·h}                   # 32-step teacher 跑到 t+d·h 的状态
+
+loss_main = ‖model(z_t, t, d=1)·1 − v_target‖²    # 保留原 flow matching loss (d=1)
+loss_shortcut = Σ_d ‖model(z_t, t, d) − x_pred_d_teacher‖²  # 多 stride 蒸馏
+
+# 推理时：选 d=N 直接 1-step 完成
+</pre>
+
+<h4>关键工程点：d 怎么进模型？</h4>
+
+<p><strong>ELF 已有现成框架</strong> — <code>num_time_tokens=4</code> 的 prefix-token 机制（<code>model.py:97-105</code>）让"t 作为 condition"成本是 4 个 prefix token。<strong>加 d 只需要新增 4 个 stride-token，几乎零改动</strong>：</p>
+
+<pre>
+class ELF(nn.Module):
+    def __init__(..., num_stride_tokens=4):  # 新增
+        ...
+        self.stride_embedder = TimestepEmbedder(hidden_size)  # 复用 t 的 sinusoidal embed
+        self.stride_tokens = nn.Parameter(torch.empty(1, num_stride_tokens, hidden_size))
+
+    def forward(..., d=None):
+        ...
+        if d is not None:
+            stride_emb = self.stride_embedder(d)  # (B, hidden)
+            prefix.append(self.stride_tokens.expand(B, -1, -1) + stride_emb.unsqueeze(1))
+</pre>
+
+<h4>训练 schedule</h4>
+<ol>
+  <li><strong>Phase 1</strong>: 正常训 d=1（即 ELF baseline 训练）。</li>
+  <li><strong>Phase 2</strong>: 引入 self-distillation —— student 对每个 (z, t)，从已有权重生成 d ∈ {2, 4, 8, 16, 32} 的多步 teacher trace（<code>no_grad</code>），然后训 model(z, t, d) 学这些 trace。</li>
+  <li>这是<strong>同一个模型自己当自己的 teacher</strong>，类似 Shortcut Models 的 self-consistency。</li>
+</ol>
+
+<h4>与方向 B 的组合</h4>
+<p><strong>Token-CE distillation + Stride-conditional 联合：</strong></p>
+<pre>
+loss = F.cross_entropy(DLM(model(z, t=0, d=N)), tokens_teacher)
+       + λ · ‖model(z, t, d=1) − v_target‖²    # 保 baseline 行为
+       + μ · Σ_d ‖model(z, t, d) − x_d_teacher‖²
+</pre>
+<p>训练完一个模型，<strong>推理时根据延迟预算选 d</strong>：低延迟选 d=N (1-step)，高质量选 d=1 (32-step)。这是 paper "Pareto curve" 的来源。</p>
+
+<h4>落点</h4>
+<ul>
+  <li><code>src/modules/model.py</code>：<code>ELF.__init__</code> 加 stride_embedder + stride_tokens；<code>forward</code> 加 d 参数。</li>
+  <li><code>src/train_step.py</code>：训练 step 加 stride sampling（log-uniform d ∈ [1, N]）。</li>
+  <li><code>src/utils/sampling_utils.py</code>：采样选 d=N 的快速路径。</li>
+</ul>
+
+<h4>第一个实验</h4>
+<p>ELF-B 上从头训一个 stride-conditional 版本（5 epoch baseline），然后 1-step 生成 vs 32-step 生成对比。<strong>预期：1-step PPL 比 32-step 退化 5-10 个点</strong>，但这就是 paper 卖点的起点 —— 进一步用方向 B 的 token-CE 把退化压回去。</p>
+
+<!-- ============================================================= -->
+<h3 id="dir-D">9.5 方向 D — DLM 鲁棒性 Probe + 双 head 轨迹一致性</h3>
+
+<p><span class="tag tag-supp">支撑</span> <span class="tag tag-easy">易</span> 是上面三个方向的可行性前置</p>
+
+<h4>9.5.1 DLM 鲁棒性 probe（先做，~1 天）</h4>
+
+<p>方向 B/C 都隐含一个假设：<strong>DLM head 在远离 clean latent 的 z 上仍能给出有信号的 logits</strong>。这要先 probe 一下：</p>
+
+<pre>
+for σ in [0.1, 0.5, 1.0, 2.0, 5.0]:
+    z_noisy = x₀ + σ · noise
+    tokens_pred = argmax(DLM(z_noisy))
+    accuracy = (tokens_pred == input_ids).mean()
+    print(f"σ={σ}: token accuracy = {accuracy}")
+</pre>
+
+<p><strong>预期</strong>（基于 <code>decoder_noise_scale=5.0</code> 训练）：</p>
+<ul>
+  <li>σ=0.5：accuracy &gt; 95%（这是 ELF 训练 well within distribution）</li>
+  <li>σ=1.0：accuracy 70-90%（可用于 4-step distillation）</li>
+  <li>σ=2.0+：accuracy 退化但仍 &gt;&gt; 1/V（说明 DLM 学到了 robust 表征）</li>
+</ul>
+
+<p>如果 σ=1.0 accuracy &lt; 50%，说明方向 B 的 1-step distillation 有架构上的天花板，需要先 finetune DLM head 加噪。这就是 <strong>"warm-up DLM" 子任务</strong>：</p>
+
+<pre>
+# 用 ELF baseline trunk 冻死，单独 finetune DLM head 在更宽的噪声分布上
+# 训练 1 个 epoch 即可，让 DLM 在 σ ∈ [0, 5] 上都鲁棒
+</pre>
+
+<h4>9.5.2 双 head 轨迹一致性 loss</h4>
+
+<p>训练 distillation 时除了"终点 token 一致"（方向 B），还可以加<strong>"沿途每个 t 切片 DLM argmax 都一致"</strong>：</p>
+
+<pre>
+for t_anchor in [0.2, 0.5, 0.8]:
+    z̃_t_teacher = teacher_step(z₀, target_t=t_anchor)   # teacher 的轨迹中点
+    z̃_t_student = student_step(z₀, target_t=t_anchor, d=t_anchor/h)
+
+    # 沿途 DLM argmax 一致性
+    loss_traj += F.cross_entropy(
+        DLM(z̃_t_student),
+        argmax(DLM(z̃_t_teacher)).detach()
+    )
+</pre>
+
+<p>这等于把 DLM 当 <strong>trajectory critic</strong>，给整条 ODE 轨迹打 token 级监督。<strong>"沿途 token 一致性"在现有 CD/LCM 文献里没人做过</strong>，因为 vision 没有这种"中间状态也可解码"的天然 critic。</p>
+
+<h4>落点</h4>
+<ul>
+  <li>9.5.1：写一个 standalone <code>scripts/probe_dlm_robustness.py</code>，独立运行，输出 σ-accuracy 曲线。</li>
+  <li>9.5.2：在 <code>distill_step.py</code> 里加 trajectory anchor loss，t_anchors 随机采样几个。</li>
+</ul>
+
+<!-- ============================================================= -->
+<h3 id="dir-roadmap">9.6 整合：四个方向怎么排序进 Phase 2</h3>
+
+<svg class="pipe-svg" viewBox="0 0 1000 280" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system" font-size="13">
+  <defs>
+    <marker id="arrR" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#b85c00"/>
+    </marker>
+  </defs>
+
+  <!-- timeline header -->
+  <text x="500" y="20" text-anchor="middle" font-weight="600" font-size="14">Phase 2 内部：四方向时间轴</text>
+
+  <!-- D first (probe) -->
+  <rect x="40"  y="50" width="180" height="60" rx="6" fill="#d4e0e9" stroke="#1f5a8a"/>
+  <text x="130" y="74" text-anchor="middle" font-weight="600" fill="#1f4a6a">方向 D 9.5.1</text>
+  <text x="130" y="92" text-anchor="middle" font-size="11" fill="#1f4a6a">DLM 鲁棒性 probe</text>
+  <text x="130" y="106" text-anchor="middle" font-size="10" fill="#666">~1 天，无训练</text>
+
+  <!-- A free lunch -->
+  <rect x="260" y="50" width="180" height="60" rx="6" fill="#fff4e0" stroke="#b85c00"/>
+  <text x="350" y="74" text-anchor="middle" font-weight="600" fill="#7a3f08">方向 A</text>
+  <text x="350" y="92" text-anchor="middle" font-size="11" fill="#7a3f08">DLM-as-confidence</text>
+  <text x="350" y="106" text-anchor="middle" font-size="10" fill="#666">~3 天，无训练</text>
+
+  <!-- B core -->
+  <rect x="480" y="50" width="220" height="60" rx="6" fill="#fff4e0" stroke="#b85c00" stroke-width="2"/>
+  <text x="590" y="74" text-anchor="middle" font-weight="600" fill="#7a3f08">方向 B（中坚 paper claim）</text>
+  <text x="590" y="92" text-anchor="middle" font-size="11" fill="#7a3f08">Token-CE Distillation</text>
+  <text x="590" y="106" text-anchor="middle" font-size="10" fill="#666">~1 周，1 个 student run</text>
+
+  <!-- C upgrade -->
+  <rect x="740" y="50" width="220" height="60" rx="6" fill="#fff4e0" stroke="#b85c00" stroke-width="2"/>
+  <text x="850" y="74" text-anchor="middle" font-weight="600" fill="#7a3f08">方向 C（top claim）</text>
+  <text x="850" y="92" text-anchor="middle" font-size="11" fill="#7a3f08">Stride-cond Shortcut</text>
+  <text x="850" y="106" text-anchor="middle" font-size="10" fill="#666">~2 周，stride-aware 重训</text>
+
+  <!-- arrows -->
+  <line x1="220" y1="80" x2="258" y2="80" stroke="#b85c00" stroke-width="1.6" marker-end="url(#arrR)"/>
+  <line x1="440" y1="80" x2="478" y2="80" stroke="#b85c00" stroke-width="1.6" marker-end="url(#arrR)"/>
+  <line x1="700" y1="80" x2="738" y2="80" stroke="#b85c00" stroke-width="1.6" marker-end="url(#arrR)"/>
+
+  <!-- bottom text -->
+  <text x="500" y="160" text-anchor="middle" font-size="13" fill="#5a4520">D 验证可行性 → A 拿免费午餐 (avg NFE ~10) → B 拿 paper 中坚 (NFE 4-8 同质量) → C 推 1-step (paper top)</text>
+  <text x="500" y="185" text-anchor="middle" font-size="13" fill="#5a4520">D 9.5.2 (轨迹一致性) 作为 B/C 的 loss 增强，整合进各自训练目标</text>
+
+  <!-- combination box -->
+  <rect x="200" y="215" width="600" height="50" rx="6" fill="#ecf5e8" stroke="#2e6e2e"/>
+  <text x="500" y="237" text-anchor="middle" font-weight="600" fill="#3a5a20">最终组合：A (token-adaptive freezing) + C (1-step model)</text>
+  <text x="500" y="254" text-anchor="middle" font-size="12" fill="#3a5a20">→ 平均 NFE ~ 1-3，paper 头条数据</text>
+</svg>
+
+<h3>9.7 Paper 故事的可写性自查</h3>
+
+<table>
+<tr><th>故事元素</th><th>来自哪个方向</th><th>是否 ELF-only</th></tr>
+<tr><td>"现有 distillation 在 LM 上有结构性盲点"（latent 一致 ≠ token 一致）</td><td>方向 B 的 motivation</td><td>✅</td></tr>
+<tr><td>"DLM head 提供原生离散监督信号"</td><td>方向 B 的 contribution</td><td>✅</td></tr>
+<tr><td>"sequence-level adaptive compute"</td><td>方向 A</td><td>✅（配合 DLM）</td></tr>
+<tr><td>"first systematic study of flow-map distillation in language modeling"</td><td>方向 C</td><td>✅</td></tr>
+<tr><td>"trajectory-consistency loss using DLM as critic"</td><td>方向 D 9.5.2</td><td>✅</td></tr>
+<tr><td>具体数字：NFE-1 PPL ≤ ELF baseline NFE-32</td><td>A + B + C 联合</td><td>—</td></tr>
+</table>
+
+<div class="callout green">
+<strong>整体结论：</strong> 把 §九的四个方向作为 elf-pro paper 的 §3-§4 主体内容（Phase 2 的具体实现），ELF-only 的 contribution 数量是 5 个，paper 的"newness"密度足够支撑顶会。建议 paper 提纲围绕 "<strong>token-aware accelerated flow matching for language</strong>" 来组织 — 这个 framing 把四个方向收敛成一条故事线。
+</div>
+
+<hr>
+
+<p style="color: var(--muted); font-size: 12px;">
+本文与 <code>elf_code_review.html</code> 对照阅读：后者是改进点全集（P/S/L issue list 和原始改进建议），本文是基于用户决策（paper 主菜 = NFE↓、绿区 = train_step、算力 = 32+ GPU）做的取舍与排序。下一步：等 Phase 0 baseline 复现完成（dataset crash 修复中），即开始 §九方向 D 9.5.1（DLM 鲁棒性 probe，~1 天）作为后续 §九方向 A/B/C 的可行性验证。
+</p>
+
+</div>
+</body>
+</html>
