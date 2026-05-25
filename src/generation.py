@@ -117,16 +117,16 @@ def test_generation_uncond(
     steps_list = sampling_config.num_sampling_steps
     self_cond_cfg_scales_list = sampling_config.self_cond_cfg_scales
     wandb_tables = {}
+    world = _world()
+    rank = _rank()
     ppl_metrics = None
-    if config.online_eval:
+    if config.online_eval and rank == 0:
         ppl_metrics = PPLMetrics(
             gen_ppl_eval_model_name_or_path=config.eval_ppl_model,
             eval_ppl_batch_size=config.eval_ppl_batch_size,
             eval_context_size=config.eval_ppl_max_length,
         )
 
-    world = _world()
-    rank = _rank()
     param_dtype = next(model.parameters()).dtype
 
     for num_sampling_steps, cfg_scale, self_cond_cfg_scale in itertools.product(
@@ -224,7 +224,7 @@ def test_generation_uncond(
             upload_output_dir_to_hf(config.output_dir, config.hf_repo_id, reason="generation")
 
         ppl_results = None
-        if config.online_eval and _rank() == 0:
+        if config.online_eval and rank == 0:
             log_for_0("\n" + "=" * 70)
             log_for_0("              PPL EVALUATION")
             log_for_0("=" * 70)
@@ -247,7 +247,7 @@ def test_generation_uncond(
                 log_for_0(f"Mean Entropy: {ppl_results['mean_entropy']:.4f}")
             log_for_0("=" * 70 + "\n")
 
-        if _rank() == 0:
+        if rank == 0:
             if ppl_results is not None:
                 metrics_line = {
                     "epoch": epoch_val, "step": step_val,
@@ -268,7 +268,10 @@ def test_generation_uncond(
                         f"generation/{name}/mean_entropy": ppl_results["mean_entropy"],
                     })
 
-    if _rank() == 0 and config.use_wandb and wandb_tables and wandb is not None:
+        if world > 1:
+            dist.barrier()
+
+    if rank == 0 and config.use_wandb and wandb_tables and wandb is not None:
         try:
             wandb.log(wandb_tables)
         except Exception as e:

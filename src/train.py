@@ -459,7 +459,13 @@ def run_training(config, *, force_cpu: bool = False):
             if 0 < config.save_freq < 1:
                 progress = epoch + (global_step - epoch * steps_per_epoch) / steps_per_epoch
                 if progress - last_save_epoch >= config.save_freq:
-                    save_checkpoint(state, config.output_dir, global_step, hf_repo_id=config.hf_repo_id)
+                    save_checkpoint(
+                        state,
+                        config.output_dir,
+                        global_step,
+                        hf_repo_id=config.hf_repo_id,
+                        max_checkpoints_to_keep=getattr(config, "max_checkpoints_to_keep", None),
+                    )
                     log_for_0(f"Saved checkpoint at epoch {progress:.2f} (step {global_step})")
                     last_save_epoch = progress
 
@@ -468,7 +474,13 @@ def run_training(config, *, force_cpu: bool = False):
         state.epoch = current_epoch
 
         if config.save_freq >= 1 and current_epoch % config.save_freq == 0:
-            save_checkpoint(state, config.output_dir, global_step, hf_repo_id=config.hf_repo_id)
+            save_checkpoint(
+                state,
+                config.output_dir,
+                global_step,
+                hf_repo_id=config.hf_repo_id,
+                max_checkpoints_to_keep=getattr(config, "max_checkpoints_to_keep", None),
+            )
             log_for_0(f"Saved checkpoint at epoch {current_epoch} (step {global_step})")
 
         if config.eval_freq >= 1 and current_epoch % config.eval_freq == 0:
@@ -483,7 +495,13 @@ def run_training(config, *, force_cpu: bool = False):
     log_for_0("\n" + "=" * 60)
     log_for_0("Final Generation")
     log_for_0("=" * 60)
-    save_checkpoint(state, config.output_dir, global_step, hf_repo_id=config.hf_repo_id)
+    save_checkpoint(
+        state,
+        config.output_dir,
+        global_step,
+        hf_repo_id=config.hf_repo_id,
+        max_checkpoints_to_keep=getattr(config, "max_checkpoints_to_keep", None),
+    )
     log_for_0(f"Final checkpoint saved to {config.output_dir}")
     if config.use_wandb and rank == 0 and wandb is not None:
         wandb.finish()

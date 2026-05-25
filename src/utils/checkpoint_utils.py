@@ -46,7 +46,13 @@ def _split_hf_path(path: str, min_parts: int) -> Optional[Tuple[str, str]]:
     return "/".join(parts[:2]), "/".join(parts[2:])
 
 
-def save_checkpoint(state, output_dir: str, step: int, hf_repo_id: str = None):
+def save_checkpoint(
+    state,
+    output_dir: str,
+    step: int,
+    hf_repo_id: str = None,
+    max_checkpoints_to_keep: int = None,
+):
     """Save model checkpoint locally as a single `checkpoint_<step>` file."""
     if _process_index() != 0:
         return
@@ -74,6 +80,14 @@ def save_checkpoint(state, output_dir: str, step: int, hf_repo_id: str = None):
     log_for_0(f"Saving checkpoint to {out_path}")
     torch.save(payload, out_path)
     log_for_0(f"Checkpoint written to {out_path}")
+    if max_checkpoints_to_keep is not None and max_checkpoints_to_keep > 0:
+        all_ckpts = find_all_checkpoints(ckpt_dir)
+        for old_ckpt in all_ckpts[:-max_checkpoints_to_keep]:
+            try:
+                os.remove(old_ckpt)
+                log_for_0(f"Removed old checkpoint {old_ckpt}")
+            except OSError as e:
+                log_for_0(f"Failed to remove old checkpoint {old_ckpt}: {e}", level=logging.WARNING)
     upload_output_dir_to_hf(output_dir, hf_repo_id, reason="checkpoint")
 
 

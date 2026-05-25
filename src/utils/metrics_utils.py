@@ -1,4 +1,5 @@
 import math
+import os
 import statistics
 from typing import Dict, List, Union
 
@@ -111,11 +112,29 @@ class Metrics:
         self.eval_context_size = eval_context_size
         self._eval_model = None
         self._eval_device = None
+        self.local_files_only = os.path.isdir(gen_ppl_eval_model_name_or_path)
+        if self.local_files_only:
+            has_weight = any(
+                os.path.exists(os.path.join(gen_ppl_eval_model_name_or_path, filename))
+                for filename in ("model.safetensors", "pytorch_model.bin")
+            )
+            if not has_weight:
+                raise FileNotFoundError(
+                    f"PPL eval model is missing weights: {gen_ppl_eval_model_name_or_path}"
+                )
+            log_for_0(f"Using local PPL eval model: {gen_ppl_eval_model_name_or_path}")
+        else:
+            log_for_0(
+                f"Warning: PPL eval model is not a local directory: "
+                f"{gen_ppl_eval_model_name_or_path}"
+            )
 
         # mT5 needs use_fast=False to avoid Tiktoken/SentencePiece conversion issues.
         use_fast = "mt5" not in gen_ppl_eval_model_name_or_path.lower()
         self.tokenizer = transformers.AutoTokenizer.from_pretrained(
-            gen_ppl_eval_model_name_or_path, use_fast=use_fast,
+            gen_ppl_eval_model_name_or_path,
+            use_fast=use_fast,
+            local_files_only=self.local_files_only,
         )
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
@@ -169,6 +188,7 @@ class Metrics:
             self._eval_model = AutoModelForCausalLM.from_pretrained(
                 self.gen_ppl_eval_model_name_or_path,
                 torch_dtype=torch.bfloat16,
+                local_files_only=self.local_files_only,
             ).to(self._eval_device).eval()
             log_for_0("PPL model cached for reuse")
 

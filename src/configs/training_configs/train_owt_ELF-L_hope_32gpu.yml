@@ -65,9 +65,17 @@ ema_decay1: 0.9999
 sampling_configs_path: "src/configs/sampling_configs/uncond_sampling_configs.yml"
 num_samples: 1000
 
+# Online PPL evaluation. Keep this local on HOPE workers; they do not have
+# reliable direct access to Hugging Face at epoch-end generation time.
+online_eval: true
+eval_ppl_model: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/native_mm/luoyaxin03/projects/elf-pro/models/gpt2-large"
+eval_ppl_batch_size: 16
+eval_ppl_max_length: 1024
+
 # Logging & Checkpointing
 log_freq: 100
-save_freq: 1
+save_freq: 0.2  # checkpoint 5 times per epoch
+max_checkpoints_to_keep: 3
 eval_freq: 1
 
 # Output (dolphinfs mirror so checkpoints survive container exit)

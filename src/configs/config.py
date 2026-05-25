@@ -110,6 +110,7 @@ class Config:
     log_freq: int = 100
     eval_freq: int = 10
     save_freq: float = 100  # Can be fractional (e.g., 0.1 for saving every 0.1 epoch)
+    max_checkpoints_to_keep: int = 3  # Keep only the latest N local checkpoints; <=0 keeps all.
 
     # Output
     output_dir: str = "./output_dir"
