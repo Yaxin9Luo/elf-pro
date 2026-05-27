@@ -8,28 +8,54 @@ import sys
 import time
 from datetime import timedelta
 
-if "WORLD_SIZE" in os.environ:
-    print(
-        "train_import_begin "
-        f"rank_env={os.environ.get('RANK')} "
-        f"local_rank={os.environ.get('LOCAL_RANK')} "
-        f"world_size={os.environ.get('WORLD_SIZE')}",
-        flush=True,
-    )
+def _log_import_stage(stage: str):
+    if "WORLD_SIZE" in os.environ:
+        print(
+            f"train_import_stage={stage} "
+            f"rank_env={os.environ.get('RANK')} "
+            f"local_rank={os.environ.get('LOCAL_RANK')} "
+            f"world_size={os.environ.get('WORLD_SIZE')}",
+            flush=True,
+        )
 
+
+if "WORLD_SIZE" in os.environ:
+    _log_import_stage("begin")
+    try:
+        stagger = float(os.environ.get("ELF_IMPORT_STAGGER_SEC", "0"))
+        delay = max(0.0, int(os.environ.get("RANK", "0")) * stagger)
+    except Exception:
+        delay = 0.0
+    if delay:
+        print(
+            f"train_import_stagger_sleep seconds={delay:.2f} "
+            f"rank_env={os.environ.get('RANK')}",
+            flush=True,
+        )
+        time.sleep(delay)
+
+_log_import_stage("yaml_begin")
 import yaml
+_log_import_stage("yaml_done")
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
+_log_import_stage("numpy_begin")
 import numpy as np
+_log_import_stage("numpy_done")
+_log_import_stage("torch_begin")
 import torch
+_log_import_stage("torch_done")
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 from tqdm import tqdm
+_log_import_stage("transformers_begin")
 from transformers import AutoTokenizer
+_log_import_stage("transformers_done")
 
+_log_import_stage("local_imports_begin")
 from modules.t5_encoder import get_encoder
 from utils.logging_utils import log_for_0
 from utils.hope_tracking_utils import HopeMetricHook
@@ -45,6 +71,7 @@ from configs.config import load_config_from_yaml, apply_config_overrides, load_s
 from modules.model import ELF_models
 from utils.data_utils import get_dataloader, prepare_batch, load_dataset, get_pad_token_id
 from train_step import train_step
+_log_import_stage("local_imports_done")
 
 try:
     import wandb
