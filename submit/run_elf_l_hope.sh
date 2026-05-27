@@ -20,6 +20,8 @@ export TORCH_NCCL_ASYNC_ERROR_HANDLING=1
 export NCCL_ASYNC_ERROR_HANDLING=1
 export TORCH_NCCL_ENABLE_MONITORING=1
 export TORCH_NCCL_HEARTBEAT_TIMEOUT_SEC=600
+export TORCH_DISTRIBUTED_DEBUG=DETAIL
+export TORCH_DIST_INIT_TIMEOUT_MIN=10
 export NCCL_DEBUG=WARN
 
 OUTPUT_DIR="$(python3 - "${CONFIG_PATH}" <<'PY'
@@ -56,4 +58,6 @@ if [ ! -f "${PROJECT_DIR}/submit/vendor/muon.py" ]; then
 fi
 
 echo "===== torchrun start $(date '+%F %T') ====="
-eval "HOPE_TRACKING_RANK=0 python3 -m torch.distributed.run $(python3 submit/hope_run_torch_distribute.py) src/train.py --config ${CONFIG_PATH}"
+TORCHRUN_FLAGS="$(python3 submit/hope_run_torch_distribute.py)"
+echo "torchrun_flags=${TORCHRUN_FLAGS}"
+HOPE_TRACKING_RANK=0 python3 -m torch.distributed.run ${TORCHRUN_FLAGS} src/train.py --config "${CONFIG_PATH}"

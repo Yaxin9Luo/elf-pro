@@ -79,7 +79,7 @@ eval_ppl_max_length: 1024
 
 # Logging & Checkpointing
 log_freq: 100
-save_freq: 0.2  # checkpoint 5 times per epoch
+save_freq: 0.05  # checkpoint 20 times per epoch
 max_checkpoints_to_keep: 3
 eval_freq: 1
 

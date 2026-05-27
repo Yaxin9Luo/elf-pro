@@ -74,14 +74,14 @@ eval_ppl_max_length: 1024
 
 # Logging & Checkpointing
 log_freq: 100
-save_freq: 0.2  # checkpoint 5 times per epoch
+save_freq: 0.05  # checkpoint 20 times per epoch
 max_checkpoints_to_keep: 3
 eval_freq: 1
 
 # Output (dolphinfs mirror so checkpoints survive container exit)
 output_dir: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/outputs/elf_l-owt-hope-32gpu"
 hf_repo_id: null
-resume: null
+resume: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/outputs/elf_l-owt-hope-8gpu/checkpoint_32352"
 
 # Wandb
 use_wandb: false   # HOPE platform provides its own viz; keep wandb off

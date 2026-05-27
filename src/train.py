@@ -6,6 +6,16 @@ import logging
 import os
 import sys
 import time
+from datetime import timedelta
+
+if "WORLD_SIZE" in os.environ:
+    print(
+        "train_import_begin "
+        f"rank_env={os.environ.get('RANK')} "
+        f"local_rank={os.environ.get('LOCAL_RANK')} "
+        f"world_size={os.environ.get('WORLD_SIZE')}",
+        flush=True,
+    )
 
 import yaml
 
@@ -50,16 +60,42 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 sys.stdout.reconfigure(line_buffering=True)
 
+if "WORLD_SIZE" in os.environ:
+    print(
+        "train_import_done "
+        f"rank_env={os.environ.get('RANK')} "
+        f"local_rank={os.environ.get('LOCAL_RANK')} "
+        f"world_size={os.environ.get('WORLD_SIZE')}",
+        flush=True,
+    )
+
 
 def _init_distributed():
     """Initialize torch.distributed if launched via torchrun."""
     if "WORLD_SIZE" in os.environ and not dist.is_initialized():
         local_rank = int(os.environ.get("LOCAL_RANK", 0))
+        timeout_min = int(os.environ.get("TORCH_DIST_INIT_TIMEOUT_MIN", "10"))
+        logger.info(
+            "Distributed init begin: rank_env=%s local_rank=%s world_size_env=%s master=%s:%s timeout=%sm",
+            os.environ.get("RANK"),
+            local_rank,
+            os.environ.get("WORLD_SIZE"),
+            os.environ.get("MASTER_ADDR"),
+            os.environ.get("MASTER_PORT"),
+            timeout_min,
+        )
+        timeout = timedelta(minutes=timeout_min)
         if torch.cuda.is_available():
             torch.cuda.set_device(local_rank)
-            dist.init_process_group(backend="nccl")
+            dist.init_process_group(backend="nccl", timeout=timeout)
         else:
-            dist.init_process_group(backend="gloo")
+            dist.init_process_group(backend="gloo", timeout=timeout)
+        logger.info(
+            "Distributed init done: rank=%s local_rank=%s world_size=%s",
+            dist.get_rank(),
+            local_rank,
+            dist.get_world_size(),
+        )
 
 
 def _rank() -> int:
