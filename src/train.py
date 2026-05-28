@@ -57,10 +57,11 @@ _log_import_stage("transformers_done")
 
 _log_import_stage("local_imports_begin")
 from modules.t5_encoder import get_encoder
+from modules.vision_encoder import get_vision_encoder
 from utils.logging_utils import log_for_0
 from utils.hope_tracking_utils import HopeMetricHook
 from utils.checkpoint_utils import (
-    save_checkpoint, load_checkpoint, find_latest_checkpoint,
+    save_checkpoint, load_checkpoint, find_latest_checkpoint, load_model_weights,
 )
 from utils.train_utils import (
     TrainState, prefetch_to_device, get_optimizer, create_learning_rate_fn,
@@ -69,7 +70,10 @@ from utils.train_utils import (
 from generation import run_generation
 from configs.config import load_config_from_yaml, apply_config_overrides, load_sampling_configs, SamplingConfig
 from modules.model import ELF_models
-from utils.data_utils import get_dataloader, prepare_batch, load_dataset, get_pad_token_id
+from utils.data_utils import (
+    get_dataloader, prepare_batch, load_dataset, get_pad_token_id,
+    is_image_text_config,
+)
 from train_step import train_step
 _log_import_stage("local_imports_done")
 
@@ -133,6 +137,27 @@ def _world_size() -> int:
     return dist.get_world_size() if dist.is_initialized() else 1
 
 
+def _configure_trainable_params(model, config):
+    if not is_image_text_config(config):
+        return
+    if getattr(model, "vision_projector", None) is None:
+        raise ValueError("image_text training requires an ELF vision_projector")
+
+    stage = getattr(config, "train_stage", "mm_instruct")
+    if stage == "vision_warmup":
+        for p in model.parameters():
+            p.requires_grad_(False)
+        for p in model.vision_projector.parameters():
+            p.requires_grad_(True)
+        log_for_0("Trainable params: vision projector only")
+    elif stage == "mm_instruct":
+        for p in model.parameters():
+            p.requires_grad_(True)
+        log_for_0("Trainable params: ELF + vision projector")
+    else:
+        raise ValueError("image_text train_stage must be 'vision_warmup' or 'mm_instruct'")
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Train ELF Diffusion Model (PyTorch).")
     parser.add_argument("--config", type=str, default=None,
@@ -156,6 +181,7 @@ def run_training(config, *, force_cpu: bool = False):
     log_for_0("ELF Diffusion Model Training (PyTorch)")
     log_for_0("=" * 60)
     log_for_0(f"Model: {config.model}")
+    log_for_0(f"Data modality: {getattr(config, 'data_modality', 'text')}")
     log_for_0(f"Encoder Model: {config.encoder_model_name}")
     log_for_0(f"Encoder Checkpoint: {config.encoder_checkpoint}")
     log_for_0(f"Data: {config.data_path}")
@@ -212,6 +238,22 @@ def run_training(config, *, force_cpu: bool = False):
         p.requires_grad_(False)
     log_for_0(f"Encoder d_model: {encoder_config.d_model}")
 
+    vision_processor, vision_encoder, vision_hidden_size = None, None, None
+    if is_image_text_config(config):
+        if not getattr(config, "freeze_vision_encoder", True):
+            raise ValueError("Trainable vision encoders are not supported in this baseline")
+        vision_processor, vision_encoder = get_vision_encoder(
+            config.vision_encoder_model_name, torch.float32,
+        )
+        vision_hidden_size = vision_encoder.hidden_size
+        vision_encoder = vision_encoder.to(device).eval()
+        for p in vision_encoder.parameters():
+            p.requires_grad_(False)
+        log_for_0(
+            f"Vision encoder hidden={vision_hidden_size}, "
+            f"visual tokens={config.num_visual_tokens}"
+        )
+
     log_for_0(f"Creating {config.model} model...")
     # Use the full tokenizer length for CE heads; tokenizer.vocab_size can exclude
     # added special tokens that still appear in tokenized Qwen targets.
@@ -229,7 +271,20 @@ def run_training(config, *, force_cpu: bool = False):
         num_model_mode_tokens=config.num_model_mode_tokens,
         bottleneck_dim=config.bottleneck_dim,
         gradient_checkpointing=bool(getattr(config, "gradient_checkpointing", True)),
+        vision_hidden_size=vision_hidden_size,
+        num_visual_tokens=getattr(config, "num_visual_tokens", 64),
+        vision_projector_hidden_dim=getattr(config, "vision_projector_hidden_dim", None),
     ).to(device)
+
+    if getattr(config, "init_checkpoint", None):
+        load_model_weights(
+            config.init_checkpoint,
+            model,
+            use_ema=bool(getattr(config, "init_checkpoint_use_ema", True)),
+            strict=bool(getattr(config, "init_checkpoint_strict", False)),
+        )
+
+    _configure_trainable_params(model, config)
 
     total_params = sum(p.numel() for p in model.parameters())
     log_for_0(f"ELF parameters: {total_params:,}")
@@ -363,6 +418,12 @@ def run_training(config, *, force_cpu: bool = False):
         max_seq_length=config.max_length, pad_token_id=pad_token_id,
         max_input_seq_length=config.max_input_length,
         distributed=(world > 1),
+        tokenizer=tokenizer,
+        vision_processor=vision_processor,
+        data_modality=getattr(config, "data_modality", "text"),
+        train_stage=getattr(config, "train_stage", "text"),
+        max_prompt_length=getattr(config, "max_prompt_length", 128),
+        num_visual_tokens=getattr(config, "num_visual_tokens", 0),
     )
 
     log_for_0("\n" + "=" * 60)
@@ -440,7 +501,10 @@ def run_training(config, *, force_cpu: bool = False):
             # Count non-pad tokens for this step *before* the train_step call (cheap, host-side).
             local_nonpad = int(batch["attention_mask"].sum().item())
             non_pad_tokens_seen += local_nonpad * world  # symmetric assumption: roughly same density across ranks
-            state, metrics = train_step(state, encoder=encoder, batch=batch, config=config)
+            state, metrics = train_step(
+                state, encoder=encoder, batch=batch, config=config,
+                vision_encoder=vision_encoder,
+            )
             tokens_seen += tokens_per_step
 
             # Sync only on first step to measure torch.compile time;
@@ -551,6 +615,8 @@ def run_training(config, *, force_cpu: bool = False):
                 state=state, encoder=encoder, eval_dataset=eval_dataset,
                 tokenizer=tokenizer, config=config, generator=g,
                 local_batch_size=local_batch_size,
+                vision_encoder=vision_encoder,
+                vision_processor=vision_processor,
             )
             last_log_step = global_step
             last_log_time = time.time()

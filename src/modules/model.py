@@ -1,5 +1,6 @@
 """ELF transformer model."""
 
+import math
 from typing import Optional, Tuple
 
 import torch
@@ -13,6 +14,49 @@ from modules.layers import (
     DEFAULT_KERNEL_INIT, DEFAULT_BIAS_INIT, NORMAL_INIT_002,
     _make_linear,
 )
+
+
+class VisionProjector(nn.Module):
+    """Pool patch tokens and project them into the ELF/T5 latent width."""
+
+    def __init__(
+        self,
+        vision_hidden_size: int,
+        text_encoder_dim: int,
+        num_visual_tokens: int = 64,
+        hidden_dim: Optional[int] = None,
+    ):
+        super().__init__()
+        if num_visual_tokens <= 0:
+            raise ValueError("num_visual_tokens must be positive")
+        hidden_dim = hidden_dim or text_encoder_dim
+        self.num_visual_tokens = int(num_visual_tokens)
+        self.norm = nn.LayerNorm(vision_hidden_size)
+        self.proj1 = _make_linear(vision_hidden_size, hidden_dim, bias=True)
+        self.proj2 = _make_linear(hidden_dim, text_encoder_dim, bias=True)
+
+    def _pool_tokens(self, tokens: torch.Tensor) -> torch.Tensor:
+        B, P, D = tokens.shape
+        if P == self.num_visual_tokens:
+            return tokens
+
+        src_side = int(math.sqrt(P))
+        dst_side = int(math.sqrt(self.num_visual_tokens))
+        if src_side * src_side == P and dst_side * dst_side == self.num_visual_tokens:
+            tokens_2d = tokens.transpose(1, 2).reshape(B, D, src_side, src_side)
+            pooled = F.adaptive_avg_pool2d(tokens_2d, (dst_side, dst_side))
+            return pooled.flatten(2).transpose(1, 2)
+
+        pooled = F.adaptive_avg_pool1d(
+            tokens.transpose(1, 2), self.num_visual_tokens,
+        )
+        return pooled.transpose(1, 2)
+
+    def forward(self, tokens: torch.Tensor) -> torch.Tensor:
+        tokens = self._pool_tokens(tokens.float())
+        tokens = self.norm(tokens)
+        tokens = F.gelu(self.proj1(tokens), approximate="tanh")
+        return self.proj2(tokens)
 
 
 class ELFBlock(nn.Module):
@@ -68,6 +112,9 @@ class ELF(nn.Module):
         num_model_mode_tokens: int = 0,
         vocab_size: int = 0,
         gradient_checkpointing: bool = False,
+        vision_hidden_size: Optional[int] = None,
+        num_visual_tokens: int = 64,
+        vision_projector_hidden_dim: Optional[int] = None,
     ):
         super().__init__()
         self.text_encoder_dim = text_encoder_dim
@@ -84,6 +131,16 @@ class ELF(nn.Module):
         self.num_model_mode_tokens = num_model_mode_tokens
         self.vocab_size = vocab_size
         self.gradient_checkpointing = gradient_checkpointing
+        self.num_visual_tokens = num_visual_tokens
+
+        self.vision_projector = None
+        if vision_hidden_size is not None:
+            self.vision_projector = VisionProjector(
+                vision_hidden_size=vision_hidden_size,
+                text_encoder_dim=text_encoder_dim,
+                num_visual_tokens=num_visual_tokens,
+                hidden_dim=vision_projector_hidden_dim,
+            )
 
         # Self-conditioning input projection (only used when input is [z, x_pred]).
         self.self_cond_proj = _make_linear(2 * text_encoder_dim, text_encoder_dim, bias=True)
@@ -138,6 +195,11 @@ class ELF(nn.Module):
         DEFAULT_BIAS_INIT(self.proj_bias)
         DEFAULT_KERNEL_INIT(self.unembed_kernel)
         DEFAULT_BIAS_INIT(self.unembed_bias)
+
+    def project_vision(self, vision_tokens: torch.Tensor) -> torch.Tensor:
+        if self.vision_projector is None:
+            raise ValueError("ELF was created without a vision_projector")
+        return self.vision_projector(vision_tokens)
 
     def build_context(self, t: torch.Tensor,
                       self_cond_cfg_scale: Optional[torch.Tensor] = None) -> list:

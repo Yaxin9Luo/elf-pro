@@ -73,7 +73,25 @@ def get_optimizer(model: nn.Module, config, lr: float, grad_accum_steps: int = 1
         opt = muon_with_aux_adam(model, lr=lr)
         log_for_0("Using Muon optimizer")
     elif config.optimizer == "adamw":
-        params = [p for p in model.parameters() if p.requires_grad]
+        named_params = [(n, p) for n, p in model.named_parameters() if p.requires_grad]
+        projector_mult = float(getattr(config, "vision_projector_lr_multiplier", 1.0))
+        if getattr(config, "data_modality", "text") == "image_text" and projector_mult != 1.0:
+            projector_params = [
+                p for n, p in named_params if n.startswith("vision_projector.")
+            ]
+            base_params = [
+                p for n, p in named_params if not n.startswith("vision_projector.")
+            ]
+            param_groups = []
+            if base_params:
+                param_groups.append({"params": base_params, "lr": lr})
+            if projector_params:
+                param_groups.append({"params": projector_params, "lr": lr * projector_mult})
+            params = param_groups or [p for _, p in named_params]
+            if projector_params:
+                log_for_0(f"Using projector LR multiplier: {projector_mult:g}")
+        else:
+            params = [p for _, p in named_params]
         opt = torch.optim.AdamW(
             params, lr=lr, weight_decay=config.weight_decay,
             betas=(config.adam_b1, config.adam_b2),

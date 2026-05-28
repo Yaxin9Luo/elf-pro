@@ -31,8 +31,10 @@ class Config:
     # Dataset
     data_path: str = None
     eval_data_path: str = None
+    data_modality: str = "text"  # "text" or "image_text"
     max_length: int = 128
     max_input_length: int = None  # Max length for conditioning input (e.g., prompt or encoder input); None = no limit
+    max_prompt_length: int = 128  # Max text prompt length for image_text batches.
     pad_token: str = "pad"  # "pad" or "eos" - which token to use for padding
 
     # Tokenizer
@@ -43,6 +45,19 @@ class Config:
     encoder_checkpoint: str = None
     latent_mean: float = 0.0
     latent_std: float = 1.0
+
+    # Vision encoder / multimodal adapter
+    vision_encoder_model_name: str = "google/siglip2-base-patch16-224"
+    image_root: str = None
+    num_visual_tokens: int = 64
+    vision_projector_hidden_dim: int = None
+    freeze_vision_encoder: bool = True
+    freeze_text_encoder: bool = True
+    train_stage: str = "text"  # "text", "vision_warmup", or "mm_instruct"
+    vision_projector_lr_multiplier: float = 5.0
+    init_checkpoint: str = None  # Optional model-only checkpoint init before optimizer creation.
+    init_checkpoint_use_ema: bool = True
+    init_checkpoint_strict: bool = False
 
     # Model architecture
     model: str = "ELF-B"

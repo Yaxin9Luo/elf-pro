@@ -14,8 +14,9 @@ from configs.config import Config, SamplingConfig
 from utils.logging_utils import log_for_0
 from utils.checkpoint_utils import upload_output_dir_to_hf
 from utils.train_utils import unwrap_model
-from utils.data_utils import get_dataloader, get_pad_token_id
+from utils.data_utils import get_dataloader, get_pad_token_id, is_image_text_config
 from utils.encoder_utils import encode_text
+from utils.multimodal_utils import build_image_text_latents
 from utils.metrics_utils import Metrics as PPLMetrics, compute_bleu, compute_rouge
 from utils.sampling_utils import get_sampling_steps
 from utils.generation_utils import (
@@ -62,6 +63,8 @@ def run_generation(
     config,
     generator: torch.Generator,
     local_batch_size: int,
+    vision_encoder: nn.Module = None,
+    vision_processor=None,
 ):
     """Run test generation."""
     for sc_idx, sc in enumerate(config.sampling_configs):
@@ -81,6 +84,7 @@ def run_generation(
         else:
             test_generation_cond(
                 **common_kwargs, encoder=encoder, dataset=eval_dataset,
+                vision_encoder=vision_encoder, vision_processor=vision_processor,
             )
 
 
@@ -290,6 +294,8 @@ def test_generation_cond(
     config: Config,
     sampling_config: SamplingConfig,
     dataset,
+    vision_encoder: nn.Module = None,
+    vision_processor=None,
     num_samples: int = 64,
     batch_size: int = 64,
 ):
@@ -315,6 +321,12 @@ def test_generation_cond(
         shuffle=False, num_workers=0, drop_last=False,
         max_seq_length=config.max_length, pad_token_id=pad_token_id,
         max_input_seq_length=config.max_input_length, distributed=False,
+        tokenizer=tokenizer,
+        vision_processor=vision_processor,
+        data_modality=getattr(config, "data_modality", "text"),
+        train_stage=getattr(config, "train_stage", "text"),
+        max_prompt_length=getattr(config, "max_prompt_length", 128),
+        num_visual_tokens=getattr(config, "num_visual_tokens", 0),
     )
 
     wandb_tables = {}
@@ -341,7 +353,6 @@ def test_generation_cond(
                 break
             bsz = batch["input_ids"].shape[0]
             input_ids = torch.from_numpy(np.array(batch["input_ids"])).to(device).long()
-            encoder_attention_mask = torch.from_numpy(np.array(batch["encoder_attention_mask"])).to(device).float()
             cond_seq_mask_arr = torch.from_numpy(np.array(batch["cond_seq_mask"])).to(device).float()
 
             t_steps = get_sampling_steps(
@@ -351,10 +362,24 @@ def test_generation_cond(
                 device=device, dtype=next(model.parameters()).dtype,
             )
 
-            cond_seq = encode_text(
-                input_ids=input_ids, attention_mask=encoder_attention_mask,
-                encoder=encoder, latent_mean=encode_latent_mean, latent_std=encode_latent_std,
-            ).to(next(model.parameters()).dtype)
+            if is_image_text_config(config):
+                cond_seq = build_image_text_latents(
+                    model=model,
+                    text_encoder=encoder,
+                    vision_encoder=vision_encoder,
+                    batch=batch,
+                    config=config,
+                    device=device,
+                    dtype=next(model.parameters()).dtype,
+                    use_bf16=bool(getattr(config, "use_bf16", True)) and device.type == "cuda",
+                    include_target=False,
+                )
+            else:
+                encoder_attention_mask = torch.from_numpy(np.array(batch["encoder_attention_mask"])).to(device).float()
+                cond_seq = encode_text(
+                    input_ids=input_ids, attention_mask=encoder_attention_mask,
+                    encoder=encoder, latent_mean=encode_latent_mean, latent_std=encode_latent_std,
+                ).to(next(model.parameters()).dtype)
 
             z = (torch.randn((bsz, config.max_length, d_model),
                              generator=generator, dtype=next(model.parameters()).dtype)
@@ -369,8 +394,11 @@ def test_generation_cond(
             )
             generation_time += time.time() - gen_start
 
-            gen_length = config.max_length - config.max_input_length
             cond_len_per_sample = cond_seq_mask_arr.to(torch.int32).sum(dim=1)
+            if is_image_text_config(config):
+                gen_length = config.max_length - int(getattr(config, "num_visual_tokens", 0))
+            else:
+                gen_length = config.max_length - config.max_input_length
 
             dec_start = time.time()
             t_final_val = t_steps[-1].item()

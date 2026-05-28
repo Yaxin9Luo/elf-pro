@@ -17,6 +17,8 @@ import torch.nn.functional as F
 
 from utils.train_utils import TrainState, ema_update
 from utils.encoder_utils import encode_text
+from utils.data_utils import is_image_text_config
+from utils.multimodal_utils import build_image_text_latents
 from utils.sampling_utils import (
     sample_cfg_scale, add_noise, sample_timesteps,
     net_out_to_v_x, restore_cond,
@@ -32,6 +34,7 @@ def train_step(
     encoder: nn.Module,
     batch: Dict[str, torch.Tensor],
     config,
+    vision_encoder: nn.Module = None,
 ) -> Tuple[TrainState, Dict[str, float]]:
     """Perform a single training step."""
     device = next(state.model.parameters()).device
@@ -45,31 +48,45 @@ def train_step(
 
     gen = state.dropout_generator
 
-    # encoder_attention_mask: cond sees cond, x sees all
     input_ids = batch["input_ids"].to(device, non_blocking=True).long()
-    encoder_attention_mask = batch["encoder_attention_mask"].to(device, dtype=torch.float32, non_blocking=True)
     cond_seq_mask = batch["cond_seq_mask"].to(device, dtype=torch.float32, non_blocking=True)
     attention_mask = batch["attention_mask"].to(device, dtype=torch.float32, non_blocking=True)
     label_drop_mask = batch.get("label_drop_mask",
                                 torch.zeros((input_ids.shape[0],), dtype=torch.bool)).to(device, non_blocking=True)
 
-    # Label drop before encoding: prevent target tokens from attending to
-    # condition tokens so x0 is truly unconditional for dropped samples.
-    if config.label_drop_prob > 0 and encoder_attention_mask.ndim == 3:
-        drop = label_drop_mask.to(dtype=torch.float32).reshape(-1, 1, 1)  # (B, 1, 1)
-        cond_mask = cond_seq_mask  # (B, S)
-        # block_mask is 1 only at (non-cond row, cond col) — leaves cond↔cond unchanged
-        block_mask = (1 - cond_mask).unsqueeze(-1) * cond_mask.unsqueeze(1)
-        encoder_attention_mask = encoder_attention_mask * (1 - drop * block_mask)
+    if is_image_text_config(config):
+        x0 = build_image_text_latents(
+            model=state.model,
+            text_encoder=encoder,
+            vision_encoder=vision_encoder,
+            batch=batch,
+            config=config,
+            device=device,
+            dtype=dtype,
+            use_bf16=use_bf16,
+            include_target=True,
+        )
+    else:
+        # encoder_attention_mask: cond sees cond, x sees all
+        encoder_attention_mask = batch["encoder_attention_mask"].to(device, dtype=torch.float32, non_blocking=True)
 
-    x0 = encode_text(
-        input_ids=input_ids,
-        attention_mask=encoder_attention_mask,
-        encoder=encoder,
-        latent_mean=latent_mean,
-        latent_std=latent_std,
-        use_bf16=use_bf16,
-    ).to(dtype)
+        # Label drop before encoding: prevent target tokens from attending to
+        # condition tokens so x0 is truly unconditional for dropped samples.
+        if config.label_drop_prob > 0 and encoder_attention_mask.ndim == 3:
+            drop = label_drop_mask.to(dtype=torch.float32).reshape(-1, 1, 1)  # (B, 1, 1)
+            cond_mask = cond_seq_mask  # (B, S)
+            # block_mask is 1 only at (non-cond row, cond col) — leaves cond↔cond unchanged
+            block_mask = (1 - cond_mask).unsqueeze(-1) * cond_mask.unsqueeze(1)
+            encoder_attention_mask = encoder_attention_mask * (1 - drop * block_mask)
+
+        x0 = encode_text(
+            input_ids=input_ids,
+            attention_mask=encoder_attention_mask,
+            encoder=encoder,
+            latent_mean=latent_mean,
+            latent_std=latent_std,
+            use_bf16=use_bf16,
+        ).to(dtype)
 
     batch_size, seq_length = x0.shape[0], x0.shape[1]
 

@@ -227,3 +227,57 @@ def load_checkpoint(checkpoint_path: str, state) -> Tuple[Any, int]:
     step = int(ckpt["step"])
     log_for_0(f"Loaded {loaded_from} checkpoint from step {step} (epoch {state.epoch})")
     return state, step
+
+
+def load_model_weights(
+    checkpoint_path: str,
+    model,
+    *,
+    use_ema: bool = True,
+    strict: bool = False,
+) -> None:
+    """Initialize model weights from a checkpoint without restoring optimizer state."""
+    log_for_0(f"Initializing model weights from {checkpoint_path}...")
+    ckpt, loaded_from = None, None
+    errors = []
+
+    local_path = _local_path(checkpoint_path)
+    if os.path.exists(local_path):
+        try:
+            ckpt = _restore_checkpoint(local_path)
+            _validate_checkpoint(ckpt)
+            loaded_from = "local"
+        except Exception as e:
+            errors.append(f"local: {e}")
+
+    if ckpt is None:
+        try:
+            hf_path = _download_hf_checkpoint(checkpoint_path)
+            if hf_path:
+                ckpt = _restore_checkpoint(hf_path)
+                _validate_checkpoint(ckpt)
+                loaded_from = "HF"
+        except Exception as e:
+            errors.append(f"HF: {e}")
+
+    if ckpt is None:
+        raise ValueError(
+            f"Failed to initialize model from {checkpoint_path}. Tried: {'; '.join(errors)}"
+        )
+
+    params = ckpt.get("ema_params1") if use_ema else None
+    if params is None:
+        params = ckpt["params"]
+
+    inner_model = unwrap_model(model)
+    result = inner_model.load_state_dict(params, strict=strict)
+    missing = list(getattr(result, "missing_keys", []))
+    unexpected = list(getattr(result, "unexpected_keys", []))
+    log_for_0(
+        f"Initialized model weights from {loaded_from}; "
+        f"missing={len(missing)}, unexpected={len(unexpected)}, strict={strict}"
+    )
+    if missing:
+        log_for_0(f"Missing keys: {missing[:20]}" + (" ..." if len(missing) > 20 else ""))
+    if unexpected:
+        log_for_0(f"Unexpected keys: {unexpected[:20]}" + (" ..." if len(unexpected) > 20 else ""))

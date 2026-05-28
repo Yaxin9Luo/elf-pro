@@ -15,11 +15,15 @@ import torch.distributed as dist
 from transformers import AutoTokenizer
 
 from modules.t5_encoder import get_encoder
+from modules.vision_encoder import get_vision_encoder
 from modules.model import ELF_models
 from utils.logging_utils import log_for_0
 from utils.checkpoint_utils import load_checkpoint
 from utils.train_utils import TrainState, get_optimizer
-from utils.data_utils import load_jsonl_dataset, load_dataset_split, get_pad_token_id
+from utils.data_utils import (
+    load_jsonl_dataset, load_dataset_split, get_pad_token_id,
+    is_image_text_config, load_image_text_dataset,
+)
 from generation import test_generation_uncond, test_generation_cond
 from configs.config import load_config_from_yaml, apply_config_overrides, load_sampling_configs
 
@@ -29,6 +33,21 @@ logging.basicConfig(
     level=logging.INFO, force=True,
 )
 logger = logging.getLogger(__name__)
+
+
+def _configure_trainable_params(model, config):
+    if not is_image_text_config(config):
+        return
+    stage = getattr(config, "train_stage", "mm_instruct")
+    if stage == "vision_warmup":
+        for p in model.parameters():
+            p.requires_grad_(False)
+        if getattr(model, "vision_projector", None) is not None:
+            for p in model.vision_projector.parameters():
+                p.requires_grad_(True)
+    elif stage == "mm_instruct":
+        for p in model.parameters():
+            p.requires_grad_(True)
 
 
 def parse_args():
@@ -106,7 +125,13 @@ def main():
     eval_dataset = None
     if config.eval_data_path is not None:
         log_for_0("Loading dataset for conditional generation...")
-        if config.eval_data_path.endswith(".jsonl"):
+        if is_image_text_config(config):
+            eval_dataset = load_image_text_dataset(
+                config.eval_data_path,
+                train_stage=getattr(config, "train_stage", "mm_instruct"),
+                image_root=getattr(config, "image_root", None),
+            )
+        elif config.eval_data_path.endswith(".jsonl"):
             eval_dataset = load_jsonl_dataset(
                 config.eval_data_path, tokenizer,
                 input_key="input", output_key="output",
@@ -122,9 +147,22 @@ def main():
     for p in encoder.parameters():
         p.requires_grad_(False)
 
+    vision_processor, vision_encoder, vision_hidden_size = None, None, None
+    if is_image_text_config(config):
+        vision_processor, vision_encoder = get_vision_encoder(
+            config.vision_encoder_model_name, torch.float32,
+        )
+        vision_hidden_size = vision_encoder.hidden_size
+        vision_encoder = vision_encoder.to(device).eval()
+        for p in vision_encoder.parameters():
+            p.requires_grad_(False)
+
     # ELF model
     log_for_0(f"Creating {config.model} model...")
-    vocab_size = tokenizer.vocab_size
+    try:
+        vocab_size = len(tokenizer)
+    except TypeError:
+        vocab_size = tokenizer.vocab_size
     model = ELF_models[config.model](
         text_encoder_dim=encoder_config.d_model, max_length=config.max_length,
         attn_drop=config.attn_dropout, proj_drop=config.proj_dropout,
@@ -133,7 +171,11 @@ def main():
         vocab_size=vocab_size,
         num_model_mode_tokens=config.num_model_mode_tokens,
         bottleneck_dim=config.bottleneck_dim,
+        vision_hidden_size=vision_hidden_size,
+        num_visual_tokens=getattr(config, "num_visual_tokens", 64),
+        vision_projector_hidden_dim=getattr(config, "vision_projector_hidden_dim", None),
     ).to(device)
+    _configure_trainable_params(model, config)
 
     # Train state template (only used to plumb EMA params + step/epoch).
     optimizer = get_optimizer(model, config, lr=1e-4)
@@ -183,6 +225,7 @@ def main():
             else:
                 test_generation_cond(
                     **common_kwargs, encoder=encoder, dataset=eval_dataset,
+                    vision_encoder=vision_encoder, vision_processor=vision_processor,
                 )
 
         config.output_dir = original_output_dir
