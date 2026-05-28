@@ -1,0 +1,103 @@
+# Local stage-2 multimodal instruction tuning. ELF backbone + projector
+# trainable; t5 encoder + SigLIP2 still frozen. Builds on the stage-1
+# warmup ckpt at outputs/elf_l-llava-siglip2-warmup-local/.
+
+data_modality: image_text
+data_path: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-hldy-nlp/3A/multimodal/yaxinluo/data/playground/data/llava_v1_5_mix665k.json"
+eval_data_path: null
+image_root: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-hldy-nlp/3A/multimodal/yaxinluo/data/playground/data"
+train_stage: mm_instruct
+
+# Multi-turn instruct convs are longer than captions: keep more budget for prompt.
+max_length: 512
+max_prompt_length: 192
+pad_token: "pad"
+
+encoder_model_name: t5-small
+latent_mean: 0.0
+latent_std: 0.2
+
+vision_encoder_model_name: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-hldy-nlp/3A/multimodal/yaxinluo/projects/elf-pro/models/siglip2-base-patch16-224"
+num_visual_tokens: 64
+vision_projector_hidden_dim: null
+freeze_vision_encoder: true
+freeze_text_encoder: true
+
+model: ELF-L
+bottleneck_dim: 128
+num_time_tokens: 4
+num_self_cond_cfg_tokens: 4
+num_model_mode_tokens: 4
+
+# Init from the stage-1 projector-warmup ckpt. find_latest_checkpoint walks
+# this dir and picks the most recent checkpoint_*.
+init_checkpoint: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-hldy-nlp/3A/multimodal/yaxinluo/projects/elf-pro/outputs/elf_l-llava-siglip2-warmup-local"
+init_checkpoint_use_ema: true
+init_checkpoint_strict: false
+
+denoiser_p_mean: -1.5
+denoiser_p_std: 0.8
+denoiser_noise_scale: 2.0
+t_eps: 0.05
+time_schedule: "logit_normal"
+
+decoder_prob: 0.2
+decoder_noise_scale: 5.0
+decoder_p_mean: 0.8
+decoder_p_std: 0.8
+
+label_drop_prob: 0.1
+self_cond_prob: 0.5
+
+# Stage 2 unfreezes the 652M ELF backbone, so memory is dominated by activations
+# instead of weights. On 2x H100 80G with max_length=512: 8 per GPU * 2 GPUs = 16
+# global is the safe starting point with grad ckpt on. We use grad_accum_steps=8
+# to keep an effective batch of 128 (LLaVA-1.5 uses 128 here too).
+#
+# H200 141G cluster: bump batch and drop accum, e.g.
+#   bash scripts/launch_mm.sh stage2 --config_override global_batch_size=64 \
+#       --config_override grad_accum_steps=2
+# Single-node 8x H200 with batch=128 + accum=1 should match LLaVA-1.5 throughput.
+epochs: 1
+global_batch_size: 16
+grad_accum_steps: 8
+blr: 0.00002
+weight_decay: 0.0
+warmup_epochs: 0.03
+warmup_steps: -1
+optimizer: adamw
+adam_b1: 0.9
+adam_b2: 0.95
+# Projector still gets a higher LR than the rest of the network, but the gap
+# is smaller than stage1 since the backbone is now also learning.
+vision_projector_lr_multiplier: 5.0
+
+# Activation memory: backbone is now in the autograd graph. Keep grad ckpt on.
+use_bf16: true
+use_compile: false
+gradient_checkpointing: true
+
+ema_decay1: 0.9999
+
+sampling_configs_path: null
+num_samples: 0
+online_eval: false
+
+log_freq: 50
+save_freq: 0.5
+# eval_freq=0 disables uncond sampling at epoch end (meaningless for multimodal,
+# see warmup yaml note). Add a cond eval_data_path when you want real eval.
+eval_freq: 0
+max_checkpoints_to_keep: 3
+
+output_dir: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-hldy-nlp/3A/multimodal/yaxinluo/projects/elf-pro/outputs/elf_l-llava-siglip2-instruct-local"
+hf_repo_id: null
+resume: null
+
+use_wandb: false
+wandb_project: elf
+wandb_entity: null
+wandb_run_name: elf_l-llava-siglip2-instruct-local
+
+seed: 42
+num_workers: 4

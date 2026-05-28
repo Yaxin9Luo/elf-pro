@@ -538,7 +538,7 @@ def run_training(config, *, force_cpu: bool = False):
                     "step": f"{global_step}", "loss": f"{avg_loss:.4f}",
                     "l2": f"{avg_l2:.4f}", "ce": f"{avg_ce:.4f}",
                     "sps": f"{steps_per_sec:.1f}", "lr": f"{current_lr:.2e}",
-                    "toks": f"{tokens_seen/1e9:.2f}B",
+                    "toks": f"{tokens_seen/1e9:.3f}B",
                 }
                 log_for_0(postfix_dict)
                 epoch_pbar.set_postfix(**postfix_dict)

@@ -1,0 +1,109 @@
+# Smoke variant of stage-2. Uses 200 hand-picked records that only point at
+# ocr_vqa + textvqa images — those subsets are already on disk while the rest
+# (COCO / GQA / VG) is still downloading. Goal: end-to-end mm_instruct path
+# (full ELF backbone trainable + projector) runs without crashing on a
+# handful of steps. Not for any quality measurement.
+#
+# Regenerate the JSON with whichever subsets are present:
+#   python3 -c "
+#   import json, os
+#   src = 'data/playground/data/llava_v1_5_mix665k.json'
+#   dst = 'data/playground/data/llava_v1_5_mix665k_smoke200.json'
+#   img_root = 'data/playground/data'
+#   keep = []
+#   for r in json.load(open(src)):
+#       img = r.get('image') or ''
+#       p = os.path.join(img_root, img)
+#       if img and os.path.isfile(p):
+#           keep.append(r)
+#           if len(keep) >= 200: break
+#   json.dump(keep, open(dst,'w'), ensure_ascii=False)
+#   "
+
+data_modality: image_text
+data_path: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-hldy-nlp/3A/multimodal/yaxinluo/data/playground/data/llava_v1_5_mix665k_smoke200.json"
+eval_data_path: null
+image_root: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-hldy-nlp/3A/multimodal/yaxinluo/data/playground/data"
+train_stage: mm_instruct
+
+max_length: 512
+max_prompt_length: 192
+pad_token: "pad"
+
+encoder_model_name: t5-small
+latent_mean: 0.0
+latent_std: 0.2
+
+vision_encoder_model_name: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-hldy-nlp/3A/multimodal/yaxinluo/projects/elf-pro/models/siglip2-base-patch16-224"
+num_visual_tokens: 64
+vision_projector_hidden_dim: null
+freeze_vision_encoder: true
+freeze_text_encoder: true
+
+model: ELF-L
+bottleneck_dim: 128
+num_time_tokens: 4
+num_self_cond_cfg_tokens: 4
+num_model_mode_tokens: 4
+
+# For smoke we don't depend on stage1 finishing — fall back to the public
+# epoch-3 ELF-L ckpt so the test can run any time. Flip to the stage1 dir
+# when stage1 has produced a checkpoint.
+init_checkpoint: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-hldy-nlp/3A/multimodal/yaxinluo/projects/elf-pro/outputs/elf_l-owt-hf-torch/checkpoint_57051"
+init_checkpoint_use_ema: true
+init_checkpoint_strict: false
+
+denoiser_p_mean: -1.5
+denoiser_p_std: 0.8
+denoiser_noise_scale: 2.0
+t_eps: 0.05
+time_schedule: "logit_normal"
+
+decoder_prob: 0.2
+decoder_noise_scale: 5.0
+decoder_p_mean: 0.8
+decoder_p_std: 0.8
+
+label_drop_prob: 0.1
+self_cond_prob: 0.5
+
+# Backbone trainable -> activations are heavy. Tiny batch + grad ckpt on.
+# 200 records / batch 8 = 25 steps/epoch — finishes in ~1 minute.
+epochs: 1
+global_batch_size: 8
+grad_accum_steps: 1
+blr: 0.00002
+weight_decay: 0.0
+warmup_epochs: null
+warmup_steps: 5
+optimizer: adamw
+adam_b1: 0.9
+adam_b2: 0.95
+vision_projector_lr_multiplier: 5.0
+
+use_bf16: true
+use_compile: false
+gradient_checkpointing: true
+
+ema_decay1: 0.9999
+
+sampling_configs_path: null
+num_samples: 0
+online_eval: false
+
+log_freq: 5
+save_freq: 999
+eval_freq: 0
+max_checkpoints_to_keep: 3
+
+output_dir: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-hldy-nlp/3A/multimodal/yaxinluo/projects/elf-pro/outputs/elf_l-llava-siglip2-instruct-smoke"
+hf_repo_id: null
+resume: null
+
+use_wandb: false
+wandb_project: elf
+wandb_entity: null
+wandb_run_name: elf_l-llava-siglip2-instruct-smoke
+
+seed: 42
+num_workers: 2

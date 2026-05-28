@@ -1,0 +1,106 @@
+# HOPE 32-GPU (4 nodes x 8 H800-141G) stage-2 SigLIP2 + ELF-L instruct tune.
+#
+# Path strategy: every external resource (data, encoder, vision encoder, init
+# ckpt) is an absolute path under the sh02 zone. The cluster has no internet,
+# so `t5-small` / `siglip2-*` repo-id strings would otherwise stall on HF
+# HEAD requests. Mirror the same five resources to sh02 before submit:
+#
+#   * mix665k JSON          ${SH02}/data/playground/data/llava_v1_5_mix665k.json
+#   * 5 image subsets       ${SH02}/data/playground/data/{coco,gqa,ocr_vqa,textvqa,vg}/...
+#   * t5-small              ${SH02}/models/t5-small/
+#   * siglip2-base          ${SH02}/models/siglip2-base-patch16-224/
+#   * stage1 ckpt dir       ${SH02}/outputs/elf_l-llava-siglip2-warmup/
+#
+# `submit/sync_to_sh02.sh` does the rsync.
+
+data_modality: image_text
+data_path: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/data/playground/data/llava_v1_5_mix665k.json"
+eval_data_path: null
+image_root: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/data/playground/data"
+train_stage: mm_instruct
+
+max_length: 512
+max_prompt_length: 192
+pad_token: "pad"
+
+encoder_model_name: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/models/t5-small"
+tokenizer_name: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/models/t5-small"
+latent_mean: 0.0
+latent_std: 0.2
+
+vision_encoder_model_name: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/models/siglip2-base-patch16-224"
+num_visual_tokens: 64
+vision_projector_hidden_dim: null
+freeze_vision_encoder: true
+freeze_text_encoder: true
+
+model: ELF-L
+bottleneck_dim: 128
+num_time_tokens: 4
+num_self_cond_cfg_tokens: 4
+num_model_mode_tokens: 4
+
+# stage1 ckpt directory (find_latest_checkpoint picks checkpoint_*).
+init_checkpoint: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/outputs/elf_l-llava-siglip2-warmup"
+init_checkpoint_use_ema: true
+init_checkpoint_strict: false
+
+denoiser_p_mean: -1.5
+denoiser_p_std: 0.8
+denoiser_noise_scale: 2.0
+t_eps: 0.05
+time_schedule: "logit_normal"
+
+decoder_prob: 0.2
+decoder_noise_scale: 5.0
+decoder_p_mean: 0.8
+decoder_p_std: 0.8
+
+label_drop_prob: 0.1
+self_cond_prob: 0.5
+
+# 32 H800-141G with ELF-L (652M) backbone trainable + grad ckpt on. With
+# max_length=512 the per-device activation budget allows ~16 samples; we
+# pick global=128 (LLaVA-1.5 reference value) so per-device=4 leaves a lot
+# of memory headroom. Scale up via `--config_override global_batch_size=...`
+# if nvidia-smi shows < 70 % VRAM after the first step.
+epochs: 1
+global_batch_size: 128
+grad_accum_steps: 1
+blr: 0.00002
+weight_decay: 0.0
+warmup_epochs: 0.03
+warmup_steps: -1
+optimizer: adamw
+adam_b1: 0.9
+adam_b2: 0.95
+vision_projector_lr_multiplier: 5.0
+
+use_bf16: true
+use_compile: false
+gradient_checkpointing: true
+
+ema_decay1: 0.9999
+
+sampling_configs_path: null
+num_samples: 0
+online_eval: false
+
+log_freq: 50
+save_freq: 0.2
+# uncond sampling is meaningless for multimodal. Add eval_data_path + a
+# cond sampler config when you want real epoch-end eval numbers.
+eval_freq: 0
+max_checkpoints_to_keep: 3
+
+output_dir: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/outputs/elf_l-llava-siglip2-instruct-hope-32gpu"
+hf_repo_id: null
+resume: null
+
+use_wandb: false
+wandb_project: elf
+wandb_entity: null
+wandb_run_name: elf_l-llava-siglip2-instruct-hope-32gpu
+
+seed: 42
+num_workers: 4

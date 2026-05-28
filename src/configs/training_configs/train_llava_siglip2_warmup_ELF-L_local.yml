@@ -1,0 +1,108 @@
+# Local stage-1 vision projector warmup on this dev box (2x H100).
+# Uses the LLaVA-Pretrain 558K caption set we mirrored under
+# /mnt/.../yaxinluo/data/LLaVA-Pretrain/, plus a local SigLIP2-base copy under
+# projects/elf-pro/models/siglip2-base-patch16-224/. No network access at runtime.
+
+data_modality: image_text
+data_path: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-hldy-nlp/3A/multimodal/yaxinluo/data/LLaVA-Pretrain/blip_laion_cc_sbu_558k.json"
+eval_data_path: null
+image_root: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-hldy-nlp/3A/multimodal/yaxinluo/data/LLaVA-Pretrain/images"
+train_stage: vision_warmup
+
+max_length: 256
+max_prompt_length: 32
+pad_token: "pad"
+
+encoder_model_name: t5-small
+latent_mean: 0.0
+latent_std: 0.2
+
+vision_encoder_model_name: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-hldy-nlp/3A/multimodal/yaxinluo/projects/elf-pro/models/siglip2-base-patch16-224"
+num_visual_tokens: 64
+vision_projector_hidden_dim: null
+freeze_vision_encoder: true
+freeze_text_encoder: true
+
+model: ELF-L
+bottleneck_dim: 128
+num_time_tokens: 4
+num_self_cond_cfg_tokens: 4
+num_model_mode_tokens: 4
+
+# Init from the public ELF-L epoch-3 OWT checkpoint (PyTorch format).
+# Stage 1 only trains the vision projector — ELF backbone stays frozen, but we
+# still want it loaded with paper weights so the projector targets a meaningful
+# latent space.
+init_checkpoint: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-hldy-nlp/3A/multimodal/yaxinluo/projects/elf-pro/outputs/elf_l-owt-hf-torch/checkpoint_57051"
+init_checkpoint_use_ema: true
+init_checkpoint_strict: false
+
+denoiser_p_mean: -1.5
+denoiser_p_std: 0.8
+denoiser_noise_scale: 2.0
+t_eps: 0.05
+time_schedule: "logit_normal"
+
+decoder_prob: 0.2
+decoder_noise_scale: 5.0
+decoder_p_mean: 0.8
+decoder_p_std: 0.8
+
+label_drop_prob: 0.1
+self_cond_prob: 0.5
+
+# 2x H100 80G aggressive defaults. ELF-L (652M) backbone is frozen, only
+# the small SigLIP2 -> ELF projector trains. Smoke at batch=8 + grad-ckpt
+# used 9.6 GB / 80 GB, so we have plenty of headroom: drop grad ckpt and
+# push batch up. ~64 / GPU * 2 GPUs = 128 global is a reasonable starting
+# point; tune up if nvidia-smi shows < 80 % VRAM after the first step.
+#
+# H200 141G cluster (~1.76x memory): override at submit time, e.g.
+#   bash scripts/launch_mm.sh stage1 --config_override global_batch_size=256
+# The training-cluster YAML should bump it to 256 or 384 directly.
+epochs: 1
+global_batch_size: 128
+grad_accum_steps: 1
+blr: 0.0001
+weight_decay: 0.0
+warmup_epochs: 0.03
+warmup_steps: -1
+optimizer: adamw
+adam_b1: 0.9
+adam_b2: 0.95
+vision_projector_lr_multiplier: 1.0
+
+# Backbone is frozen so gradient checkpointing buys nothing on the only
+# trainable path (the projector). Keep it off for max throughput.
+# torch.compile off so the first step lands fast; flip on once you commit
+# to a multi-hour run.
+use_bf16: true
+use_compile: false
+gradient_checkpointing: false
+
+ema_decay1: 0.9999
+
+sampling_configs_path: null
+num_samples: 0
+online_eval: false
+
+log_freq: 50
+save_freq: 1
+# eval_freq=0 disables the epoch-end sampling pass. The default sampling path
+# only does *unconditional* generation, which is meaningless for multimodal
+# (we trained on image+prompt -> caption). Add a real eval_data_path + a cond
+# sampler later if you want quality numbers.
+eval_freq: 0
+max_checkpoints_to_keep: 3
+
+output_dir: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-hldy-nlp/3A/multimodal/yaxinluo/projects/elf-pro/outputs/elf_l-llava-siglip2-warmup-local"
+hf_repo_id: null
+resume: null
+
+use_wandb: false
+wandb_project: elf
+wandb_entity: null
+wandb_run_name: elf_l-llava-siglip2-warmup-local
+
+seed: 42
+num_workers: 4

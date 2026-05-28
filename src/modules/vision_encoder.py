@@ -50,9 +50,14 @@ class FrozenVisionEncoder(nn.Module):
 
 
 def get_vision_encoder(model_name: str, dtype: Any = torch.float32):
-    """Return `(processor, frozen_vision_encoder)` for image-text experiments."""
-    from transformers import AutoProcessor
+    """Return `(image_processor, frozen_vision_encoder)` for image-text experiments.
 
-    processor = AutoProcessor.from_pretrained(model_name)
+    We deliberately load only the image side. SigLIP2 ships a Gemma tokenizer
+    that older transformers (<4.45) can't parse, and we never need it here —
+    text encoding goes through the T5 encoder.
+    """
+    from transformers import AutoImageProcessor
+
+    processor = AutoImageProcessor.from_pretrained(model_name)
     encoder = FrozenVisionEncoder(model_name, dtype=dtype)
     return processor, encoder
