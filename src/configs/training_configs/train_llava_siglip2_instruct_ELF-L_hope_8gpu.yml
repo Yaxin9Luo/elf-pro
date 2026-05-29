@@ -1,20 +1,4 @@
-# HOPE 32-GPU (4 nodes x 8 H800-141G) stage-2 SigLIP2 + ELF-L instruct tune.
-#
-# Data strategy: reuse the LLaVA-NeXT-Data tree someone else mirrored to sh02
-# at native_mm/mm_datasets/LLaVA-NeXT-Data/. It carries:
-#   - 738590 instruction-tuning records (LLaVA-1.5 mix665k superset; same
-#     {image, conversations} schema, same <image> token convention)
-#   - All 5 LLaVA-1.5 image subsets except textvqa: coco/train2017, gqa/images,
-#     ocr_vqa/images, vg/VG_100K, vg/VG_100K_2. The JSON does NOT reference
-#     textvqa, so this is consistent.
-# This means: no rsync of ~80 GB of images, no waiting on COCO download.
-# Cluster workers read images directly off dolphinfs.
-#
-# The other resources still need to be on sh02 (and sync_to_sh02.sh handled
-# them earlier):
-#   * t5-small              ${SH02}/models/t5-small/
-#   * siglip2-base          ${SH02}/models/siglip2-base-patch16-224/
-#   * stage1 ckpt dir       ${SH02}/outputs/elf_l-llava-siglip2-warmup/
+# HOPE 8-GPU (1 node x 8 H800-141G) stage-2 SigLIP2 + ELF-L instruct tune.
 
 data_modality: image_text
 data_path: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/native_mm/mm_datasets/LLaVA-NeXT-Data/images/llava_next_raw_format_processed.json"
@@ -43,7 +27,6 @@ num_time_tokens: 4
 num_self_cond_cfg_tokens: 4
 num_model_mode_tokens: 4
 
-# stage1 ckpt directory (find_latest_checkpoint picks checkpoint_*).
 init_checkpoint: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/outputs/elf_l-llava-siglip2-warmup"
 init_checkpoint_use_ema: true
 init_checkpoint_strict: false
@@ -62,11 +45,6 @@ decoder_p_std: 0.8
 label_drop_prob: 0.1
 self_cond_prob: 0.5
 
-# 32 H800-141G with ELF-L (652M) backbone trainable + grad ckpt on. With
-# max_length=512 the per-device activation budget allows ~16 samples; we
-# pick global=128 (LLaVA-1.5 reference value) so per-device=4 leaves a lot
-# of memory headroom. Scale up via `--config_override global_batch_size=...`
-# if nvidia-smi shows < 70 % VRAM after the first step.
 epochs: 1
 global_batch_size: 128
 grad_accum_steps: 1
@@ -91,19 +69,17 @@ online_eval: false
 
 log_freq: 50
 save_freq: 0.2
-# uncond sampling is meaningless for multimodal. Add eval_data_path + a
-# cond sampler config when you want real epoch-end eval numbers.
 eval_freq: 0
 max_checkpoints_to_keep: 3
 
-output_dir: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/outputs/elf_l-llava-siglip2-instruct-hope-32gpu"
+output_dir: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/outputs/elf_l-llava-siglip2-instruct-hope-8gpu"
 hf_repo_id: null
 resume: null
 
 use_wandb: false
 wandb_project: elf
 wandb_entity: null
-wandb_run_name: elf_l-llava-siglip2-instruct-hope-32gpu
+wandb_run_name: elf_l-llava-siglip2-instruct-hope-8gpu
 
 seed: 42
 num_workers: 4

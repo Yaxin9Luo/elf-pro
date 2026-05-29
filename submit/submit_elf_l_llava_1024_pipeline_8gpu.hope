@@ -23,8 +23,8 @@ afo.engine.wait_for_job_finished = false
 source.system = kinet
 
 [roles]
-worker.script = bash /mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/submit/run_elf_l_llava_instruct_hope.sh src/configs/training_configs/train_llava_siglip2_instruct_ELF-L_hope_32gpu.yml
-workers = 4
+worker.script = PIPELINE_LOG_DIR=/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/outputs/elf_l-llava-siglip2-1024-vt196-pipeline-hope-8gpu/launch_logs bash /mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/submit/run_elf_l_llava_1024_pipeline_hope.sh src/configs/training_configs/train_llava_siglip2_warmup_ELF-L_hope_1024_vt196_8gpu.yml src/configs/training_configs/train_llava_siglip2_instruct_ELF-L_hope_1024_vt196_8gpu.yml
+workers = 1
 worker.memory = 2000000
 worker.vcore = 176
 worker.gcoresh800-141g = 8
@@ -49,4 +49,3 @@ afo.data.prefetch = false
 
 [failover]
 afo.app.support.engine.failover = true
-
