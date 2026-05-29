@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>ELF 多模态理解研究计划 — SigLIP2 × ELF-L</title>
+<style>
+  :root {
+    --fg: #1a1a1a;
+    --bg: #fcfcfa;
+    --muted: #666;
+    --accent: #b85c00;
+    --accent2: #2e6e2e;
+    --accent3: #1f5a8a;
+    --warn: #b03030;
+    --code-bg: #f3f0e8;
+    --border: #e0d8c8;
+    --table-stripe: #f7f3ea;
+    --tag-bg: #ece4d2;
+    --headline-bg: #fff4e0;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg); color: var(--fg);
+    line-height: 1.65;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 28px 80px; }
+  h1 { font-size: 28px; margin: 0 0 4px; letter-spacing: -0.5px; }
+  h2 { font-size: 21px; margin: 44px 0 14px; padding-bottom: 6px; border-bottom: 2px solid var(--accent); }
+  h3 { font-size: 16px; margin: 24px 0 8px; color: var(--accent); }
+  h4 { font-size: 14px; margin: 18px 0 6px; color: var(--accent2); }
+  .subtitle { color: var(--muted); margin: 0 0 24px; font-size: 13px; }
+  p, li { font-size: 14px; }
+  code, pre, .mono { font-family: "JetBrains Mono", "Menlo", monospace; font-size: 12.5px; }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border);
+    padding: 12px 14px; border-radius: 6px; overflow-x: auto;
+    line-height: 1.5;
+  }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0 18px; font-size: 13px; }
+  th, td { padding: 8px 10px; border: 1px solid var(--border); text-align: left; vertical-align: top; }
+  th { background: var(--tag-bg); }
+  tbody tr:nth-child(even) { background: var(--table-stripe); }
+  .tag {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 11.5px; font-weight: 600; background: var(--tag-bg); color: #5a4520;
+    margin-right: 6px;
+  }
+  .tag-main  { background: #f4d8b8; color: #7a3f08; }
+  .tag-side  { background: #d8e2cf; color: #3a5a20; }
+  .tag-supp  { background: #d4e0e9; color: #1f4a6a; }
+  .tag-risk  { background: #f0d4d4; color: #8b2020; }
+  .callout {
+    border-left: 3px solid var(--accent);
+    padding: 10px 14px; margin: 14px 0;
+    background: #f8efde;
+  }
+  .callout.green  { border-color: var(--accent2); background: #ecf5e8; }
+  .callout.blue   { border-color: var(--accent3); background: #e6eef5; }
+  .callout.red    { border-color: var(--warn); background: #f8e8e6; }
+  .headline {
+    background: var(--headline-bg);
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    padding: 16px 20px; margin: 18px 0 28px;
+  }
+  .headline strong { color: var(--accent); font-size: 15px; }
+  .grid-2 {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 14px; margin: 14px 0;
+  }
+  .grid-3 {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px; margin: 14px 0;
+  }
+  .card {
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 14px 16px; background: #fff;
+  }
+  .card.main { border-color: var(--accent); border-width: 2px; }
+  .card.side { border-color: var(--accent2); }
+  .card.supp { border-color: var(--accent3); }
+  .toc { background: #fff; border: 1px solid var(--border); padding: 14px 18px; border-radius: 6px; }
+  .toc ol { margin: 0; padding-left: 24px; }
+  .toc a { color: var(--fg); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+  .file-ref { color: var(--accent2); font-family: monospace; font-size: 12px; }
+  .phase-box {
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 12px 16px; margin: 8px 0; background: #fff;
+  }
+  .phase-box.main { border-left: 4px solid var(--accent); }
+  .phase-box.side { border-left: 4px solid var(--accent2); }
+  .phase-box.supp { border-left: 4px solid var(--accent3); }
+  @media (max-width: 720px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>ELF 多模态理解研究计划</h1>
+<p class="subtitle">2026-05-28 · SigLIP2 vision encoder + ELF-L latent flow；仅讨论 image+text → text，不做图像生成。</p>
+
+<div class="headline">
+  <strong>核心判断：</strong>
+  先把 ELF 做成一个强的多模态理解 baseline，而不是一开始追求统一多模态生成。视觉侧只作为 condition prefix，ELF 仍在 T5 latent space 里生成答案文本。当前最好的初始化是 <code>ELF-L epoch 3 / checkpoint_57051</code>，因为它在 64-step SDE 上达到 <strong>PPL 21.27 / entropy 5.18</strong>，优于原版 ELF-L headline 的 <strong>PPL 23.3 / entropy 5.28</strong>。
+</div>
+
+<div class="toc">
+  <strong>目录</strong>
+  <ol>
+    <li><a href="#goal">一、目标与边界</a></li>
+    <li><a href="#prior">二、文本 prior：为什么用 epoch 3 ELF-L</a></li>
+    <li><a href="#architecture">三、模型方案：SigLIP2 → projector → ELF</a></li>
+    <li><a href="#training">四、训练阶段与 ablation</a></li>
+    <li><a href="#eval">五、评测指标与成功标准</a></li>
+    <li><a href="#risks">六、风险与下一步</a></li>
+  </ol>
+</div>
+
+<h2 id="goal">一、目标与边界</h2>
+
+<div class="grid-2">
+  <div class="card main">
+    <span class="tag tag-main">目标</span>
+    <h4>Image + Text → Text</h4>
+    <p>给定一张图和一个文本 prompt，ELF 在 latent space 中生成 answer/caption，再通过 DLM head 解码成 token。</p>
+    <pre>image + user prompt
+  → visual condition tokens + prompt latents
+  → ELF flow denoise answer latents
+  → DLM head decode answer tokens</pre>
+  </div>
+  <div class="card side">
+    <span class="tag tag-side">边界</span>
+    <h4>不做统一多模态生成</h4>
+    <p>第一版不生成 image/audio/video，不训练可反演的多模态 shared latent space，也不引入 Q-Former/Perceiver 或 auxiliary alignment loss。</p>
+    <p>核心问题是：一个强文本 ELF prior 加简单视觉 projector，能否形成可训练、可比较的多模态理解 baseline。</p>
+  </div>
+</div>
+
+<div class="callout blue">
+  <strong>研究品味约束：</strong>
+  baseline 必须简单、可复现、能被强对照实验验证。先证明视觉条件真的被 ELF 用上，再讨论更复杂的 alignment space 或视觉 tower。
+</div>
+
+<h2 id="prior">二、文本 prior：为什么用 epoch 3 ELF-L</h2>
+
+<p>按同样 3 epochs 比，你们的 ELF-L 复现已经超过原版 headline。多模态 finetune 的最终输出仍然是文本，因此更强的 text prior 会直接改善 caption/VQA/instruct 的起点。</p>
+
+<table>
+  <thead>
+    <tr><th>模型 / checkpoint</th><th>Eval config</th><th>PPL ↓</th><th>Mean entropy ↑</th><th>判断</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Original ELF-L</td>
+      <td>SDE 64 steps</td>
+      <td>23.3</td>
+      <td>5.28</td>
+      <td>paper headline</td>
+    </tr>
+    <tr>
+      <td>ours ELF-L epoch 3 / checkpoint_57051</td>
+      <td>SDE 64 / gamma 1.0</td>
+      <td><strong>21.2668</strong></td>
+      <td>5.1782</td>
+      <td>PPL 好 2.03；entropy 低 0.10，但未坍缩</td>
+    </tr>
+    <tr>
+      <td>ours ELF-L epoch 3 / checkpoint_57051</td>
+      <td>SDE 32 / gamma 1.5</td>
+      <td>27.8613</td>
+      <td>5.2650</td>
+      <td>32-step 质量不如 64-step，适合做 NFE ablation</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout green">
+  <strong>默认初始化：</strong>
+  多模态实验优先使用 <code>checkpoint_57051</code> 的 EMA 权重，配置为 <code>init_checkpoint_use_ema: true</code>、<code>init_checkpoint_strict: false</code>。不要默认用 epoch 5 final，因为 final 的 PPL 已经回退到 23.67 左右。
+</div>
+
+<h2 id="architecture">三、模型方案：SigLIP2 → projector → ELF</h2>
+
+<p>当前实现已经落到代码里：<span class="file-ref">src/modules/vision_encoder.py</span> 加载 frozen SigLIP2，<span class="file-ref">src/modules/model.py</span> 内置 <code>VisionProjector</code>，<span class="file-ref">src/utils/multimodal_utils.py</span> 组装多模态 latent 序列。</p>
+
+<pre>SigLIP2 image encoder (frozen)
+  → patch tokens [B, P, d_v]
+  → adaptive pool to 8x8 = 64 tokens
+  → LayerNorm → Linear → GELU → Linear
+  → visual condition latents [B, 64, d_t5]
+
+T5 encoder (frozen)
+  → prompt latents + target answer latents
+
+ELF input sequence:
+  [visual_cond_latents] + [prompt_latents] + [target_answer_latents]</pre>
+
+<table>
+  <thead>
+    <tr><th>组件</th><th>默认选择</th><th>训练状态</th><th>原因</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Vision encoder</td>
+      <td><code>google/siglip2-base-patch16-224</code></td>
+      <td>frozen</td>
+      <td>语义 alignment 干净，作为第一版比 QwenViT 更容易诊断</td>
+    </tr>
+    <tr>
+      <td>Text encoder</td>
+      <td><code>t5-small</code></td>
+      <td>frozen</td>
+      <td>保持 ELF 原始 latent space，不引入额外变量</td>
+    </tr>
+    <tr>
+      <td>Projector</td>
+      <td><code>LN → Linear → GELU → Linear</code></td>
+      <td>trainable</td>
+      <td>最小 bridge；能验证视觉条件是否能被 ELF 使用</td>
+    </tr>
+    <tr>
+      <td>ELF</td>
+      <td>ELF-L 优先，ELF-B 作快速 smoke</td>
+      <td>Stage 1 frozen；Stage 2 trainable</td>
+      <td>先学 bridge，再让 latent flow 适配视觉条件</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="training">四、训练阶段与 ablation</h2>
+
+<div class="phase-box main">
+  <h3>Phase 0 · Text ELF-L checkpoint 固化</h3>
+  <p>固定使用 epoch 3 <code>checkpoint_57051</code> 作为多模态初始化。记录它在 OWT 上的 <code>PPL 21.27 / entropy 5.18</code>，后续多模态 finetune 不再混淆 text pretraining 变量。</p>
+</div>
+
+<div class="phase-box side">
+  <h3>Phase 1 · Projector warmup</h3>
+  <p>数据用 LLaVA pretrain / caption 数据。冻结 SigLIP2、T5、ELF，只训练 projector；目标是 image condition → caption generation，不加 cosine/MSE/contrastive auxiliary loss。</p>
+  <pre>config: train_llava_siglip2_warmup_ELF-B.yml / ELF-L variant
+train_stage: vision_warmup
+trainable: vision_projector only
+loss: existing ELF CE/L2 target-only loss</pre>
+</div>
+
+<div class="phase-box supp">
+  <h3>Phase 2 · Multimodal instruction finetune</h3>
+  <p>数据用 LLaVA-Instruct / LLaVA-OneVision single-image subset。冻结 SigLIP2、T5，训练 projector + ELF；projector learning rate 默认是 ELF 的 5 倍。</p>
+  <pre>config: train_llava_siglip2_instruct_ELF-B.yml / ELF-L variant
+train_stage: mm_instruct
+trainable: vision_projector + ELF
+loss: existing ELF CE/L2 target-only loss</pre>
+</div>
+
+<h3>Ablation 矩阵</h3>
+
+<table>
+  <thead>
+    <tr><th>实验</th><th>设置</th><th>要回答的问题</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>A1</td><td>不做 warmup，直接 instruct finetune</td><td>projector warmup 是否必要</td></tr>
+    <tr><td>A2</td><td>warmup → instruct finetune</td><td>主 baseline</td></tr>
+    <tr><td>A3</td><td>Stage 2 只训 projector，不解冻 ELF</td><td>ELF 本体是否需要适配视觉条件</td></tr>
+    <tr><td>A4</td><td>shuffled image control</td><td>模型是否真的看图，而不是只靠语言 prior</td></tr>
+    <tr><td>A5</td><td>ELF-B vs ELF-L 初始化</td><td>强 text prior 对多模态理解的收益是否可见</td></tr>
+  </tbody>
+</table>
+
+<h2 id="eval">五、评测指标与成功标准</h2>
+
+<p>主比较应该是同等数据、同等视觉 encoder 下，ELF 多模态 baseline 与简单 AR/VLM baseline 的生成质量和成本。不要把 ELF 的 generative PPL 与 AR validation PPL 混比。</p>
+
+<div class="grid-3">
+  <div class="card main">
+    <span class="tag tag-main">Caption</span>
+    <h4>COCO / LLaVA pretrain eval</h4>
+    <p>ROUGE / BLEU 只作快速 sanity；重点看生成是否贴图、是否重复、是否短模板化。</p>
+  </div>
+  <div class="card side">
+    <span class="tag tag-side">VQA</span>
+    <h4>VQAv2 / GQA / TextVQA</h4>
+    <p>用 exact match / normalized accuracy。TextVQA 可以检验 SigLIP2 baseline 在 OCR 弱项上的边界。</p>
+  </div>
+  <div class="card supp">
+    <span class="tag tag-supp">Instruction</span>
+    <h4>LLaVA-Bench / MM-Vet 子集</h4>
+    <p>保存 JSONL，必要时用 LLM judge；第一版不把 judge 分数当唯一主结果。</p>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr><th>成功标准</th><th>最低要求</th><th>强结果</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>视觉条件有效</td>
+      <td>A2 明显优于 shuffled image A4</td>
+      <td>A2 在 caption/VQA 上稳定超过 A3</td>
+    </tr>
+    <tr>
+      <td>ELF 可多模态适配</td>
+      <td>Stage 2 解冻 ELF 后不破坏基本文本生成</td>
+      <td>ELF-L 初始化明显优于 ELF-B 或 random projector direct tuning</td>
+    </tr>
+    <tr>
+      <td>生成质量</td>
+      <td>非空、非重复、能跟随 prompt</td>
+      <td>caption/VQA 接近简单 LLaVA-style AR baseline</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="risks">六、风险与下一步</h2>
+
+<div class="callout red">
+  <strong>最大风险：</strong>
+  SigLIP2 的 patch features 虽然语义 alignment 好，但不是专门为 ELF/T5 latent space 训练的。MLP projector 可能学到可用 condition，但细粒度 OCR、定位、计数会弱。
+</div>
+
+<table>
+  <thead>
+    <tr><th>风险</th><th>症状</th><th>处理</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>只靠语言 prior</td>
+      <td>shuffled image control 仍然答得很好</td>
+      <td>提高视觉相关数据比例；加入 hard negative VQA；降低 prompt-only shortcuts</td>
+    </tr>
+    <tr>
+      <td>finetune 后模板化</td>
+      <td>entropy/repetition 变差，答案变短</td>
+      <td>降低 ELF lr；增加 caption/open-ended QA；保留 best checkpoint 而非 final</td>
+    </tr>
+    <tr>
+      <td>MLP bridge 不够</td>
+      <td>warmup loss 降不动，A2 不优于 A1</td>
+      <td>第二版再上 Perceiver/Q-Former，不在第一版引入</td>
+    </tr>
+    <tr>
+      <td>SigLIP2 感知不足</td>
+      <td>OCR/layout/chart 任务弱</td>
+      <td>后续引入 QwenViT / InternViT 作强感知对照</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout green">
+  <strong>下一步执行顺序：</strong>
+  先用 ELF-B 配置跑 8-16 条 fake/LLaVA 样本 smoke；再用 ELF-L + <code>checkpoint_57051</code> 跑 projector warmup；最后做 A1/A2/A3/A4 ablation。所有结果同时记录 task metric、生成样本、entropy/repetition 和采样成本。
+</div>
+
+</div>
+</body>
+</html>
