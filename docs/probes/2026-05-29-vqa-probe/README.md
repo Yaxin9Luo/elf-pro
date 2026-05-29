@@ -1,0 +1,46 @@
+# ELF-L LLaVA VQA Probe - 2026-05-29
+
+This is a manual two-image sanity check for the final Stage 2 checkpoint.
+
+- Checkpoint: `outputs/elf_l-llava-siglip2-instruct-1024-vt196-hope-8gpu/checkpoint_5770`
+- Config: `src/configs/training_configs/train_llava_siglip2_instruct_ELF-L_hope_1024_vt196_8gpu.yml`
+- Primary sampling: `ode`, 64 steps, `cfg=2`, `self_cond_cfg=1`, `time_schedule=logit_normal`
+- Verdict from this probe: the generated answers are not usable VQA answers. They do not answer the image questions coherently.
+
+Raw generations are kept in [`raw/`](raw/): `generated_64_cfg2.jsonl`, `generated_64_cfg1.jsonl`, and `generated_32_cfg2.jsonl`.
+Machine-readable metadata is in [`probe_results.json`](probe_results.json).
+
+## Sample 1
+
+![sample 1](images/000000033471.jpg)
+
+- Source image: `coco/train2017/000000033471.jpg`
+- Prompt: `What are the colors of the bus in the image?`
+- Reference: `The bus in the image is white and red.`
+
+<details open>
+<summary>Model output - primary run, 64-step cfg=2</summary>
+
+```text
+Act. 1829, by Color of Congress (Omcopa) Color of the Congress (D A.C.) Executive Reform Act of 1959 and legislative Actidary (Men. 199-1880) Judile Laws Act (Collegia, Virginia, Virginia, and Iowa) Judile Reform Act (Men. 199-1870) Act. 1900-Cen. 1892 State-Ddefining The Senate or state House of Representatives shall look at the image and bring a vote of action: (1) any ineffective occupation in the office of vice president and without sanctionss under district constitutional law or state official law; (4) any obstruction impact on the House, ab or by the Senate or by spiece to  (3) retain the government's power, redistributing, or (4) reduce the perceived size of each chamber by a majority; (5) to limit the gathering of the Legislature in limiting the power of both House and Senate by applying the state rule of law in the legislative branch; (6) to prohibit Members present and past of the Court's Prefixes from applying by commercial court decrees unconveniently applied to the Constitution, requiring checking, recording and casting of readings. Senal Code 21.45 In exempt 16101, J the state Senate shall sign separate and simple bills for action, pronounced in to the form 1001 and 1002 of nations, by the words and by votes of the Legislature and of the State of Illinois, to inveal and (1) amend the state government's constitution; (1) to retain the power of reprebking the Constitution; (2) any electronic or printed visual evidence not being identified; and (3) or in a case of administrative violations, the Senate shall call the office of the Attorney General, The Governor of the State of Illinois, to import the Constitution; and (4) any violating of federal law punishing the state of Illinois, legally or on charges of force and without interference with the Senate and the somme. Senal Code 23.49 In exempt 16101, D the Illinois state House of Representatives shall engage in: (1) in the office of Representatives without requesting, by its own indececision, bring legislation before [the]th Illinois Circuit Court of Appeals;  (2) in the office of electable electoral persons and start no party votes;  (3) in the office of treasurer of persons for whom law shall issue an ordinance to secure a record under the Electronic Public Services Act 1870 of 1976; (4) on behalf of persons with no liabilities which may be prohibited and punishable in court of shutdown against the Attorney General if authority to acting actions does not restore the Constitution enforcing any decree. Senal Code 24.52 Where in 31.06—any weapons not prohibited from imposing Section II of Section 916 or of Section 42 of U.S. Customs and Tax Agions Act (CCJM10):A, Any weapons also prohibited from imposing Section II. Senal Code 27.53 The state House of Delegates shall nominate three members of Congress, provided that: (1) proposes a "prop bill" with the consent of the governor or constaveman of the House revokes the approval or approval of or braveman of three members of Congress, that the governor does not created the formula of a vote for an alignment of the outcome of home town hall elections, (2) prohibits the governor from signing a draft bill of three governors of association or commercial district with the consent of the 10,000 representatives, and e(6) automatically nominates the state and county Commissioners. Senal Code 26.10b,100 The President of the United States House of Representatives or state House of Representatives shall sign a draft bill with the approval of a representative who chairs of a
+```
+
+</details>
+
+## Sample 2
+
+![sample 2](images/000000052846.jpg)
+
+- Source image: `coco/train2017/000000052846.jpg`
+- Prompt: `Where is the cat positioned in the image?`
+- Reference: `The cat is positioned on top of the back of the couch in the living room.`
+
+<details open>
+<summary>Model output - primary run, 64-step cfg=2</summary>
+
+```text
+Hold the button on the inside of a cat. on the right, turn on a cat. Hold the button and an option button in the center on the bottom of a square. on the left. Turn on a chain. Hold the button below a button near to the top of a cat. Place on a chain. Hold a black strip immodly on the number Press "T" a button. Hold on a chain slightly in front of a cat. Put on a column. Hold the button on a column at the top of an image in the toe of a column, in a light water box. "U" on the left line into left. Hold a column and Hold the button on a column at the bottom of a cat. on the right, press the button on a column. Put a white chain on a large metal paper. Place a chain on a cat or hold a finger to one on a chain. Place on a chain. Hold on a chain slightly in front of a cat. Place on the right side and Hold the button on a column on the toe of a column. Place on a chain. Hold a finger on a column at the bottom of a cat. Press open a column and close The column is on watchful One column under a column Press "A" about in the right. Hold a column and Hold the button on a column at the bottom of a cat. Place on a chain. A finger on a column at the top of a cat. Press open a column to close Wait a minute a white eye at the top of a plant is illuminated, opening so a context column is visible Press "Z" on the left. Holding button on right Press "B" a button. Draw a black clip on a chain, crossing fill a butt-blue line from right, past the screen on a Pink. Press "H" a button. Draw a black clip on a chain, crossing down a butt-blue line from left, past the screen. to the right, press the button on a column. Click the button top of column of an image. Place on a column or hold an option on a button at the bottom of a cat. Place on a column. A finger on a column on the left of a column. Place on a chain. Hold a finger on a column to the bottom of a cat. Place on a chain. Hold an option on a column on the bottom of a cat. To the left, press the button on a column. Click the button top of column of an image. Hold a column and Hold the button on a column at the bottom of a cat. Place on a chain. Skip a stopsign in the plastic misfield, toward in the left Press "Z" a button. Skip a piece drawing a is installed in a vent-shaped box securely in front of a Box. Hold a make-up with a stick while skip a row slightly to the left of a box. To the right, skip a stopsign in the plastic misfield. Skip a White Dot! A pin on the hold is placed, for the lower mouse in the image (test and large caunk) Press "B" on the left Press "A" a button. Hold a make-up with a stick while skip a row slightly in front of a box. on the left, change the angle of a mouse. Press "B" on this two. Skip a white square Three small flowers flower through a stake, one pointed upward to the
+```
+
+</details>
+
