@@ -21,6 +21,8 @@ appName = [hope/ml-easy-job]luoyaxin03
 afo.app.name = [mlp/Hope]@luoyaxin03
 afo.engine.wait_for_job_finished = false
 source.system = kinet
+hope.resource.experiment = multi_modal_h800_tokenizer
+
 
 [roles]
 worker.script = PIPELINE_LOG_DIR=/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/outputs/elf_l-llava-siglip2-1024-vt196-pipeline-hope-8gpu/launch_logs bash /mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/submit/run_elf_l_llava_1024_pipeline_hope.sh src/configs/training_configs/train_llava_siglip2_warmup_ELF-L_hope_1024_vt196_8gpu.yml src/configs/training_configs/train_llava_siglip2_instruct_ELF-L_hope_1024_vt196_8gpu.yml
