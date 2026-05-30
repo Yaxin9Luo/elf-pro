@@ -1,0 +1,960 @@
+{
+  "summary": {
+    "checkpoint": "outputs/elf_l-tulu3-sft-t5-1024-hope-32gpu/checkpoint_5402",
+    "checkpoint_meta": {
+      "step": 5402,
+      "epoch": 2
+    },
+    "weights": "ema_params1",
+    "num_examples": 8,
+    "clean_decode": {
+      "mean_token_acc": 1.0,
+      "min_token_acc": 1.0,
+      "max_token_acc": 1.0
+    },
+    "controlled_denoise": {
+      "t=0.9:correct": {
+        "noise_x_mse": 0.04751769080758095,
+        "x_mse": 0.09577007591724396,
+        "v_mse": 9.577007293701172,
+        "cosine": 0.9355632960796356,
+        "token_acc": 0.9277708008885384
+      },
+      "t=0.9:zero": {
+        "noise_x_mse": 0.04751769080758095,
+        "x_mse": 0.1558159664273262,
+        "v_mse": 15.581597328186035,
+        "cosine": 0.8917032778263092,
+        "token_acc": 0.8921549916267395
+      },
+      "t=0.9:shuffled": {
+        "noise_x_mse": 0.04751769080758095,
+        "x_mse": 0.13376808539032936,
+        "v_mse": 13.376808166503906,
+        "cosine": 0.9092924892902374,
+        "token_acc": 0.9090820774435997
+      },
+      "t=0.7:correct": {
+        "noise_x_mse": 0.4274194687604904,
+        "x_mse": 0.10666200146079063,
+        "v_mse": 1.1851332783699036,
+        "cosine": 0.9276711642742157,
+        "token_acc": 0.9240943342447281
+      },
+      "t=0.7:zero": {
+        "noise_x_mse": 0.4274194687604904,
+        "x_mse": 0.17388086020946503,
+        "v_mse": 1.9320095777511597,
+        "cosine": 0.878052294254303,
+        "token_acc": 0.9221496134996414
+      },
+      "t=0.7:shuffled": {
+        "noise_x_mse": 0.4274194687604904,
+        "x_mse": 0.1555175557732582,
+        "v_mse": 1.7279728651046753,
+        "cosine": 0.8933026790618896,
+        "token_acc": 0.8475011959671974
+      },
+      "t=0.5:correct": {
+        "noise_x_mse": 1.1858142018318176,
+        "x_mse": 0.14122410118579865,
+        "v_mse": 0.5648964047431946,
+        "cosine": 0.9020521938800812,
+        "token_acc": 0.8156534023582935
+      },
+      "t=0.5:zero": {
+        "noise_x_mse": 1.1858142018318176,
+        "x_mse": 0.22538171708583832,
+        "v_mse": 0.9015268683433533,
+        "cosine": 0.8370076715946198,
+        "token_acc": 0.6733284071087837
+      },
+      "t=0.5:shuffled": {
+        "noise_x_mse": 1.1858142018318176,
+        "x_mse": 0.21344879269599915,
+        "v_mse": 0.8537951111793518,
+        "cosine": 0.8484218418598175,
+        "token_acc": 0.6211983673274517
+      },
+      "t=0.3:correct": {
+        "noise_x_mse": 2.327939987182617,
+        "x_mse": 0.25665538012981415,
+        "v_mse": 0.5237865298986435,
+        "cosine": 0.8055646121501923,
+        "token_acc": 0.6115569714456797
+      },
+      "t=0.3:zero": {
+        "noise_x_mse": 2.327939987182617,
+        "x_mse": 0.4346684515476227,
+        "v_mse": 0.8870784938335419,
+        "cosine": 0.633633017539978,
+        "token_acc": 0.2872915156185627
+      },
+      "t=0.3:shuffled": {
+        "noise_x_mse": 2.327939987182617,
+        "x_mse": 0.4591827988624573,
+        "v_mse": 0.9371078014373779,
+        "cosine": 0.6202358901500702,
+        "token_acc": 0.20244126953184605
+      }
+    }
+  },
+  "examples": [
+    {
+      "id": 0,
+      "input": "User: What are the main benefits of instruction tuning a pretrained language model? Answer in exactly three bullet points.\nAssistant:",
+      "expected": "- It teaches the model to follow user requests.\n- It improves conversational formatting and helpfulness.\n- It makes outputs better aligned with supervised task demonstrations.",
+      "clean_decode": {
+        "token_acc": 1.0,
+        "generated": "- It teaches the model to follow user requests. - It improves conversational formatting and helpfulness. - It makes outputs better aligned with supervised task demonstrations."
+      },
+      "denoise": [
+        {
+          "t": 0.9,
+          "variant": "correct",
+          "x_mse": 0.08603516221046448,
+          "v_mse": 8.603515625,
+          "cosine": 0.9422339797019958,
+          "token_acc_batch": 0.8780487775802612
+        },
+        {
+          "t": 0.9,
+          "variant": "zero",
+          "x_mse": 0.13366563618183136,
+          "v_mse": 13.36656379699707,
+          "cosine": 0.9069613218307495,
+          "token_acc_batch": 0.8780487775802612
+        },
+        {
+          "t": 0.9,
+          "variant": "shuffled",
+          "x_mse": 0.11344554275274277,
+          "v_mse": 11.344554901123047,
+          "cosine": 0.9228286743164062,
+          "token_acc_batch": 0.8780487775802612
+        },
+        {
+          "t": 0.7,
+          "variant": "correct",
+          "x_mse": 0.09607595205307007,
+          "v_mse": 1.0675106048583984,
+          "cosine": 0.935040295124054,
+          "token_acc_batch": 0.8780487775802612
+        },
+        {
+          "t": 0.7,
+          "variant": "zero",
+          "x_mse": 0.14549066126346588,
+          "v_mse": 1.616562843322754,
+          "cosine": 0.8979677557945251,
+          "token_acc_batch": 0.9268292784690857
+        },
+        {
+          "t": 0.7,
+          "variant": "shuffled",
+          "x_mse": 0.1315508931875229,
+          "v_mse": 1.4616765975952148,
+          "cosine": 0.9093096256256104,
+          "token_acc_batch": 0.8780487775802612
+        },
+        {
+          "t": 0.5,
+          "variant": "correct",
+          "x_mse": 0.12228399515151978,
+          "v_mse": 0.4891359806060791,
+          "cosine": 0.915378749370575,
+          "token_acc_batch": 0.8536585569381714
+        },
+        {
+          "t": 0.5,
+          "variant": "zero",
+          "x_mse": 0.1809561550617218,
+          "v_mse": 0.7238246202468872,
+          "cosine": 0.8708439469337463,
+          "token_acc_batch": 0.8780487775802612
+        },
+        {
+          "t": 0.5,
+          "variant": "shuffled",
+          "x_mse": 0.1713120937347412,
+          "v_mse": 0.6852483749389648,
+          "cosine": 0.878828227519989,
+          "token_acc_batch": 0.8292682766914368
+        },
+        {
+          "t": 0.3,
+          "variant": "correct",
+          "x_mse": 0.32908299565315247,
+          "v_mse": 0.6715980172157288,
+          "cosine": 0.7408947348594666,
+          "token_acc_batch": 0.4390243887901306
+        },
+        {
+          "t": 0.3,
+          "variant": "zero",
+          "x_mse": 0.37903034687042236,
+          "v_mse": 0.7735313773155212,
+          "cosine": 0.6782053112983704,
+          "token_acc_batch": 0.39024388790130615
+        },
+        {
+          "t": 0.3,
+          "variant": "shuffled",
+          "x_mse": 0.4212157130241394,
+          "v_mse": 0.859623908996582,
+          "cosine": 0.6537846326828003,
+          "token_acc_batch": 0.3658536672592163
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "input": "User: 请用中文回答，并且只输出一个 JSON 对象，不要输出解释。把下面这句话抽取成字段：张三明天下午三点在上海和李四开会。字段包括 person, time, location, event。\nAssistant:",
+      "expected": "{\"person\":\"张三\",\"time\":\"明天下午三点\",\"location\":\"上海\",\"event\":\"和李四开会\"}",
+      "clean_decode": {
+        "token_acc": 1.0,
+        "generated": "\"person\":\"\",\"time\":\"\",\"location\":\"\",\"event\":\"\""
+      },
+      "denoise": [
+        {
+          "t": 0.9,
+          "variant": "correct",
+          "x_mse": 0.08603516221046448,
+          "v_mse": 8.603515625,
+          "cosine": 0.9422339797019958,
+          "token_acc_batch": 0.9390243887901306
+        },
+        {
+          "t": 0.9,
+          "variant": "zero",
+          "x_mse": 0.13366563618183136,
+          "v_mse": 13.36656379699707,
+          "cosine": 0.9069613218307495,
+          "token_acc_batch": 0.8921493887901306
+        },
+        {
+          "t": 0.9,
+          "variant": "shuffled",
+          "x_mse": 0.11344554275274277,
+          "v_mse": 11.344554901123047,
+          "cosine": 0.9228286743164062,
+          "token_acc_batch": 0.9390243887901306
+        },
+        {
+          "t": 0.7,
+          "variant": "correct",
+          "x_mse": 0.09607595205307007,
+          "v_mse": 1.0675106048583984,
+          "cosine": 0.935040295124054,
+          "token_acc_batch": 0.9390243887901306
+        },
+        {
+          "t": 0.7,
+          "variant": "zero",
+          "x_mse": 0.14549066126346588,
+          "v_mse": 1.616562843322754,
+          "cosine": 0.8979677557945251,
+          "token_acc_batch": 0.9165396392345428
+        },
+        {
+          "t": 0.7,
+          "variant": "shuffled",
+          "x_mse": 0.1315508931875229,
+          "v_mse": 1.4616765975952148,
+          "cosine": 0.9093096256256104,
+          "token_acc_batch": 0.9390243887901306
+        },
+        {
+          "t": 0.5,
+          "variant": "correct",
+          "x_mse": 0.12228399515151978,
+          "v_mse": 0.4891359806060791,
+          "cosine": 0.915378749370575,
+          "token_acc_batch": 0.9268292784690857
+        },
+        {
+          "t": 0.5,
+          "variant": "zero",
+          "x_mse": 0.1809561550617218,
+          "v_mse": 0.7238246202468872,
+          "cosine": 0.8708439469337463,
+          "token_acc_batch": 0.9077743887901306
+        },
+        {
+          "t": 0.5,
+          "variant": "shuffled",
+          "x_mse": 0.1713120937347412,
+          "v_mse": 0.6852483749389648,
+          "cosine": 0.878828227519989,
+          "token_acc_batch": 0.8990091383457184
+        },
+        {
+          "t": 0.3,
+          "variant": "correct",
+          "x_mse": 0.32908299565315247,
+          "v_mse": 0.6715980172157288,
+          "cosine": 0.7408947348594666,
+          "token_acc_batch": 0.3445121943950653
+        },
+        {
+          "t": 0.3,
+          "variant": "zero",
+          "x_mse": 0.37903034687042236,
+          "v_mse": 0.7735313773155212,
+          "cosine": 0.6782053112983704,
+          "token_acc_batch": 0.2888719439506531
+        },
+        {
+          "t": 0.3,
+          "variant": "shuffled",
+          "x_mse": 0.4212157130241394,
+          "v_mse": 0.859623908996582,
+          "cosine": 0.6537846326828003,
+          "token_acc_batch": 0.33917683362960815
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "input": "User: Translate the following sentence into English. Only output the translation, no explanation. 这个模型需要先学会听懂指令，然后再接入多模态数据。\nAssistant:",
+      "expected": "The model needs to learn to understand instructions first, and then incorporate multimodal data.",
+      "clean_decode": {
+        "token_acc": 1.0,
+        "generated": "The model needs to learn to understand instructions first, and then incorporate multimodal data."
+      },
+      "denoise": [
+        {
+          "t": 0.9,
+          "variant": "correct",
+          "x_mse": 0.08603516221046448,
+          "v_mse": 8.603515625,
+          "cosine": 0.9422339797019958,
+          "token_acc_batch": 0.9397417505582174
+        },
+        {
+          "t": 0.9,
+          "variant": "zero",
+          "x_mse": 0.13366563618183136,
+          "v_mse": 13.36656379699707,
+          "cosine": 0.9069613218307495,
+          "token_acc_batch": 0.9084917505582174
+        },
+        {
+          "t": 0.9,
+          "variant": "shuffled",
+          "x_mse": 0.11344554275274277,
+          "v_mse": 11.344554901123047,
+          "cosine": 0.9228286743164062,
+          "token_acc_batch": 0.9397417505582174
+        },
+        {
+          "t": 0.7,
+          "variant": "correct",
+          "x_mse": 0.09607595205307007,
+          "v_mse": 1.0675106048583984,
+          "cosine": 0.935040295124054,
+          "token_acc_batch": 0.920133908589681
+        },
+        {
+          "t": 0.7,
+          "variant": "zero",
+          "x_mse": 0.14549066126346588,
+          "v_mse": 1.616562843322754,
+          "cosine": 0.8979677557945251,
+          "token_acc_batch": 0.9051440755526224
+        },
+        {
+          "t": 0.7,
+          "variant": "shuffled",
+          "x_mse": 0.1315508931875229,
+          "v_mse": 1.4616765975952148,
+          "cosine": 0.9093096256256104,
+          "token_acc_batch": 0.920133908589681
+        },
+        {
+          "t": 0.5,
+          "variant": "correct",
+          "x_mse": 0.12228399515151978,
+          "v_mse": 0.4891359806060791,
+          "cosine": 0.915378749370575,
+          "token_acc_batch": 0.872788151105245
+        },
+        {
+          "t": 0.5,
+          "variant": "zero",
+          "x_mse": 0.1809561550617218,
+          "v_mse": 0.7238246202468872,
+          "cosine": 0.8708439469337463,
+          "token_acc_batch": 0.8600848913192749
+        },
+        {
+          "t": 0.5,
+          "variant": "shuffled",
+          "x_mse": 0.1713120937347412,
+          "v_mse": 0.6852483749389648,
+          "cosine": 0.878828227519989,
+          "token_acc_batch": 0.8738492329915365
+        },
+        {
+          "t": 0.3,
+          "variant": "correct",
+          "x_mse": 0.32908299565315247,
+          "v_mse": 0.6715980172157288,
+          "cosine": 0.7408947348594666,
+          "token_acc_batch": 0.3081061691045761
+        },
+        {
+          "t": 0.3,
+          "variant": "zero",
+          "x_mse": 0.37903034687042236,
+          "v_mse": 0.7735313773155212,
+          "cosine": 0.6782053112983704,
+          "token_acc_batch": 0.27101266880830127
+        },
+        {
+          "t": 0.3,
+          "variant": "shuffled",
+          "x_mse": 0.4212157130241394,
+          "v_mse": 0.859623908996582,
+          "cosine": 0.6537846326828003,
+          "token_acc_batch": 0.2849414199590683
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "input": "User: Read the paragraph and answer with one concise sentence. Paragraph: The experiment used 32 GPUs, trained for two epochs, and saved the final checkpoint at step 5402. What checkpoint should we evaluate?\nAssistant:",
+      "expected": "We should evaluate checkpoint_5402.",
+      "clean_decode": {
+        "token_acc": 1.0,
+        "generated": "We should evaluate checkpoint_5402."
+      },
+      "denoise": [
+        {
+          "t": 0.9,
+          "variant": "correct",
+          "x_mse": 0.08603516221046448,
+          "v_mse": 8.603515625,
+          "cosine": 0.9422339797019958,
+          "token_acc_batch": 0.892306312918663
+        },
+        {
+          "t": 0.9,
+          "variant": "zero",
+          "x_mse": 0.13366563618183136,
+          "v_mse": 13.36656379699707,
+          "cosine": 0.9069613218307495,
+          "token_acc_batch": 0.868868812918663
+        },
+        {
+          "t": 0.9,
+          "variant": "shuffled",
+          "x_mse": 0.11344554275274277,
+          "v_mse": 11.344554901123047,
+          "cosine": 0.9228286743164062,
+          "token_acc_batch": 0.923556312918663
+        },
+        {
+          "t": 0.7,
+          "variant": "correct",
+          "x_mse": 0.09607595205307007,
+          "v_mse": 1.0675106048583984,
+          "cosine": 0.935040295124054,
+          "token_acc_batch": 0.8776004314422607
+        },
+        {
+          "t": 0.7,
+          "variant": "zero",
+          "x_mse": 0.14549066126346588,
+          "v_mse": 1.616562843322754,
+          "cosine": 0.8979677557945251,
+          "token_acc_batch": 0.8663580566644669
+        },
+        {
+          "t": 0.7,
+          "variant": "shuffled",
+          "x_mse": 0.1315508931875229,
+          "v_mse": 1.4616765975952148,
+          "cosine": 0.9093096256256104,
+          "token_acc_batch": 0.8151004314422607
+        },
+        {
+          "t": 0.5,
+          "variant": "correct",
+          "x_mse": 0.12228399515151978,
+          "v_mse": 0.4891359806060791,
+          "cosine": 0.915378749370575,
+          "token_acc_batch": 0.8420911133289337
+        },
+        {
+          "t": 0.5,
+          "variant": "zero",
+          "x_mse": 0.1809561550617218,
+          "v_mse": 0.7238246202468872,
+          "cosine": 0.8708439469337463,
+          "token_acc_batch": 0.7388136684894562
+        },
+        {
+          "t": 0.5,
+          "variant": "shuffled",
+          "x_mse": 0.1713120937347412,
+          "v_mse": 0.6852483749389648,
+          "cosine": 0.878828227519989,
+          "token_acc_batch": 0.7178869247436523
+        },
+        {
+          "t": 0.3,
+          "variant": "correct",
+          "x_mse": 0.32908299565315247,
+          "v_mse": 0.6715980172157288,
+          "cosine": 0.7408947348594666,
+          "token_acc_batch": 0.3873296268284321
+        },
+        {
+          "t": 0.3,
+          "variant": "zero",
+          "x_mse": 0.37903034687042236,
+          "v_mse": 0.7735313773155212,
+          "cosine": 0.6782053112983704,
+          "token_acc_batch": 0.20325950160622597
+        },
+        {
+          "t": 0.3,
+          "variant": "shuffled",
+          "x_mse": 0.4212157130241394,
+          "v_mse": 0.859623908996582,
+          "cosine": 0.6537846326828003,
+          "token_acc_batch": 0.21370606496930122
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "input": "User: You must follow this format exactly:\nAnswer: <number>\nCompute 17 + 25 - 9.\nAssistant:",
+      "expected": "Answer: 33",
+      "clean_decode": {
+        "token_acc": 1.0,
+        "generated": "Answer: 33"
+      },
+      "denoise": [
+        {
+          "t": 0.9,
+          "variant": "correct",
+          "x_mse": 0.10550498962402344,
+          "v_mse": 10.550498962402344,
+          "cosine": 0.9288926124572754,
+          "token_acc_batch": 1.0
+        },
+        {
+          "t": 0.9,
+          "variant": "zero",
+          "x_mse": 0.17796629667282104,
+          "v_mse": 17.796630859375,
+          "cosine": 0.8764452338218689,
+          "token_acc_batch": 1.0
+        },
+        {
+          "t": 0.9,
+          "variant": "shuffled",
+          "x_mse": 0.15409062802791595,
+          "v_mse": 15.409061431884766,
+          "cosine": 0.8957563042640686,
+          "token_acc_batch": 0.6666666865348816
+        },
+        {
+          "t": 0.7,
+          "variant": "correct",
+          "x_mse": 0.1172480508685112,
+          "v_mse": 1.3027559518814087,
+          "cosine": 0.9203020334243774,
+          "token_acc_batch": 1.0
+        },
+        {
+          "t": 0.7,
+          "variant": "zero",
+          "x_mse": 0.20227105915546417,
+          "v_mse": 2.2474563121795654,
+          "cosine": 0.8581368327140808,
+          "token_acc_batch": 1.0
+        },
+        {
+          "t": 0.7,
+          "variant": "shuffled",
+          "x_mse": 0.17948421835899353,
+          "v_mse": 1.9942691326141357,
+          "cosine": 0.877295732498169,
+          "token_acc_batch": 0.6666666865348816
+        },
+        {
+          "t": 0.5,
+          "variant": "correct",
+          "x_mse": 0.16016420722007751,
+          "v_mse": 0.6406568288803101,
+          "cosine": 0.8887256383895874,
+          "token_acc_batch": 0.3333333432674408
+        },
+        {
+          "t": 0.5,
+          "variant": "zero",
+          "x_mse": 0.26980727910995483,
+          "v_mse": 1.0792291164398193,
+          "cosine": 0.8031713962554932,
+          "token_acc_batch": 0.6666666865348816
+        },
+        {
+          "t": 0.5,
+          "variant": "shuffled",
+          "x_mse": 0.2555854916572571,
+          "v_mse": 1.0223418474197388,
+          "cosine": 0.818015456199646,
+          "token_acc_batch": 0.3333333432674408
+        },
+        {
+          "t": 0.3,
+          "variant": "correct",
+          "x_mse": 0.18422776460647583,
+          "v_mse": 0.3759750425815582,
+          "cosine": 0.870234489440918,
+          "token_acc_batch": 0.6666666865348816
+        },
+        {
+          "t": 0.3,
+          "variant": "zero",
+          "x_mse": 0.490306556224823,
+          "v_mse": 1.0006256103515625,
+          "cosine": 0.5890607237815857,
+          "token_acc_batch": 0.0
+        },
+        {
+          "t": 0.3,
+          "variant": "shuffled",
+          "x_mse": 0.49714988470077515,
+          "v_mse": 1.0145916938781738,
+          "cosine": 0.5866871476173401,
+          "token_acc_batch": 0.0
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "input": "User: 改写下面的句子，让它更正式，但保持原意：这个模型现在说话有点乱，得先做一轮 SFT。\nAssistant:",
+      "expected": "当前模型的输出仍然不够稳定，因此需要先进行一轮监督微调。",
+      "clean_decode": {
+        "token_acc": 1.0,
+        "generated": ","
+      },
+      "denoise": [
+        {
+          "t": 0.9,
+          "variant": "correct",
+          "x_mse": 0.10550498962402344,
+          "v_mse": 10.550498962402344,
+          "cosine": 0.9288926124572754,
+          "token_acc_batch": 1.0
+        },
+        {
+          "t": 0.9,
+          "variant": "zero",
+          "x_mse": 0.17796629667282104,
+          "v_mse": 17.796630859375,
+          "cosine": 0.8764452338218689,
+          "token_acc_batch": 0.875
+        },
+        {
+          "t": 0.9,
+          "variant": "shuffled",
+          "x_mse": 0.15409062802791595,
+          "v_mse": 15.409061431884766,
+          "cosine": 0.8957563042640686,
+          "token_acc_batch": 0.8333333432674408
+        },
+        {
+          "t": 0.7,
+          "variant": "correct",
+          "x_mse": 0.1172480508685112,
+          "v_mse": 1.3027559518814087,
+          "cosine": 0.9203020334243774,
+          "token_acc_batch": 1.0
+        },
+        {
+          "t": 0.7,
+          "variant": "zero",
+          "x_mse": 0.20227105915546417,
+          "v_mse": 2.2474563121795654,
+          "cosine": 0.8581368327140808,
+          "token_acc_batch": 1.0
+        },
+        {
+          "t": 0.7,
+          "variant": "shuffled",
+          "x_mse": 0.17948421835899353,
+          "v_mse": 1.9942691326141357,
+          "cosine": 0.877295732498169,
+          "token_acc_batch": 0.8333333432674408
+        },
+        {
+          "t": 0.5,
+          "variant": "correct",
+          "x_mse": 0.16016420722007751,
+          "v_mse": 0.6406568288803101,
+          "cosine": 0.8887256383895874,
+          "token_acc_batch": 0.6666666716337204
+        },
+        {
+          "t": 0.5,
+          "variant": "zero",
+          "x_mse": 0.26980727910995483,
+          "v_mse": 1.0792291164398193,
+          "cosine": 0.8031713962554932,
+          "token_acc_batch": 0.8333333432674408
+        },
+        {
+          "t": 0.5,
+          "variant": "shuffled",
+          "x_mse": 0.2555854916572571,
+          "v_mse": 1.0223418474197388,
+          "cosine": 0.818015456199646,
+          "token_acc_batch": 0.6666666716337204
+        },
+        {
+          "t": 0.3,
+          "variant": "correct",
+          "x_mse": 0.18422776460647583,
+          "v_mse": 0.3759750425815582,
+          "cosine": 0.870234489440918,
+          "token_acc_batch": 0.8333333432674408
+        },
+        {
+          "t": 0.3,
+          "variant": "zero",
+          "x_mse": 0.490306556224823,
+          "v_mse": 1.0006256103515625,
+          "cosine": 0.5890607237815857,
+          "token_acc_batch": 0.375
+        },
+        {
+          "t": 0.3,
+          "variant": "shuffled",
+          "x_mse": 0.49714988470077515,
+          "v_mse": 1.0145916938781738,
+          "cosine": 0.5866871476173401,
+          "token_acc_batch": 0.25
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "input": "User: Classify the sentiment of this sentence as Positive, Negative, or Neutral. Only output the label. Sentence: The run finally completed, but the generated answers are still not reliable.\nAssistant:",
+      "expected": "Negative",
+      "clean_decode": {
+        "token_acc": 1.0,
+        "generated": "Negative"
+      },
+      "denoise": [
+        {
+          "t": 0.9,
+          "variant": "correct",
+          "x_mse": 0.10550498962402344,
+          "v_mse": 10.550498962402344,
+          "cosine": 0.9288926124572754,
+          "token_acc_batch": 1.0
+        },
+        {
+          "t": 0.9,
+          "variant": "zero",
+          "x_mse": 0.17796629667282104,
+          "v_mse": 17.796630859375,
+          "cosine": 0.8764452338218689,
+          "token_acc_batch": 0.9166666666666666
+        },
+        {
+          "t": 0.9,
+          "variant": "shuffled",
+          "x_mse": 0.15409062802791595,
+          "v_mse": 15.409061431884766,
+          "cosine": 0.8957563042640686,
+          "token_acc_batch": 0.8888888955116272
+        },
+        {
+          "t": 0.7,
+          "variant": "correct",
+          "x_mse": 0.1172480508685112,
+          "v_mse": 1.3027559518814087,
+          "cosine": 0.9203020334243774,
+          "token_acc_batch": 1.0
+        },
+        {
+          "t": 0.7,
+          "variant": "zero",
+          "x_mse": 0.20227105915546417,
+          "v_mse": 2.2474563121795654,
+          "cosine": 0.8581368327140808,
+          "token_acc_batch": 1.0
+        },
+        {
+          "t": 0.7,
+          "variant": "shuffled",
+          "x_mse": 0.17948421835899353,
+          "v_mse": 1.9942691326141357,
+          "cosine": 0.877295732498169,
+          "token_acc_batch": 0.8888888955116272
+        },
+        {
+          "t": 0.5,
+          "variant": "correct",
+          "x_mse": 0.16016420722007751,
+          "v_mse": 0.6406568288803101,
+          "cosine": 0.8887256383895874,
+          "token_acc_batch": 0.777777781089147
+        },
+        {
+          "t": 0.5,
+          "variant": "zero",
+          "x_mse": 0.26980727910995483,
+          "v_mse": 1.0792291164398193,
+          "cosine": 0.8031713962554932,
+          "token_acc_batch": 0.5555555621782938
+        },
+        {
+          "t": 0.5,
+          "variant": "shuffled",
+          "x_mse": 0.2555854916572571,
+          "v_mse": 1.0223418474197388,
+          "cosine": 0.818015456199646,
+          "token_acc_batch": 0.4444444477558136
+        },
+        {
+          "t": 0.3,
+          "variant": "correct",
+          "x_mse": 0.18422776460647583,
+          "v_mse": 0.3759750425815582,
+          "cosine": 0.870234489440918,
+          "token_acc_batch": 0.8888888955116272
+        },
+        {
+          "t": 0.3,
+          "variant": "zero",
+          "x_mse": 0.490306556224823,
+          "v_mse": 1.0006256103515625,
+          "cosine": 0.5890607237815857,
+          "token_acc_batch": 0.4166666666666667
+        },
+        {
+          "t": 0.3,
+          "variant": "shuffled",
+          "x_mse": 0.49714988470077515,
+          "v_mse": 1.0145916938781738,
+          "cosine": 0.5866871476173401,
+          "token_acc_batch": 0.16666666666666666
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "input": "User: Extract the action items from the note below. Return a numbered list with no extra commentary. Note: We need to evaluate the SFT checkpoint, compare it with the old checkpoint, and then decide whether to scale pretraining data or move to multimodal training.\nAssistant:",
+      "expected": "1. Evaluate the SFT checkpoint.\n2. Compare it with the old checkpoint.\n3. Decide whether to scale pretraining data or move to multimodal training.",
+      "clean_decode": {
+        "token_acc": 1.0,
+        "generated": "1. Evaluate the SFT checkpoint. 2. Compare it with the old checkpoint. 3. Decide whether to scale pretraining data or move to multimodal training."
+      },
+      "denoise": [
+        {
+          "t": 0.9,
+          "variant": "correct",
+          "x_mse": 0.10550498962402344,
+          "v_mse": 10.550498962402344,
+          "cosine": 0.9288926124572754,
+          "token_acc_batch": 0.9632352888584137
+        },
+        {
+          "t": 0.9,
+          "variant": "zero",
+          "x_mse": 0.17796629667282104,
+          "v_mse": 17.796630859375,
+          "cosine": 0.8764452338218689,
+          "token_acc_batch": 0.915441170334816
+        },
+        {
+          "t": 0.9,
+          "variant": "shuffled",
+          "x_mse": 0.15409062802791595,
+          "v_mse": 15.409061431884766,
+          "cosine": 0.8957563042640686,
+          "token_acc_batch": 0.8946078419685364
+        },
+        {
+          "t": 0.7,
+          "variant": "correct",
+          "x_mse": 0.1172480508685112,
+          "v_mse": 1.3027559518814087,
+          "cosine": 0.9203020334243774,
+          "token_acc_batch": 0.9705882370471954
+        },
+        {
+          "t": 0.7,
+          "variant": "zero",
+          "x_mse": 0.20227105915546417,
+          "v_mse": 2.2474563121795654,
+          "cosine": 0.8581368327140808,
+          "token_acc_batch": 0.977941170334816
+        },
+        {
+          "t": 0.7,
+          "variant": "shuffled",
+          "x_mse": 0.17948421835899353,
+          "v_mse": 1.9942691326141357,
+          "cosine": 0.877295732498169,
+          "token_acc_batch": 0.8799019604921341
+        },
+        {
+          "t": 0.5,
+          "variant": "correct",
+          "x_mse": 0.16016420722007751,
+          "v_mse": 0.6406568288803101,
+          "cosine": 0.8887256383895874,
+          "token_acc_batch": 0.7892156913876534
+        },
+        {
+          "t": 0.5,
+          "variant": "zero",
+          "x_mse": 0.26980727910995483,
+          "v_mse": 1.0792291164398193,
+          "cosine": 0.8031713962554932,
+          "token_acc_batch": 0.6078431457281113
+        },
+        {
+          "t": 0.5,
+          "variant": "shuffled",
+          "x_mse": 0.2555854916572571,
+          "v_mse": 1.0223418474197388,
+          "cosine": 0.818015456199646,
+          "token_acc_batch": 0.5245098099112511
+        },
+        {
+          "t": 0.3,
+          "variant": "correct",
+          "x_mse": 0.18422776460647583,
+          "v_mse": 0.3759750425815582,
+          "cosine": 0.870234489440918,
+          "token_acc_batch": 0.8357843160629272
+        },
+        {
+          "t": 0.3,
+          "variant": "zero",
+          "x_mse": 0.490306556224823,
+          "v_mse": 1.0006256103515625,
+          "cosine": 0.5890607237815857,
+          "token_acc_batch": 0.37132352963089943
+        },
+        {
+          "t": 0.3,
+          "variant": "shuffled",
+          "x_mse": 0.49714988470077515,
+          "v_mse": 1.0145916938781738,
+          "cosine": 0.5866871476173401,
+          "token_acc_batch": 0.19117647409439087
+        }
+      ]
+    }
+  ]
+}

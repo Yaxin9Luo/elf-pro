@@ -1,0 +1,746 @@
+{
+  "summary": {
+    "checkpoint": "outputs/elf_l-tulu3-sft-t5-1024-hope-32gpu/checkpoint_5402",
+    "checkpoint_meta": {
+      "step": 5402,
+      "epoch": 2
+    },
+    "weights": "params",
+    "num_examples": 6,
+    "clean_decode": {
+      "mean_token_acc": 0.9956709941228231,
+      "min_token_acc": 0.9740259647369385,
+      "max_token_acc": 1.0
+    },
+    "controlled_denoise": {
+      "t=0.9:correct": {
+        "noise_x_mse": 0.047644754871726036,
+        "x_mse": 0.07662281766533852,
+        "v_mse": 7.662282466888428,
+        "cosine": 0.9487470090389252,
+        "token_acc": 0.8593359192212422
+      },
+      "t=0.9:zero": {
+        "noise_x_mse": 0.047644754871726036,
+        "x_mse": 0.11766708269715309,
+        "v_mse": 11.766707420349121,
+        "cosine": 0.920815646648407,
+        "token_acc": 0.8930804034074148
+      },
+      "t=0.9:shuffled": {
+        "noise_x_mse": 0.047644754871726036,
+        "x_mse": 0.1011008657515049,
+        "v_mse": 10.11008596420288,
+        "cosine": 0.9318403601646423,
+        "token_acc": 0.8724107642968496
+      },
+      "t=0.7:correct": {
+        "noise_x_mse": 0.42539408802986145,
+        "x_mse": 0.08376235887408257,
+        "v_mse": 0.9306928813457489,
+        "cosine": 0.9437794387340546,
+        "token_acc": 0.8419983486334484
+      },
+      "t=0.7:zero": {
+        "noise_x_mse": 0.42539408802986145,
+        "x_mse": 0.12539267539978027,
+        "v_mse": 1.3932517766952515,
+        "cosine": 0.9150108695030212,
+        "token_acc": 0.8873472213745117
+      },
+      "t=0.7:shuffled": {
+        "noise_x_mse": 0.42539408802986145,
+        "x_mse": 0.11465134471654892,
+        "v_mse": 1.273903727531433,
+        "cosine": 0.9221027195453644,
+        "token_acc": 0.8593047559261322
+      },
+      "t=0.5:correct": {
+        "noise_x_mse": 1.182519555091858,
+        "x_mse": 0.11183425039052963,
+        "v_mse": 0.44733700156211853,
+        "cosine": 0.923645943403244,
+        "token_acc": 0.7834066450595856
+      },
+      "t=0.5:zero": {
+        "noise_x_mse": 1.182519555091858,
+        "x_mse": 0.1575322076678276,
+        "v_mse": 0.6301288306713104,
+        "cosine": 0.8909828662872314,
+        "token_acc": 0.816639671723048
+      },
+      "t=0.5:shuffled": {
+        "noise_x_mse": 1.182519555091858,
+        "x_mse": 0.15222057700157166,
+        "v_mse": 0.6088823080062866,
+        "cosine": 0.8940799832344055,
+        "token_acc": 0.8059876561164856
+      },
+      "t=0.3:correct": {
+        "noise_x_mse": 2.3321006298065186,
+        "x_mse": 0.286786288022995,
+        "v_mse": 0.5852781236171722,
+        "cosine": 0.7846438884735107,
+        "token_acc": 0.44993426402409875
+      },
+      "t=0.3:zero": {
+        "noise_x_mse": 2.3321006298065186,
+        "x_mse": 0.3571988195180893,
+        "v_mse": 0.728977233171463,
+        "cosine": 0.7246926724910736,
+        "token_acc": 0.3960193196932475
+      },
+      "t=0.3:shuffled": {
+        "noise_x_mse": 2.3321006298065186,
+        "x_mse": 0.36090579628944397,
+        "v_mse": 0.7365424931049347,
+        "cosine": 0.7203017771244049,
+        "token_acc": 0.3758367424209913
+      }
+    }
+  },
+  "examples": [
+    {
+      "id": 0,
+      "input": "User: Cinco capitales de países que empiecen por K\nAssistant:",
+      "expected": "Aquí tienes cinco capitales de países que empiezan con la letra \"K\":\n\n1-Kigali, Ruanda\n2-Kiev, Ucrania\n3-Kingston, Jamaica\n4-Kuwait City, Kuwait\n5-Kabul, Afganistán",
+      "clean_decode": {
+        "token_acc": 1.0,
+        "generated": "Aqu tienes cinco capitales de pases que empiezan con la letra \"K\": 1-Kigali, Ruanda 2-Kiev, Ucrania 3-Kingston, Jamaica 4-Kuwait City, Kuwait 5-Kabul, Afganistán"
+      },
+      "denoise": [
+        {
+          "t": 0.9,
+          "variant": "correct",
+          "x_mse": 0.08169608563184738,
+          "v_mse": 8.169609069824219,
+          "cosine": 0.9453491568565369,
+          "token_acc_batch": 0.8571428656578064
+        },
+        {
+          "t": 0.9,
+          "variant": "zero",
+          "x_mse": 0.12326564639806747,
+          "v_mse": 12.326562881469727,
+          "cosine": 0.917824387550354,
+          "token_acc_batch": 0.9142857193946838
+        },
+        {
+          "t": 0.9,
+          "variant": "shuffled",
+          "x_mse": 0.10246464610099792,
+          "v_mse": 10.246463775634766,
+          "cosine": 0.9314085245132446,
+          "token_acc_batch": 0.8571428656578064
+        },
+        {
+          "t": 0.7,
+          "variant": "correct",
+          "x_mse": 0.08993380516767502,
+          "v_mse": 0.9992645382881165,
+          "cosine": 0.9396284222602844,
+          "token_acc_batch": 0.8714285492897034
+        },
+        {
+          "t": 0.7,
+          "variant": "zero",
+          "x_mse": 0.1331883817911148,
+          "v_mse": 1.4798706769943237,
+          "cosine": 0.9105989336967468,
+          "token_acc_batch": 0.9142857193946838
+        },
+        {
+          "t": 0.7,
+          "variant": "shuffled",
+          "x_mse": 0.1152711883187294,
+          "v_mse": 1.2807908058166504,
+          "cosine": 0.9224514365196228,
+          "token_acc_batch": 0.8571428656578064
+        },
+        {
+          "t": 0.5,
+          "variant": "correct",
+          "x_mse": 0.1252332329750061,
+          "v_mse": 0.5009329319000244,
+          "cosine": 0.9145863652229309,
+          "token_acc_batch": 0.6857143044471741
+        },
+        {
+          "t": 0.5,
+          "variant": "zero",
+          "x_mse": 0.17339813709259033,
+          "v_mse": 0.6935925483703613,
+          "cosine": 0.8806580305099487,
+          "token_acc_batch": 0.6857143044471741
+        },
+        {
+          "t": 0.5,
+          "variant": "shuffled",
+          "x_mse": 0.15763549506664276,
+          "v_mse": 0.630541980266571,
+          "cosine": 0.8914515972137451,
+          "token_acc_batch": 0.6857143044471741
+        },
+        {
+          "t": 0.3,
+          "variant": "correct",
+          "x_mse": 0.28261321783065796,
+          "v_mse": 0.5767616629600525,
+          "cosine": 0.7901766300201416,
+          "token_acc_batch": 0.4714285731315613
+        },
+        {
+          "t": 0.3,
+          "variant": "zero",
+          "x_mse": 0.3585857152938843,
+          "v_mse": 0.7318075895309448,
+          "cosine": 0.7265682816505432,
+          "token_acc_batch": 0.30000001192092896
+        },
+        {
+          "t": 0.3,
+          "variant": "shuffled",
+          "x_mse": 0.35503461956977844,
+          "v_mse": 0.7245604991912842,
+          "cosine": 0.7295784950256348,
+          "token_acc_batch": 0.37142857909202576
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "input": "User: Com creus que podem abordar el canvi climàtic?\nAssistant:",
+      "expected": "Per revertir els efectes del canvi climàtic, principalment s'han de reduir dràsticament les emissions de CO2, ampliant les fonts d'energia renovables i reduint el consum d'hidrocarburs.",
+      "clean_decode": {
+        "token_acc": 0.9740259647369385,
+        "generated": "Per revertir els effets del canvi climàtic, principalment s'han de reduir dràsticament les emissions de CO2, ampliant les fonts d'energia renovables i reduint el consum d'hydrocarburs."
+      },
+      "denoise": [
+        {
+          "t": 0.9,
+          "variant": "correct",
+          "x_mse": 0.08169608563184738,
+          "v_mse": 8.169609069824219,
+          "cosine": 0.9453491568565369,
+          "token_acc_batch": 0.8116883039474487
+        },
+        {
+          "t": 0.9,
+          "variant": "zero",
+          "x_mse": 0.12326564639806747,
+          "v_mse": 12.326562881469727,
+          "cosine": 0.917824387550354,
+          "token_acc_batch": 0.8402597308158875
+        },
+        {
+          "t": 0.9,
+          "variant": "shuffled",
+          "x_mse": 0.10246464610099792,
+          "v_mse": 10.246463775634766,
+          "cosine": 0.9314085245132446,
+          "token_acc_batch": 0.8116883039474487
+        },
+        {
+          "t": 0.7,
+          "variant": "correct",
+          "x_mse": 0.08993380516767502,
+          "v_mse": 0.9992645382881165,
+          "cosine": 0.9396284222602844,
+          "token_acc_batch": 0.8123376369476318
+        },
+        {
+          "t": 0.7,
+          "variant": "zero",
+          "x_mse": 0.1331883817911148,
+          "v_mse": 1.4798706769943237,
+          "cosine": 0.9105989336967468,
+          "token_acc_batch": 0.8337662220001221
+        },
+        {
+          "t": 0.7,
+          "variant": "shuffled",
+          "x_mse": 0.1152711883187294,
+          "v_mse": 1.2807908058166504,
+          "cosine": 0.9224514365196228,
+          "token_acc_batch": 0.7987013161182404
+        },
+        {
+          "t": 0.5,
+          "variant": "correct",
+          "x_mse": 0.1252332329750061,
+          "v_mse": 0.5009329319000244,
+          "cosine": 0.9145863652229309,
+          "token_acc_batch": 0.7000000178813934
+        },
+        {
+          "t": 0.5,
+          "variant": "zero",
+          "x_mse": 0.17339813709259033,
+          "v_mse": 0.6935925483703613,
+          "cosine": 0.8806580305099487,
+          "token_acc_batch": 0.7000000178813934
+        },
+        {
+          "t": 0.5,
+          "variant": "shuffled",
+          "x_mse": 0.15763549506664276,
+          "v_mse": 0.630541980266571,
+          "cosine": 0.8914515972137451,
+          "token_acc_batch": 0.7000000178813934
+        },
+        {
+          "t": 0.3,
+          "variant": "correct",
+          "x_mse": 0.28261321783065796,
+          "v_mse": 0.5767616629600525,
+          "cosine": 0.7901766300201416,
+          "token_acc_batch": 0.44350649416446686
+        },
+        {
+          "t": 0.3,
+          "variant": "zero",
+          "x_mse": 0.3585857152938843,
+          "v_mse": 0.7318075895309448,
+          "cosine": 0.7265682816505432,
+          "token_acc_batch": 0.3512987047433853
+        },
+        {
+          "t": 0.3,
+          "variant": "shuffled",
+          "x_mse": 0.35503461956977844,
+          "v_mse": 0.7245604991912842,
+          "cosine": 0.7295784950256348,
+          "token_acc_batch": 0.38051947951316833
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "input": "User: 愚公移山的成語出處，用這個成語造句\nAssistant:",
+      "expected": "“愚公移山”（Gùgōng yí shān）是一个成语，起源于一位名叫愚公的老人试图移走一座挡住他回家路的山的故事。\n\n这是一个使用这个成语的句子：\n\"他有愚公移山的精神，對於不可能的事也不會放棄。\"",
+      "clean_decode": {
+        "token_acc": 1.0,
+        "generated": "“”(Gùgng y shn), : \",\""
+      },
+      "denoise": [
+        {
+          "t": 0.9,
+          "variant": "correct",
+          "x_mse": 0.08169608563184738,
+          "v_mse": 8.169609069824219,
+          "cosine": 0.9453491568565369,
+          "token_acc_batch": 0.8374218344688416
+        },
+        {
+          "t": 0.9,
+          "variant": "zero",
+          "x_mse": 0.12326564639806747,
+          "v_mse": 12.326562881469727,
+          "cosine": 0.917824387550354,
+          "token_acc_batch": 0.8811608155568441
+        },
+        {
+          "t": 0.9,
+          "variant": "shuffled",
+          "x_mse": 0.10246464610099792,
+          "v_mse": 10.246463775634766,
+          "cosine": 0.9314085245132446,
+          "token_acc_batch": 0.8621131976445516
+        },
+        {
+          "t": 0.7,
+          "variant": "correct",
+          "x_mse": 0.08993380516767502,
+          "v_mse": 0.9992645382881165,
+          "cosine": 0.9396284222602844,
+          "token_acc_batch": 0.8131633599599203
+        },
+        {
+          "t": 0.7,
+          "variant": "zero",
+          "x_mse": 0.1331883817911148,
+          "v_mse": 1.4798706769943237,
+          "cosine": 0.9105989336967468,
+          "token_acc_batch": 0.8644861181577047
+        },
+        {
+          "t": 0.7,
+          "variant": "shuffled",
+          "x_mse": 0.1152711883187294,
+          "v_mse": 1.2807908058166504,
+          "cosine": 0.9224514365196228,
+          "token_acc_batch": 0.8411095142364502
+        },
+        {
+          "t": 0.5,
+          "variant": "correct",
+          "x_mse": 0.1252332329750061,
+          "v_mse": 0.5009329319000244,
+          "cosine": 0.9145863652229309,
+          "token_acc_batch": 0.7382716139157613
+        },
+        {
+          "t": 0.5,
+          "variant": "zero",
+          "x_mse": 0.17339813709259033,
+          "v_mse": 0.6935925483703613,
+          "cosine": 0.8806580305099487,
+          "token_acc_batch": 0.7876543402671814
+        },
+        {
+          "t": 0.5,
+          "variant": "shuffled",
+          "x_mse": 0.15763549506664276,
+          "v_mse": 0.630541980266571,
+          "cosine": 0.8914515972137451,
+          "token_acc_batch": 0.7753086487452189
+        },
+        {
+          "t": 0.3,
+          "variant": "correct",
+          "x_mse": 0.28261321783065796,
+          "v_mse": 0.5767616629600525,
+          "cosine": 0.7901766300201416,
+          "token_acc_batch": 0.4932018617788951
+        },
+        {
+          "t": 0.3,
+          "variant": "zero",
+          "x_mse": 0.3585857152938843,
+          "v_mse": 0.7318075895309448,
+          "cosine": 0.7265682816505432,
+          "token_acc_batch": 0.4070386389891307
+        },
+        {
+          "t": 0.3,
+          "variant": "shuffled",
+          "x_mse": 0.35503461956977844,
+          "v_mse": 0.7245604991912842,
+          "cosine": 0.7295784950256348,
+          "token_acc_batch": 0.4141734838485718
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "input": "User: xin chào bạn\nAssistant:",
+      "expected": "Xin chào! Tôi có thể giúp gì cho bạn?",
+      "clean_decode": {
+        "token_acc": 1.0,
+        "generated": "Xin chào! Tôi có th gip g cho bn?"
+      },
+      "denoise": [
+        {
+          "t": 0.9,
+          "variant": "correct",
+          "x_mse": 0.07154954969882965,
+          "v_mse": 7.154955863952637,
+          "cosine": 0.9521448612213135,
+          "token_acc_batch": 0.9375
+        },
+        {
+          "t": 0.9,
+          "variant": "zero",
+          "x_mse": 0.11206851899623871,
+          "v_mse": 11.206851959228516,
+          "cosine": 0.92380690574646,
+          "token_acc_batch": 0.9375
+        },
+        {
+          "t": 0.9,
+          "variant": "shuffled",
+          "x_mse": 0.09973708540201187,
+          "v_mse": 9.973708152770996,
+          "cosine": 0.93227219581604,
+          "token_acc_batch": 0.90625
+        },
+        {
+          "t": 0.7,
+          "variant": "correct",
+          "x_mse": 0.07759091258049011,
+          "v_mse": 0.8621212244033813,
+          "cosine": 0.9479304552078247,
+          "token_acc_batch": 0.9375
+        },
+        {
+          "t": 0.7,
+          "variant": "zero",
+          "x_mse": 0.11759696900844574,
+          "v_mse": 1.3066328763961792,
+          "cosine": 0.9194228053092957,
+          "token_acc_batch": 0.9375
+        },
+        {
+          "t": 0.7,
+          "variant": "shuffled",
+          "x_mse": 0.11403150111436844,
+          "v_mse": 1.2670166492462158,
+          "cosine": 0.921754002571106,
+          "token_acc_batch": 0.90625
+        },
+        {
+          "t": 0.5,
+          "variant": "correct",
+          "x_mse": 0.09843526780605316,
+          "v_mse": 0.39374107122421265,
+          "cosine": 0.9327055215835571,
+          "token_acc_batch": 0.9375
+        },
+        {
+          "t": 0.5,
+          "variant": "zero",
+          "x_mse": 0.14166627824306488,
+          "v_mse": 0.5666651129722595,
+          "cosine": 0.9013077020645142,
+          "token_acc_batch": 0.9375
+        },
+        {
+          "t": 0.5,
+          "variant": "shuffled",
+          "x_mse": 0.14680565893650055,
+          "v_mse": 0.5872226357460022,
+          "cosine": 0.8967083692550659,
+          "token_acc_batch": 0.90625
+        },
+        {
+          "t": 0.3,
+          "variant": "correct",
+          "x_mse": 0.29095935821533203,
+          "v_mse": 0.593794584274292,
+          "cosine": 0.7791111469268799,
+          "token_acc_batch": 0.5625
+        },
+        {
+          "t": 0.3,
+          "variant": "zero",
+          "x_mse": 0.3558119237422943,
+          "v_mse": 0.7261468768119812,
+          "cosine": 0.722817063331604,
+          "token_acc_batch": 0.5
+        },
+        {
+          "t": 0.3,
+          "variant": "shuffled",
+          "x_mse": 0.3667769730091095,
+          "v_mse": 0.7485244870185852,
+          "cosine": 0.711025059223175,
+          "token_acc_batch": 0.40625
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "input": "User: Write five lines of iambic pentameter about a subject of your choosing. Do not use any trochaic substitutions. The lines do not need to rhyme.\nAssistant:",
+      "expected": "The big brown cat jumped down the tallest tree\nas everything up there was such a bore\nThe feline only knew that down below\nthat when he reached the ground from high above\nhe could eat some mice - fluffy paradise!",
+      "clean_decode": {
+        "token_acc": 1.0,
+        "generated": "The big brown cat jumped down the tallest tree as everything up there was such a bore The feline only knew that down below that when he reached the ground from high above he could eat some mice - fluffy paradise!"
+      },
+      "denoise": [
+        {
+          "t": 0.9,
+          "variant": "correct",
+          "x_mse": 0.07154954969882965,
+          "v_mse": 7.154955863952637,
+          "cosine": 0.9521448612213135,
+          "token_acc_batch": 0.8687500059604645
+        },
+        {
+          "t": 0.9,
+          "variant": "zero",
+          "x_mse": 0.11206851899623871,
+          "v_mse": 11.206851959228516,
+          "cosine": 0.92380690574646,
+          "token_acc_batch": 0.8887499868869781
+        },
+        {
+          "t": 0.9,
+          "variant": "shuffled",
+          "x_mse": 0.09973708540201187,
+          "v_mse": 9.973708152770996,
+          "cosine": 0.93227219581604,
+          "token_acc_batch": 0.8631249964237213
+        },
+        {
+          "t": 0.7,
+          "variant": "correct",
+          "x_mse": 0.07759091258049011,
+          "v_mse": 0.8621212244033813,
+          "cosine": 0.9479304552078247,
+          "token_acc_batch": 0.8687500059604645
+        },
+        {
+          "t": 0.7,
+          "variant": "zero",
+          "x_mse": 0.11759696900844574,
+          "v_mse": 1.3066328763961792,
+          "cosine": 0.9194228053092957,
+          "token_acc_batch": 0.8887499868869781
+        },
+        {
+          "t": 0.7,
+          "variant": "shuffled",
+          "x_mse": 0.11403150111436844,
+          "v_mse": 1.2670166492462158,
+          "cosine": 0.921754002571106,
+          "token_acc_batch": 0.8631249964237213
+        },
+        {
+          "t": 0.5,
+          "variant": "correct",
+          "x_mse": 0.09843526780605316,
+          "v_mse": 0.39374107122421265,
+          "cosine": 0.9327055215835571,
+          "token_acc_batch": 0.8287500143051147
+        },
+        {
+          "t": 0.5,
+          "variant": "zero",
+          "x_mse": 0.14166627824306488,
+          "v_mse": 0.5666651129722595,
+          "cosine": 0.9013077020645142,
+          "token_acc_batch": 0.8387500047683716
+        },
+        {
+          "t": 0.5,
+          "variant": "shuffled",
+          "x_mse": 0.14680565893650055,
+          "v_mse": 0.5872226357460022,
+          "cosine": 0.8967083692550659,
+          "token_acc_batch": 0.8331249952316284
+        },
+        {
+          "t": 0.3,
+          "variant": "correct",
+          "x_mse": 0.29095935821533203,
+          "v_mse": 0.593794584274292,
+          "cosine": 0.7791111469268799,
+          "token_acc_batch": 0.39124999940395355
+        },
+        {
+          "t": 0.3,
+          "variant": "zero",
+          "x_mse": 0.3558119237422943,
+          "v_mse": 0.7261468768119812,
+          "cosine": 0.722817063331604,
+          "token_acc_batch": 0.39000000059604645
+        },
+        {
+          "t": 0.3,
+          "variant": "shuffled",
+          "x_mse": 0.3667769730091095,
+          "v_mse": 0.7485244870185852,
+          "cosine": 0.711025059223175,
+          "token_acc_batch": 0.3031250014901161
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "input": "User: ¿Puedes decirme 8 palabras que terminen en o?\nAssistant:",
+      "expected": "¡Por supuesto! Aquí te dejo 8 palabras que terminan en \"o\":\n\n1. Anciano\n2. Caballo\n3. Zapato\n4. Mango\n5. Cuchillo\n6. Hueso\n7. Gato\n8. Helado",
+      "clean_decode": {
+        "token_acc": 1.0,
+        "generated": "Por supuesto! Aqu te dejo 8 palabras que terminan en \"o\": 1. Anciano 2. Caballo 3. Zapato 4. Mango 5. Cuchillo 6. Hueso 7. Gato 8. Helado"
+      },
+      "denoise": [
+        {
+          "t": 0.9,
+          "variant": "correct",
+          "x_mse": 0.07154954969882965,
+          "v_mse": 7.154955863952637,
+          "cosine": 0.9521448612213135,
+          "token_acc_batch": 0.881250003973643
+        },
+        {
+          "t": 0.9,
+          "variant": "zero",
+          "x_mse": 0.11206851899623871,
+          "v_mse": 11.206851959228516,
+          "cosine": 0.92380690574646,
+          "token_acc_batch": 0.9049999912579855
+        },
+        {
+          "t": 0.9,
+          "variant": "shuffled",
+          "x_mse": 0.09973708540201187,
+          "v_mse": 9.973708152770996,
+          "cosine": 0.93227219581604,
+          "token_acc_batch": 0.8827083309491476
+        },
+        {
+          "t": 0.7,
+          "variant": "correct",
+          "x_mse": 0.07759091258049011,
+          "v_mse": 0.8621212244033813,
+          "cosine": 0.9479304552078247,
+          "token_acc_batch": 0.8708333373069763
+        },
+        {
+          "t": 0.7,
+          "variant": "zero",
+          "x_mse": 0.11759696900844574,
+          "v_mse": 1.3066328763961792,
+          "cosine": 0.9194228053092957,
+          "token_acc_batch": 0.9102083245913187
+        },
+        {
+          "t": 0.7,
+          "variant": "shuffled",
+          "x_mse": 0.11403150111436844,
+          "v_mse": 1.2670166492462158,
+          "cosine": 0.921754002571106,
+          "token_acc_batch": 0.8774999976158142
+        },
+        {
+          "t": 0.5,
+          "variant": "correct",
+          "x_mse": 0.09843526780605316,
+          "v_mse": 0.39374107122421265,
+          "cosine": 0.9327055215835571,
+          "token_acc_batch": 0.8285416762034098
+        },
+        {
+          "t": 0.5,
+          "variant": "zero",
+          "x_mse": 0.14166627824306488,
+          "v_mse": 0.5666651129722595,
+          "cosine": 0.9013077020645142,
+          "token_acc_batch": 0.8456250031789144
+        },
+        {
+          "t": 0.5,
+          "variant": "shuffled",
+          "x_mse": 0.14680565893650055,
+          "v_mse": 0.5872226357460022,
+          "cosine": 0.8967083692550659,
+          "token_acc_batch": 0.8366666634877523
+        },
+        {
+          "t": 0.3,
+          "variant": "correct",
+          "x_mse": 0.29095935821533203,
+          "v_mse": 0.593794584274292,
+          "cosine": 0.7791111469268799,
+          "token_acc_batch": 0.40666666626930237
+        },
+        {
+          "t": 0.3,
+          "variant": "zero",
+          "x_mse": 0.3558119237422943,
+          "v_mse": 0.7261468768119812,
+          "cosine": 0.722817063331604,
+          "token_acc_batch": 0.3850000003973643
+        },
+        {
+          "t": 0.3,
+          "variant": "shuffled",
+          "x_mse": 0.3667769730091095,
+          "v_mse": 0.7485244870185852,
+          "cosine": 0.711025059223175,
+          "token_acc_batch": 0.33750000099341076
+        }
+      ]
+    }
+  ]
+}

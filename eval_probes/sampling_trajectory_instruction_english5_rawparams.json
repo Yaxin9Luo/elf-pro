@@ -1,0 +1,4146 @@
+{
+  "checkpoint": "outputs/elf_l-tulu3-sft-t5-1024-hope-32gpu/checkpoint_5402",
+  "checkpoint_meta": {
+    "step": 5402,
+    "epoch": 2
+  },
+  "weights": "params",
+  "seed": 123,
+  "schedules": {
+    "uniform": {
+      "steps": 32
+    },
+    "logit_tail": {
+      "source_total_steps": 64,
+      "p_mean": -1.5,
+      "p_std": 0.8
+    }
+  },
+  "examples": [
+    {
+      "id": 0,
+      "input": "User: What are the main benefits of instruction tuning a pretrained language model? Answer in exactly three bullet points.\nAssistant:",
+      "expected": "- It teaches the model to follow user requests.\n- It improves conversational formatting and helpfulness.\n- It makes outputs better aligned with supervised task demonstrations.",
+      "clean_decode": {
+        "token_acc": 1.0,
+        "generated": "- It teaches the model to follow user requests. - It improves conversational formatting and helpfulness. - It makes outputs better aligned with supervised task demonstrations."
+      },
+      "runs": [
+        {
+          "t_start": 0.95,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 0.01179824210703373,
+          "final_mse": 0.02776448056101799,
+          "final_token_acc": 0.8780487775802612,
+          "final_generated": "- It teaches the model to follow user requests. - It improves conversational formatting and helpfulness. - it makes outputs better alignment.d with supervised task demo..",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.949999988079071,
+              "t_next": 0.9515624642372131,
+              "dt": 0.0015624761581420898,
+              "z_before_mse": 0.01179824210703373,
+              "z_after_mse": 0.01127299852669239,
+              "x_pred_mse": 0.05249222740530968,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.8292682766914368
+            },
+            {
+              "step": 8,
+              "t": 0.9609375,
+              "t_next": 0.9624999761581421,
+              "dt": 0.0015624761581420898,
+              "z_before_mse": 0.010548282414674759,
+              "z_after_mse": 0.01075426209717989,
+              "x_pred_mse": 0.05718157812952995,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.8292682766914368
+            },
+            {
+              "step": 16,
+              "t": 0.973437488079071,
+              "t_next": 0.9750000238418579,
+              "dt": 0.0015625357627868652,
+              "z_before_mse": 0.013938028365373611,
+              "z_after_mse": 0.01458131242543459,
+              "x_pred_mse": 0.06045648083090782,
+              "z_after_token_acc": 0.9512194991111755,
+              "x_pred_token_acc": 0.8048780560493469
+            },
+            {
+              "step": 24,
+              "t": 0.9859374761581421,
+              "t_next": 0.987500011920929,
+              "dt": 0.0015625357627868652,
+              "z_before_mse": 0.019880391657352448,
+              "z_after_mse": 0.020718391984701157,
+              "x_pred_mse": 0.06421564519405365,
+              "z_after_token_acc": 0.8780487775802612,
+              "x_pred_token_acc": 0.8536585569381714
+            },
+            {
+              "step": 32,
+              "t": 0.9984375238418579,
+              "t_next": 1.0,
+              "dt": 0.0015624761581420898,
+              "z_before_mse": 0.02686448208987713,
+              "z_after_mse": 0.02776448056101799,
+              "x_pred_mse": 0.06853976100683212,
+              "z_after_token_acc": 0.8780487775802612,
+              "x_pred_token_acc": 0.8292682766914368
+            }
+          ]
+        },
+        {
+          "t_start": 0.95,
+          "schedule": "logit_tail",
+          "num_steps": 1,
+          "initial_mse": 0.01179824210703373,
+          "final_mse": 0.05249222740530968,
+          "final_token_acc": 0.8292682766914368,
+          "final_generated": "- It teaches the model to understand user requests. - It improves conversational empathy and helpfulness. - it makes outputs better alignmentdd with supervised task demo..",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.949999988079071,
+              "t_next": 1.0,
+              "dt": 0.050000011920928955,
+              "z_before_mse": 0.01179824210703373,
+              "z_after_mse": 0.05249222740530968,
+              "x_pred_mse": 0.05249222740530968,
+              "z_after_token_acc": 0.8292682766914368,
+              "x_pred_token_acc": 0.8292682766914368
+            }
+          ]
+        },
+        {
+          "t_start": 0.9,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 0.04643385857343674,
+          "final_mse": 0.058934129774570465,
+          "final_token_acc": 0.8292682766914368,
+          "final_generated": "- It teaches the model to follow user requests. - It improves conversational pronunciation and helpfulness. - it makes outputs better alignment.d with supervised fact list..",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.8999999761581421,
+              "t_next": 0.903124988079071,
+              "dt": 0.003125011920928955,
+              "z_before_mse": 0.04643385857343674,
+              "z_after_mse": 0.0439138300716877,
+              "x_pred_mse": 0.052331823855638504,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.8292682766914368
+            },
+            {
+              "step": 8,
+              "t": 0.921875,
+              "t_next": 0.9249999523162842,
+              "dt": 0.0031249523162841797,
+              "z_before_mse": 0.03255169093608856,
+              "z_after_mse": 0.031311944127082825,
+              "x_pred_mse": 0.05749361217021942,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.8292682766914368
+            },
+            {
+              "step": 16,
+              "t": 0.9468749761581421,
+              "t_next": 0.949999988079071,
+              "dt": 0.003125011920928955,
+              "z_before_mse": 0.02818332426249981,
+              "z_after_mse": 0.02857845649123192,
+              "x_pred_mse": 0.06279994547367096,
+              "z_after_token_acc": 0.8780487775802612,
+              "x_pred_token_acc": 0.8292682766914368
+            },
+            {
+              "step": 24,
+              "t": 0.971875011920929,
+              "t_next": 0.9750000238418579,
+              "dt": 0.003125011920928955,
+              "z_before_mse": 0.03579847142100334,
+              "z_after_mse": 0.03725119307637215,
+              "x_pred_mse": 0.07526319473981857,
+              "z_after_token_acc": 0.8780487775802612,
+              "x_pred_token_acc": 0.8292682766914368
+            },
+            {
+              "step": 32,
+              "t": 0.996874988079071,
+              "t_next": 1.0,
+              "dt": 0.003125011920928955,
+              "z_before_mse": 0.055000390857458115,
+              "z_after_mse": 0.058934129774570465,
+              "x_pred_mse": 0.16772408783435822,
+              "z_after_token_acc": 0.8292682766914368,
+              "x_pred_token_acc": 0.8048780560493469
+            }
+          ]
+        },
+        {
+          "t_start": 0.9,
+          "schedule": "logit_tail",
+          "num_steps": 1,
+          "initial_mse": 0.04643385857343674,
+          "final_mse": 0.052331823855638504,
+          "final_token_acc": 0.8292682766914368,
+          "final_generated": "- It teaches the model to understand user requests. - It improves conversational listening and helpfulness. - it makes outputs better alignmentdd with supervised task demo..",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.8999999761581421,
+              "t_next": 1.0,
+              "dt": 0.10000002384185791,
+              "z_before_mse": 0.04643385857343674,
+              "z_after_mse": 0.052331823855638504,
+              "x_pred_mse": 0.052331823855638504,
+              "z_after_token_acc": 0.8292682766914368,
+              "x_pred_token_acc": 0.8292682766914368
+            }
+          ]
+        },
+        {
+          "t_start": 0.7,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 0.4235093593597412,
+          "final_mse": 0.1574684977531433,
+          "final_token_acc": 0.8292682766914368,
+          "final_generated": "- It teaches the model to follow user requests. - It enhances conversational vocabulary and helpfulness. - it makes outputs better alignment.d with supervised task mind.",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.699999988079071,
+              "t_next": 0.7093749642372131,
+              "dt": 0.00937497615814209,
+              "z_before_mse": 0.4235093593597412,
+              "z_after_mse": 0.39862707257270813,
+              "x_pred_mse": 0.057240404188632965,
+              "z_after_token_acc": 0.9756097793579102,
+              "x_pred_token_acc": 0.8292682766914368
+            },
+            {
+              "step": 8,
+              "t": 0.765625,
+              "t_next": 0.7749999761581421,
+              "dt": 0.00937497615814209,
+              "z_before_mse": 0.2671516537666321,
+              "z_after_mse": 0.24830539524555206,
+              "x_pred_mse": 0.06058153882622719,
+              "z_after_token_acc": 0.9756097793579102,
+              "x_pred_token_acc": 0.8292682766914368
+            },
+            {
+              "step": 16,
+              "t": 0.840624988079071,
+              "t_next": 0.8500000238418579,
+              "dt": 0.009375035762786865,
+              "z_before_mse": 0.14126798510551453,
+              "z_after_mse": 0.12958671152591705,
+              "x_pred_mse": 0.06491917371749878,
+              "z_after_token_acc": 0.8780487775802612,
+              "x_pred_token_acc": 0.8292682766914368
+            },
+            {
+              "step": 24,
+              "t": 0.9156249761581421,
+              "t_next": 0.925000011920929,
+              "dt": 0.009375035762786865,
+              "z_before_mse": 0.07597969472408295,
+              "z_after_mse": 0.07416228950023651,
+              "x_pred_mse": 0.11778607219457626,
+              "z_after_token_acc": 0.8048780560493469,
+              "x_pred_token_acc": 0.8292682766914368
+            },
+            {
+              "step": 32,
+              "t": 0.9906250238418579,
+              "t_next": 1.0,
+              "dt": 0.00937497615814209,
+              "z_before_mse": 0.14364561438560486,
+              "z_after_mse": 0.1574684977531433,
+              "x_pred_mse": 0.2351464480161667,
+              "z_after_token_acc": 0.8292682766914368,
+              "x_pred_token_acc": 0.8292682766914368
+            }
+          ]
+        },
+        {
+          "t_start": 0.7,
+          "schedule": "logit_tail",
+          "num_steps": 1,
+          "initial_mse": 0.4235093593597412,
+          "final_mse": 0.057240404188632965,
+          "final_token_acc": 0.8292682766914368,
+          "final_generated": "- It teaches the model to understand user requests. - It improves conversational coloring and helpfulness. - it makes outputs better alignmentdd with supervised task min..",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.699999988079071,
+              "t_next": 1.0,
+              "dt": 0.30000001192092896,
+              "z_before_mse": 0.4235093593597412,
+              "z_after_mse": 0.057240404188632965,
+              "x_pred_mse": 0.057240404188632965,
+              "z_after_token_acc": 0.8292682766914368,
+              "x_pred_token_acc": 0.8292682766914368
+            }
+          ]
+        },
+        {
+          "t_start": 0.5,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 1.1744155883789062,
+          "final_mse": 0.2535346448421478,
+          "final_token_acc": 0.7804877758026123,
+          "final_generated": "- It  teaching the model to follow user instructions. - It improves pronunciational accuracy and helpfulness. - it makes outputs better alignmentdd with supervised task monitord.",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.5,
+              "t_next": 0.515625,
+              "dt": 0.015625,
+              "z_before_mse": 1.1744155883789062,
+              "z_after_mse": 1.105185866355896,
+              "x_pred_mse": 0.08977112174034119,
+              "z_after_token_acc": 0.9268292784690857,
+              "x_pred_token_acc": 0.7560975551605225
+            },
+            {
+              "step": 8,
+              "t": 0.609375,
+              "t_next": 0.625,
+              "dt": 0.015625,
+              "z_before_mse": 0.736405611038208,
+              "z_after_mse": 0.682841956615448,
+              "x_pred_mse": 0.09075656533241272,
+              "z_after_token_acc": 0.9024389982223511,
+              "x_pred_token_acc": 0.8048780560493469
+            },
+            {
+              "step": 16,
+              "t": 0.734375,
+              "t_next": 0.75,
+              "dt": 0.015625,
+              "z_before_mse": 0.3725738227367401,
+              "z_after_mse": 0.3376353681087494,
+              "x_pred_mse": 0.0991421639919281,
+              "z_after_token_acc": 0.8048780560493469,
+              "x_pred_token_acc": 0.8048780560493469
+            },
+            {
+              "step": 24,
+              "t": 0.859375,
+              "t_next": 0.875,
+              "dt": 0.015625,
+              "z_before_mse": 0.170090913772583,
+              "z_after_mse": 0.1600976139307022,
+              "x_pred_mse": 0.20659120380878448,
+              "z_after_token_acc": 0.8048780560493469,
+              "x_pred_token_acc": 0.7560975551605225
+            },
+            {
+              "step": 32,
+              "t": 0.984375,
+              "t_next": 1.0,
+              "dt": 0.015625,
+              "z_before_mse": 0.23360459506511688,
+              "z_after_mse": 0.2535346448421478,
+              "x_pred_mse": 0.3063005805015564,
+              "z_after_token_acc": 0.7804877758026123,
+              "x_pred_token_acc": 0.8536585569381714
+            }
+          ]
+        },
+        {
+          "t_start": 0.5,
+          "schedule": "logit_tail",
+          "num_steps": 1,
+          "initial_mse": 1.1744155883789062,
+          "final_mse": 0.08977112174034119,
+          "final_token_acc": 0.7560975551605225,
+          "final_generated": "- It teaches the model to follow user instructions. - It improves verbal accuracy and predictness. - it makes outputs better alignmentdd with supervised work evaluation..",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.5,
+              "t_next": 1.0,
+              "dt": 0.5,
+              "z_before_mse": 1.1744155883789062,
+              "z_after_mse": 0.08977112174034119,
+              "x_pred_mse": 0.08977112174034119,
+              "z_after_token_acc": 0.7560975551605225,
+              "x_pred_token_acc": 0.7560975551605225
+            }
+          ]
+        },
+        {
+          "t_start": 0.3,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 2.2833940982818604,
+          "final_mse": 0.5101730823516846,
+          "final_token_acc": 0.46341463923454285,
+          "final_generated": "- It teaches the model to balance unique questions. - It helps with correction of alphabet and alphabets. - It also plug tests perfectly tailoreddd onto an iPad of relevant data.",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.30000001192092896,
+              "t_next": 0.3218750059604645,
+              "dt": 0.021874994039535522,
+              "z_before_mse": 2.2833940982818604,
+              "z_after_mse": 2.1553146839141846,
+              "x_pred_mse": 0.22698427736759186,
+              "z_after_token_acc": 0.5609756112098694,
+              "x_pred_token_acc": 0.4390243887901306
+            },
+            {
+              "step": 8,
+              "t": 0.453125,
+              "t_next": 0.4750000238418579,
+              "dt": 0.02187502384185791,
+              "z_before_mse": 1.4695483446121216,
+              "z_after_mse": 1.3702787160873413,
+              "x_pred_mse": 0.2758757770061493,
+              "z_after_token_acc": 0.46341463923454285,
+              "x_pred_token_acc": 0.4390243887901306
+            },
+            {
+              "step": 16,
+              "t": 0.628125011920929,
+              "t_next": 0.6499999761581421,
+              "dt": 0.021874964237213135,
+              "z_before_mse": 0.8084051609039307,
+              "z_after_mse": 0.7476950883865356,
+              "x_pred_mse": 0.42050305008888245,
+              "z_after_token_acc": 0.4390243887901306,
+              "x_pred_token_acc": 0.4390243887901306
+            },
+            {
+              "step": 24,
+              "t": 0.8031250238418579,
+              "t_next": 0.824999988079071,
+              "dt": 0.021874964237213135,
+              "z_before_mse": 0.4673909842967987,
+              "z_after_mse": 0.44871601462364197,
+              "x_pred_mse": 0.49082285165786743,
+              "z_after_token_acc": 0.46341463923454285,
+              "x_pred_token_acc": 0.46341463923454285
+            },
+            {
+              "step": 32,
+              "t": 0.9781249761581421,
+              "t_next": 1.0,
+              "dt": 0.02187502384185791,
+              "z_before_mse": 0.49071004986763,
+              "z_after_mse": 0.5101730823516846,
+              "x_pred_mse": 0.5386541485786438,
+              "z_after_token_acc": 0.46341463923454285,
+              "x_pred_token_acc": 0.4878048896789551
+            }
+          ]
+        },
+        {
+          "t_start": 0.3,
+          "schedule": "logit_tail",
+          "num_steps": 16,
+          "initial_mse": 2.2833940982818604,
+          "final_mse": 0.41955137252807617,
+          "final_token_acc": 0.4390243887901306,
+          "final_generated": "- It teaches the model to balance essential questions. - It helps with understanding of numbers and alphabets. - it also package examples to provide d separate data list of relevant information.",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.30000001192092896,
+              "t_next": 0.3031689524650574,
+              "dt": 0.003168940544128418,
+              "z_before_mse": 2.2833940982818604,
+              "z_after_mse": 2.26458477973938,
+              "x_pred_mse": 0.22698427736759186,
+              "z_after_token_acc": 0.5609756112098694,
+              "x_pred_token_acc": 0.4390243887901306
+            },
+            {
+              "step": 8,
+              "t": 0.36710262298583984,
+              "t_next": 0.3875333070755005,
+              "dt": 0.020430684089660645,
+              "z_before_mse": 1.9026012420654297,
+              "z_after_mse": 1.7945971488952637,
+              "x_pred_mse": 0.2681925296783447,
+              "z_after_token_acc": 0.5121951103210449,
+              "x_pred_token_acc": 0.4146341383457184
+            },
+            {
+              "step": 16,
+              "t": 0.6675633788108826,
+              "t_next": 1.0,
+              "dt": 0.33243662118911743,
+              "z_before_mse": 0.7032366991043091,
+              "z_after_mse": 0.41955137252807617,
+              "x_pred_mse": 0.41955137252807617,
+              "z_after_token_acc": 0.4390243887901306,
+              "x_pred_token_acc": 0.4146341383457184
+            }
+          ]
+        },
+        {
+          "t_start": 0.1,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 3.818769931793213,
+          "final_mse": 1.0716875791549683,
+          "final_token_acc": 0.024390242993831635,
+          "final_generated": "First, visually ensuring peace and safety A just fit plain language model also allows any imagery used to receive a phone automatically. Second, put and snap details ET video suited to nuching or ab",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.10000000149011612,
+              "t_next": 0.12812499701976776,
+              "dt": 0.028124995529651642,
+              "z_before_mse": 3.818769931793213,
+              "z_after_mse": 3.6146810054779053,
+              "x_pred_mse": 0.5242359638214111,
+              "z_after_token_acc": 0.04878048598766327,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 8,
+              "t": 0.296875,
+              "t_next": 0.32499998807907104,
+              "dt": 0.028124988079071045,
+              "z_before_mse": 2.544456958770752,
+              "z_after_mse": 2.391772747039795,
+              "x_pred_mse": 0.7260033488273621,
+              "z_after_token_acc": 0.024390242993831635,
+              "x_pred_token_acc": 0.024390242993831635
+            },
+            {
+              "step": 16,
+              "t": 0.5218749642372131,
+              "t_next": 0.550000011920929,
+              "dt": 0.02812504768371582,
+              "z_before_mse": 1.527443528175354,
+              "z_after_mse": 1.4336800575256348,
+              "x_pred_mse": 0.9500593543052673,
+              "z_after_token_acc": 0.024390242993831635,
+              "x_pred_token_acc": 0.024390242993831635
+            },
+            {
+              "step": 24,
+              "t": 0.746874988079071,
+              "t_next": 0.7749999761581421,
+              "dt": 0.028124988079071045,
+              "z_before_mse": 1.0092436075210571,
+              "z_after_mse": 0.9823631644248962,
+              "x_pred_mse": 1.0723689794540405,
+              "z_after_token_acc": 0.024390242993831635,
+              "x_pred_token_acc": 0.024390242993831635
+            },
+            {
+              "step": 32,
+              "t": 0.971875011920929,
+              "t_next": 1.0,
+              "dt": 0.028124988079071045,
+              "z_before_mse": 1.0437465906143188,
+              "z_after_mse": 1.0716875791549683,
+              "x_pred_mse": 1.0964505672454834,
+              "z_after_token_acc": 0.024390242993831635,
+              "x_pred_token_acc": 0.024390242993831635
+            }
+          ]
+        },
+        {
+          "t_start": 0.1,
+          "schedule": "logit_tail",
+          "num_steps": 52,
+          "initial_mse": 3.818769931793213,
+          "final_mse": 1.013479232788086,
+          "final_token_acc": 0.04878048598766327,
+          "final_generated": "1. Dictionary: a file and storage In any prrained language model there is a dictionary to reserve a cell even. It also uses a ttable adapted to notations or ab",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.10000000149011612,
+              "t_next": 0.10472046583890915,
+              "dt": 0.00472046434879303,
+              "z_before_mse": 3.818769931793213,
+              "z_after_mse": 3.78406023979187,
+              "x_pred_mse": 0.5242359638214111,
+              "z_after_token_acc": 0.04878048598766327,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 8,
+              "t": 0.12156990170478821,
+              "t_next": 0.12445991486310959,
+              "dt": 0.0028900131583213806,
+              "z_before_mse": 3.662081718444824,
+              "z_after_mse": 3.6414225101470947,
+              "x_pred_mse": 0.5353925824165344,
+              "z_after_token_acc": 0.04878048598766327,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 16,
+              "t": 0.1661110669374466,
+              "t_next": 0.16654734313488007,
+              "dt": 0.0004362761974334717,
+              "z_before_mse": 3.352511405944824,
+              "z_after_mse": 3.3495848178863525,
+              "x_pred_mse": 0.6305972337722778,
+              "z_after_token_acc": 0.04878048598766327,
+              "x_pred_token_acc": 0.024390242993831635
+            },
+            {
+              "step": 24,
+              "t": 0.19699883460998535,
+              "t_next": 0.20516283810138702,
+              "dt": 0.008164003491401672,
+              "z_before_mse": 3.1491222381591797,
+              "z_after_mse": 3.096651077270508,
+              "x_pred_mse": 0.6197027564048767,
+              "z_after_token_acc": 0.024390242993831635,
+              "x_pred_token_acc": 0.024390242993831635
+            },
+            {
+              "step": 32,
+              "t": 0.22754642367362976,
+              "t_next": 0.2567683458328247,
+              "dt": 0.029221922159194946,
+              "z_before_mse": 2.9556353092193604,
+              "z_after_mse": 2.777884006500244,
+              "x_pred_mse": 0.6403728127479553,
+              "z_after_token_acc": 0.024390242993831635,
+              "x_pred_token_acc": 0.04878048598766327
+            },
+            {
+              "step": 40,
+              "t": 0.2728601098060608,
+              "t_next": 0.2835620045661926,
+              "dt": 0.010701894760131836,
+              "z_before_mse": 2.6834371089935303,
+              "z_after_mse": 2.6219122409820557,
+              "x_pred_mse": 0.7038147449493408,
+              "z_after_token_acc": 0.024390242993831635,
+              "x_pred_token_acc": 0.04878048598766327
+            },
+            {
+              "step": 48,
+              "t": 0.37907540798187256,
+              "t_next": 0.3924841582775116,
+              "dt": 0.013408750295639038,
+              "z_before_mse": 2.1198816299438477,
+              "z_after_mse": 2.056323766708374,
+              "x_pred_mse": 0.8996717929840088,
+              "z_after_token_acc": 0.024390242993831635,
+              "x_pred_token_acc": 0.04878048598766327
+            },
+            {
+              "step": 52,
+              "t": 0.528177797794342,
+              "t_next": 1.0,
+              "dt": 0.47182220220565796,
+              "z_before_mse": 1.50912606716156,
+              "z_after_mse": 1.013479232788086,
+              "x_pred_mse": 1.013479232788086,
+              "z_after_token_acc": 0.04878048598766327,
+              "x_pred_token_acc": 0.04878048598766327
+            }
+          ]
+        },
+        {
+          "t_start": 0.0,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 4.723208904266357,
+          "final_mse": 1.0841689109802246,
+          "final_token_acc": 0.024390242993831635,
+          "final_generated": "Tatting: Although it'd a simple and storied language model, there are several steps required and alignment with the components. Names and prime benefits are: 1. **Testing",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.0,
+              "t_next": 0.03125,
+              "dt": 0.03125,
+              "z_before_mse": 4.723208904266357,
+              "z_after_mse": 4.468130111694336,
+              "x_pred_mse": 0.5968636870384216,
+              "z_after_token_acc": 0.04878048598766327,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 8,
+              "t": 0.21875,
+              "t_next": 0.25,
+              "dt": 0.03125,
+              "z_before_mse": 3.124406099319458,
+              "z_after_mse": 2.9316046237945557,
+              "x_pred_mse": 0.7780587077140808,
+              "z_after_token_acc": 0.024390242993831635,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 16,
+              "t": 0.46875,
+              "t_next": 0.5,
+              "dt": 0.03125,
+              "z_before_mse": 1.8341293334960938,
+              "z_after_mse": 1.7137538194656372,
+              "x_pred_mse": 1.0425993204116821,
+              "z_after_token_acc": 0.024390242993831635,
+              "x_pred_token_acc": 0.024390242993831635
+            },
+            {
+              "step": 24,
+              "t": 0.71875,
+              "t_next": 0.75,
+              "dt": 0.03125,
+              "z_before_mse": 1.1367255449295044,
+              "z_after_mse": 1.0930300951004028,
+              "x_pred_mse": 1.0988155603408813,
+              "z_after_token_acc": 0.024390242993831635,
+              "x_pred_token_acc": 0.024390242993831635
+            },
+            {
+              "step": 32,
+              "t": 0.96875,
+              "t_next": 1.0,
+              "dt": 0.03125,
+              "z_before_mse": 1.0632792711257935,
+              "z_after_mse": 1.0841689109802246,
+              "x_pred_mse": 1.0991265773773193,
+              "z_after_token_acc": 0.024390242993831635,
+              "x_pred_token_acc": 0.024390242993831635
+            }
+          ]
+        },
+        {
+          "t_start": 0.0,
+          "schedule": "logit_tail",
+          "num_steps": 64,
+          "initial_mse": 4.723208904266357,
+          "final_mse": 1.138689398765564,
+          "final_token_acc": 0.0,
+          "final_generated": "Tatting: Hello! To craft a simple and effective collectrained language model, you need several role plays and correct arrangement of components. Briefs to accommodate the roles: 1. **Tatan",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.0,
+              "t_next": 0.0269638579338789,
+              "dt": 0.0269638579338789,
+              "z_before_mse": 4.723208904266357,
+              "z_after_mse": 4.502634525299072,
+              "x_pred_mse": 0.5968636870384216,
+              "z_after_token_acc": 0.04878048598766327,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 8,
+              "t": 0.0805438831448555,
+              "t_next": 0.08983787149190903,
+              "dt": 0.009293988347053528,
+              "z_before_mse": 4.084006309509277,
+              "z_after_mse": 4.014108180999756,
+              "x_pred_mse": 0.6445171236991882,
+              "z_after_token_acc": 0.04878048598766327,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 16,
+              "t": 0.11737871915102005,
+              "t_next": 0.12051943689584732,
+              "dt": 0.0031407177448272705,
+              "z_before_mse": 3.811692714691162,
+              "z_after_mse": 3.789060354232788,
+              "x_pred_mse": 0.6870325803756714,
+              "z_after_token_acc": 0.04878048598766327,
+              "x_pred_token_acc": 0.04878048598766327
+            },
+            {
+              "step": 24,
+              "t": 0.14336974918842316,
+              "t_next": 0.14634405076503754,
+              "dt": 0.00297430157661438,
+              "z_before_mse": 3.627105236053467,
+              "z_after_mse": 3.6063830852508545,
+              "x_pred_mse": 0.7195081114768982,
+              "z_after_token_acc": 0.04878048598766327,
+              "x_pred_token_acc": 0.024390242993831635
+            },
+            {
+              "step": 32,
+              "t": 0.18266068398952484,
+              "t_next": 0.19057880342006683,
+              "dt": 0.007918119430541992,
+              "z_before_mse": 3.360079765319824,
+              "z_after_mse": 3.308046340942383,
+              "x_pred_mse": 0.7962154150009155,
+              "z_after_token_acc": 0.024390242993831635,
+              "x_pred_token_acc": 0.024390242993831635
+            },
+            {
+              "step": 40,
+              "t": 0.22853142023086548,
+              "t_next": 0.2306925356388092,
+              "dt": 0.0021611154079437256,
+              "z_before_mse": 3.066657543182373,
+              "z_after_mse": 3.053313970565796,
+              "x_pred_mse": 0.8625360131263733,
+              "z_after_token_acc": 0.024390242993831635,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 48,
+              "t": 0.3301735520362854,
+              "t_next": 0.3347739577293396,
+              "dt": 0.004600405693054199,
+              "z_before_mse": 2.485109567642212,
+              "z_after_mse": 2.4611101150512695,
+              "x_pred_mse": 0.9884293079376221,
+              "z_after_token_acc": 0.024390242993831635,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 56,
+              "t": 0.3784053921699524,
+              "t_next": 0.39158740639686584,
+              "dt": 0.013182014226913452,
+              "z_before_mse": 2.2434189319610596,
+              "z_after_mse": 2.1812117099761963,
+              "x_pred_mse": 1.037851333618164,
+              "z_after_token_acc": 0.024390242993831635,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 64,
+              "t": 0.6300482749938965,
+              "t_next": 1.0,
+              "dt": 0.3699517250061035,
+              "z_before_mse": 1.3409754037857056,
+              "z_after_mse": 1.138689398765564,
+              "x_pred_mse": 1.138689398765564,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "input": "User: Read the paragraph and answer with one concise sentence. Paragraph: The experiment used 32 GPUs, trained for two epochs, and saved the final checkpoint at step 5402. What checkpoint should we evaluate?\nAssistant:",
+      "expected": "We should evaluate checkpoint_5402.",
+      "clean_decode": {
+        "token_acc": 1.0,
+        "generated": "We should evaluate checkpoint_5402."
+      },
+      "runs": [
+        {
+          "t_start": 0.95,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 0.011762997135519981,
+          "final_mse": 0.05581314489245415,
+          "final_token_acc": 0.5,
+          "final_generated": "We should evaluate 50point 48 54end",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.949999988079071,
+              "t_next": 0.9515624642372131,
+              "dt": 0.0015624761581420898,
+              "z_before_mse": 0.011762997135519981,
+              "z_after_mse": 0.011400123126804829,
+              "x_pred_mse": 0.12293166667222977,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.625
+            },
+            {
+              "step": 8,
+              "t": 0.9609375,
+              "t_next": 0.9624999761581421,
+              "dt": 0.0015624761581420898,
+              "z_before_mse": 0.013630791567265987,
+              "z_after_mse": 0.014582778327167034,
+              "x_pred_mse": 0.12348359823226929,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.625
+            },
+            {
+              "step": 16,
+              "t": 0.973437488079071,
+              "t_next": 0.9750000238418579,
+              "dt": 0.0015625357627868652,
+              "z_before_mse": 0.024122238159179688,
+              "z_after_mse": 0.02577744796872139,
+              "x_pred_mse": 0.1268312633037567,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.625
+            },
+            {
+              "step": 24,
+              "t": 0.9859374761581421,
+              "t_next": 0.987500011920929,
+              "dt": 0.0015625357627868652,
+              "z_before_mse": 0.03841259330511093,
+              "z_after_mse": 0.04030678793787956,
+              "x_pred_mse": 0.13152724504470825,
+              "z_after_token_acc": 0.875,
+              "x_pred_token_acc": 0.625
+            },
+            {
+              "step": 32,
+              "t": 0.9984375238418579,
+              "t_next": 1.0,
+              "dt": 0.0015624761581420898,
+              "z_before_mse": 0.05381554365158081,
+              "z_after_mse": 0.05581314489245415,
+              "x_pred_mse": 0.1476694941520691,
+              "z_after_token_acc": 0.5,
+              "x_pred_token_acc": 0.5
+            }
+          ]
+        },
+        {
+          "t_start": 0.95,
+          "schedule": "logit_tail",
+          "num_steps": 1,
+          "initial_mse": 0.011762997135519981,
+          "final_mse": 0.12293167412281036,
+          "final_token_acc": 0.625,
+          "final_generated": "We should evaluate 50point 48 5402.",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.949999988079071,
+              "t_next": 1.0,
+              "dt": 0.050000011920928955,
+              "z_before_mse": 0.011762997135519981,
+              "z_after_mse": 0.12293167412281036,
+              "x_pred_mse": 0.12293166667222977,
+              "z_after_token_acc": 0.625,
+              "x_pred_token_acc": 0.625
+            }
+          ]
+        },
+        {
+          "t_start": 0.9,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 0.04728063941001892,
+          "final_mse": 0.1042536050081253,
+          "final_token_acc": 0.5,
+          "final_generated": "We should evaluate 50point 48 54end",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.8999999761581421,
+              "t_next": 0.903124988079071,
+              "dt": 0.003125011920928955,
+              "z_before_mse": 0.04728063941001892,
+              "z_after_mse": 0.0449429526925087,
+              "x_pred_mse": 0.12296335399150848,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.625
+            },
+            {
+              "step": 8,
+              "t": 0.921875,
+              "t_next": 0.9249999523162842,
+              "dt": 0.0031249523162841797,
+              "z_before_mse": 0.03713415563106537,
+              "z_after_mse": 0.03691308945417404,
+              "x_pred_mse": 0.12363886833190918,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.625
+            },
+            {
+              "step": 16,
+              "t": 0.9468749761581421,
+              "t_next": 0.949999988079071,
+              "dt": 0.003125011920928955,
+              "z_before_mse": 0.044311076402664185,
+              "z_after_mse": 0.04670090973377228,
+              "x_pred_mse": 0.12958449125289917,
+              "z_after_token_acc": 0.875,
+              "x_pred_token_acc": 0.625
+            },
+            {
+              "step": 24,
+              "t": 0.971875011920929,
+              "t_next": 0.9750000238418579,
+              "dt": 0.003125011920928955,
+              "z_before_mse": 0.06891496479511261,
+              "z_after_mse": 0.07262928783893585,
+              "x_pred_mse": 0.16048838198184967,
+              "z_after_token_acc": 0.5,
+              "x_pred_token_acc": 0.5
+            },
+            {
+              "step": 32,
+              "t": 0.996874988079071,
+              "t_next": 1.0,
+              "dt": 0.003125011920928955,
+              "z_before_mse": 0.10027401149272919,
+              "z_after_mse": 0.1042536050081253,
+              "x_pred_mse": 0.20840638875961304,
+              "z_after_token_acc": 0.5,
+              "x_pred_token_acc": 0.5
+            }
+          ]
+        },
+        {
+          "t_start": 0.9,
+          "schedule": "logit_tail",
+          "num_steps": 1,
+          "initial_mse": 0.04728063941001892,
+          "final_mse": 0.12296335399150848,
+          "final_token_acc": 0.625,
+          "final_generated": "We should evaluate 50point 48 5402.",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.8999999761581421,
+              "t_next": 1.0,
+              "dt": 0.10000002384185791,
+              "z_before_mse": 0.04728063941001892,
+              "z_after_mse": 0.12296335399150848,
+              "x_pred_mse": 0.12296335399150848,
+              "z_after_token_acc": 0.625,
+              "x_pred_token_acc": 0.625
+            }
+          ]
+        },
+        {
+          "t_start": 0.7,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 0.42740219831466675,
+          "final_mse": 0.1849261224269867,
+          "final_token_acc": 0.625,
+          "final_generated": "We should evaluate 50point_ 54end",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.699999988079071,
+              "t_next": 0.7093749642372131,
+              "dt": 0.00937497615814209,
+              "z_before_mse": 0.42740219831466675,
+              "z_after_mse": 0.40290987491607666,
+              "x_pred_mse": 0.12558524310588837,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.625
+            },
+            {
+              "step": 8,
+              "t": 0.765625,
+              "t_next": 0.7749999761581421,
+              "dt": 0.00937497615814209,
+              "z_before_mse": 0.2755340337753296,
+              "z_after_mse": 0.2577531337738037,
+              "x_pred_mse": 0.12459857016801834,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.625
+            },
+            {
+              "step": 16,
+              "t": 0.840624988079071,
+              "t_next": 0.8500000238418579,
+              "dt": 0.009375035762786865,
+              "z_before_mse": 0.16108444333076477,
+              "z_after_mse": 0.15128475427627563,
+              "x_pred_mse": 0.13002222776412964,
+              "z_after_token_acc": 0.75,
+              "x_pred_token_acc": 0.625
+            },
+            {
+              "step": 24,
+              "t": 0.9156249761581421,
+              "t_next": 0.925000011920929,
+              "dt": 0.009375035762786865,
+              "z_before_mse": 0.1133359968662262,
+              "z_after_mse": 0.11321035772562027,
+              "x_pred_mse": 0.16095706820487976,
+              "z_after_token_acc": 0.5,
+              "x_pred_token_acc": 0.5
+            },
+            {
+              "step": 32,
+              "t": 0.9906250238418579,
+              "t_next": 1.0,
+              "dt": 0.00937497615814209,
+              "z_before_mse": 0.17194969952106476,
+              "z_after_mse": 0.1849261224269867,
+              "x_pred_mse": 0.26227661967277527,
+              "z_after_token_acc": 0.625,
+              "x_pred_token_acc": 0.625
+            }
+          ]
+        },
+        {
+          "t_start": 0.7,
+          "schedule": "logit_tail",
+          "num_steps": 2,
+          "initial_mse": 0.42740219831466675,
+          "final_mse": 0.12357620894908905,
+          "final_token_acc": 0.625,
+          "final_generated": "We should evaluate 50point 48 5402.",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.699999988079071,
+              "t_next": 0.703611433506012,
+              "dt": 0.003611445426940918,
+              "z_before_mse": 0.42740219831466675,
+              "z_after_mse": 0.41785216331481934,
+              "x_pred_mse": 0.12558524310588837,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.625
+            },
+            {
+              "step": 2,
+              "t": 0.703611433506012,
+              "t_next": 1.0,
+              "dt": 0.29638856649398804,
+              "z_before_mse": 0.41785216331481934,
+              "z_after_mse": 0.12357620894908905,
+              "x_pred_mse": 0.12357620894908905,
+              "z_after_token_acc": 0.625,
+              "x_pred_token_acc": 0.625
+            }
+          ]
+        },
+        {
+          "t_start": 0.5,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 1.165243148803711,
+          "final_mse": 0.21817725896835327,
+          "final_token_acc": 0.625,
+          "final_generated": "We should evaluate 50point_ 542.",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.5,
+              "t_next": 0.515625,
+              "dt": 0.015625,
+              "z_before_mse": 1.165243148803711,
+              "z_after_mse": 1.0972318649291992,
+              "x_pred_mse": 0.12480314821004868,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.625
+            },
+            {
+              "step": 8,
+              "t": 0.609375,
+              "t_next": 0.625,
+              "dt": 0.015625,
+              "z_before_mse": 0.7360609769821167,
+              "z_after_mse": 0.6839186549186707,
+              "x_pred_mse": 0.12575998902320862,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.625
+            },
+            {
+              "step": 16,
+              "t": 0.734375,
+              "t_next": 0.75,
+              "dt": 0.015625,
+              "z_before_mse": 0.3838512599468231,
+              "z_after_mse": 0.3503148555755615,
+              "x_pred_mse": 0.13150250911712646,
+              "z_after_token_acc": 0.875,
+              "x_pred_token_acc": 0.625
+            },
+            {
+              "step": 24,
+              "t": 0.859375,
+              "t_next": 0.875,
+              "dt": 0.015625,
+              "z_before_mse": 0.18970413506031036,
+              "z_after_mse": 0.17802749574184418,
+              "x_pred_mse": 0.19027867913246155,
+              "z_after_token_acc": 0.5,
+              "x_pred_token_acc": 0.5
+            },
+            {
+              "step": 32,
+              "t": 0.984375,
+              "t_next": 1.0,
+              "dt": 0.015625,
+              "z_before_mse": 0.2060707062482834,
+              "z_after_mse": 0.21817725896835327,
+              "x_pred_mse": 0.2542155683040619,
+              "z_after_token_acc": 0.625,
+              "x_pred_token_acc": 0.625
+            }
+          ]
+        },
+        {
+          "t_start": 0.5,
+          "schedule": "logit_tail",
+          "num_steps": 4,
+          "initial_mse": 1.165243148803711,
+          "final_mse": 0.12432873249053955,
+          "final_token_acc": 0.625,
+          "final_generated": "We should evaluate 50point 48 5402.",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.5,
+              "t_next": 0.5089442729949951,
+              "dt": 0.008944272994995117,
+              "z_before_mse": 1.165243148803711,
+              "z_after_mse": 1.1260309219360352,
+              "x_pred_mse": 0.12480314821004868,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.625
+            },
+            {
+              "step": 4,
+              "t": 0.5343716144561768,
+              "t_next": 1.0,
+              "dt": 0.46562838554382324,
+              "z_before_mse": 1.0183525085449219,
+              "z_after_mse": 0.12432873249053955,
+              "x_pred_mse": 0.12432873249053955,
+              "z_after_token_acc": 0.625,
+              "x_pred_token_acc": 0.625
+            }
+          ]
+        },
+        {
+          "t_start": 0.3,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 2.287064552307129,
+          "final_mse": 0.3292345404624939,
+          "final_token_acc": 0.75,
+          "final_generated": "We should evaluate checkpoint of 5402.",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.30000001192092896,
+              "t_next": 0.3218750059604645,
+              "dt": 0.021874994039535522,
+              "z_before_mse": 2.287064552307129,
+              "z_after_mse": 2.1544060707092285,
+              "x_pred_mse": 0.2366737276315689,
+              "z_after_token_acc": 0.625,
+              "x_pred_token_acc": 0.625
+            },
+            {
+              "step": 8,
+              "t": 0.453125,
+              "t_next": 0.4750000238418579,
+              "dt": 0.02187502384185791,
+              "z_before_mse": 1.4495865106582642,
+              "z_after_mse": 1.3476685285568237,
+              "x_pred_mse": 0.24510900676250458,
+              "z_after_token_acc": 0.75,
+              "x_pred_token_acc": 0.5
+            },
+            {
+              "step": 16,
+              "t": 0.628125011920929,
+              "t_next": 0.6499999761581421,
+              "dt": 0.021874964237213135,
+              "z_before_mse": 0.7634968757629395,
+              "z_after_mse": 0.6985152959823608,
+              "x_pred_mse": 0.2825273275375366,
+              "z_after_token_acc": 0.625,
+              "x_pred_token_acc": 0.5
+            },
+            {
+              "step": 24,
+              "t": 0.8031250238418579,
+              "t_next": 0.824999988079071,
+              "dt": 0.021874964237213135,
+              "z_before_mse": 0.37739014625549316,
+              "z_after_mse": 0.3512972593307495,
+              "x_pred_mse": 0.32006242871284485,
+              "z_after_token_acc": 0.5,
+              "x_pred_token_acc": 0.625
+            },
+            {
+              "step": 32,
+              "t": 0.9781249761581421,
+              "t_next": 1.0,
+              "dt": 0.02187502384185791,
+              "z_before_mse": 0.31897664070129395,
+              "z_after_mse": 0.3292345404624939,
+              "x_pred_mse": 0.3453355133533478,
+              "z_after_token_acc": 0.75,
+              "x_pred_token_acc": 0.75
+            }
+          ]
+        },
+        {
+          "t_start": 0.3,
+          "schedule": "logit_tail",
+          "num_steps": 14,
+          "initial_mse": 2.287064552307129,
+          "final_mse": 0.23499080538749695,
+          "final_token_acc": 0.625,
+          "final_generated": "We should evaluate 50point of 5402.",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.30000001192092896,
+              "t_next": 0.31887325644493103,
+              "dt": 0.018873244524002075,
+              "z_before_mse": 2.287064552307129,
+              "z_after_mse": 2.1723477840423584,
+              "x_pred_mse": 0.2366737276315689,
+              "z_after_token_acc": 0.625,
+              "x_pred_token_acc": 0.625
+            },
+            {
+              "step": 8,
+              "t": 0.3969510495662689,
+              "t_next": 0.4010700583457947,
+              "dt": 0.004119008779525757,
+              "z_before_mse": 1.73182213306427,
+              "z_after_mse": 1.7101452350616455,
+              "x_pred_mse": 0.22497960925102234,
+              "z_after_token_acc": 0.75,
+              "x_pred_token_acc": 0.625
+            },
+            {
+              "step": 14,
+              "t": 0.5128299593925476,
+              "t_next": 1.0,
+              "dt": 0.4871700406074524,
+              "z_before_mse": 1.1818970441818237,
+              "z_after_mse": 0.23499080538749695,
+              "x_pred_mse": 0.23499080538749695,
+              "z_after_token_acc": 0.625,
+              "x_pred_token_acc": 0.625
+            }
+          ]
+        },
+        {
+          "t_start": 0.1,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 3.818607807159424,
+          "final_mse": 0.9450553059577942,
+          "final_token_acc": 0.125,
+          "final_generated": "We need to have training about two",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.10000000149011612,
+              "t_next": 0.12812499701976776,
+              "dt": 0.028124995529651642,
+              "z_before_mse": 3.818607807159424,
+              "z_after_mse": 3.616223096847534,
+              "x_pred_mse": 0.6055182814598083,
+              "z_after_token_acc": 0.125,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 8,
+              "t": 0.296875,
+              "t_next": 0.32499998807907104,
+              "dt": 0.028124988079071045,
+              "z_before_mse": 2.545941114425659,
+              "z_after_mse": 2.391890048980713,
+              "x_pred_mse": 0.7923197150230408,
+              "z_after_token_acc": 0.125,
+              "x_pred_token_acc": 0.125
+            },
+            {
+              "step": 16,
+              "t": 0.5218749642372131,
+              "t_next": 0.550000011920929,
+              "dt": 0.02812504768371582,
+              "z_before_mse": 1.5072228908538818,
+              "z_after_mse": 1.4107297658920288,
+              "x_pred_mse": 0.9429007768630981,
+              "z_after_token_acc": 0.125,
+              "x_pred_token_acc": 0.125
+            },
+            {
+              "step": 24,
+              "t": 0.746874988079071,
+              "t_next": 0.7749999761581421,
+              "dt": 0.028124988079071045,
+              "z_before_mse": 0.9581095576286316,
+              "z_after_mse": 0.9253548383712769,
+              "x_pred_mse": 0.9518448710441589,
+              "z_after_token_acc": 0.125,
+              "x_pred_token_acc": 0.125
+            },
+            {
+              "step": 32,
+              "t": 0.971875011920929,
+              "t_next": 1.0,
+              "dt": 0.028124988079071045,
+              "z_before_mse": 0.9256637096405029,
+              "z_after_mse": 0.9450553059577942,
+              "x_pred_mse": 0.9625409245491028,
+              "z_after_token_acc": 0.125,
+              "x_pred_token_acc": 0.125
+            }
+          ]
+        },
+        {
+          "t_start": 0.1,
+          "schedule": "logit_tail",
+          "num_steps": 50,
+          "initial_mse": 3.818607807159424,
+          "final_mse": 1.1793235540390015,
+          "final_token_acc": 0.0,
+          "final_generated": "You need to have trained for two",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.10000000149011612,
+              "t_next": 0.10093439370393753,
+              "dt": 0.0009343922138214111,
+              "z_before_mse": 3.818607807159424,
+              "z_after_mse": 3.8117785453796387,
+              "x_pred_mse": 0.6055182814598083,
+              "z_after_token_acc": 0.125,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 8,
+              "t": 0.11594274640083313,
+              "t_next": 0.1201619803905487,
+              "dt": 0.004219233989715576,
+              "z_before_mse": 3.702873945236206,
+              "z_after_mse": 3.672670602798462,
+              "x_pred_mse": 0.6051895618438721,
+              "z_after_token_acc": 0.125,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 16,
+              "t": 0.14308424293994904,
+              "t_next": 0.14704304933547974,
+              "dt": 0.003958806395530701,
+              "z_before_mse": 3.511442184448242,
+              "z_after_mse": 3.484166145324707,
+              "x_pred_mse": 0.6425518989562988,
+              "z_after_token_acc": 0.125,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 24,
+              "t": 0.1753142923116684,
+              "t_next": 0.1830439567565918,
+              "dt": 0.007729664444923401,
+              "z_before_mse": 3.293935775756836,
+              "z_after_mse": 3.2430994510650635,
+              "x_pred_mse": 0.7306466102600098,
+              "z_after_token_acc": 0.125,
+              "x_pred_token_acc": 0.125
+            },
+            {
+              "step": 32,
+              "t": 0.2341335564851761,
+              "t_next": 0.2572312653064728,
+              "dt": 0.023097708821296692,
+              "z_before_mse": 2.9219048023223877,
+              "z_after_mse": 2.7847907543182373,
+              "x_pred_mse": 0.9520837068557739,
+              "z_after_token_acc": 0.125,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 40,
+              "t": 0.30945682525634766,
+              "t_next": 0.32263997197151184,
+              "dt": 0.013183146715164185,
+              "z_before_mse": 2.4941134452819824,
+              "z_after_mse": 2.425015449523926,
+              "x_pred_mse": 1.0565152168273926,
+              "z_after_token_acc": 0.125,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 48,
+              "t": 0.37443673610687256,
+              "t_next": 0.5687464475631714,
+              "dt": 0.19430971145629883,
+              "z_before_mse": 2.170811653137207,
+              "z_after_mse": 1.4480960369110107,
+              "x_pred_mse": 1.131861686706543,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 50,
+              "t": 0.6420354843139648,
+              "t_next": 1.0,
+              "dt": 0.35796451568603516,
+              "z_before_mse": 1.272935152053833,
+              "z_after_mse": 1.1793235540390015,
+              "x_pred_mse": 1.1793235540390015,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.0,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 4.830910682678223,
+          "final_mse": 1.3263065814971924,
+          "final_token_acc": 0.0,
+          "final_generated": "What about the question? You're",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.0,
+              "t_next": 0.03125,
+              "dt": 0.03125,
+              "z_before_mse": 4.830910682678223,
+              "z_after_mse": 4.57554292678833,
+              "x_pred_mse": 0.7225337028503418,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 8,
+              "t": 0.21875,
+              "t_next": 0.25,
+              "dt": 0.03125,
+              "z_before_mse": 3.2326855659484863,
+              "z_after_mse": 3.040713310241699,
+              "x_pred_mse": 0.8841261267662048,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 16,
+              "t": 0.46875,
+              "t_next": 0.5,
+              "dt": 0.03125,
+              "z_before_mse": 1.9517226219177246,
+              "z_after_mse": 1.8335578441619873,
+              "x_pred_mse": 1.2788854837417603,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 24,
+              "t": 0.71875,
+              "t_next": 0.75,
+              "dt": 0.03125,
+              "z_before_mse": 1.2914612293243408,
+              "z_after_mse": 1.255215048789978,
+              "x_pred_mse": 1.3365285396575928,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 32,
+              "t": 0.96875,
+              "t_next": 1.0,
+              "dt": 0.03125,
+              "z_before_mse": 1.2961523532867432,
+              "z_after_mse": 1.3263065814971924,
+              "x_pred_mse": 1.3467459678649902,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.0,
+          "schedule": "logit_tail",
+          "num_steps": 64,
+          "initial_mse": 4.830910682678223,
+          "final_mse": 1.250046730041504,
+          "final_token_acc": 0.0,
+          "final_generated": "(aboator 1:2). How do we",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.0,
+              "t_next": 0.019864775240421295,
+              "dt": 0.019864775240421295,
+              "z_before_mse": 4.830910682678223,
+              "z_after_mse": 4.66763162612915,
+              "x_pred_mse": 0.7225337028503418,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 8,
+              "t": 0.05380304157733917,
+              "t_next": 0.055635757744312286,
+              "dt": 0.001832716166973114,
+              "z_before_mse": 4.396800994873047,
+              "z_after_mse": 4.382493019104004,
+              "x_pred_mse": 0.7720580697059631,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 16,
+              "t": 0.08460542559623718,
+              "t_next": 0.08883746713399887,
+              "dt": 0.004232041537761688,
+              "z_before_mse": 4.160452365875244,
+              "z_after_mse": 4.128671646118164,
+              "x_pred_mse": 0.792102038860321,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 24,
+              "t": 0.12525488436222076,
+              "t_next": 0.1271045207977295,
+              "dt": 0.001849636435508728,
+              "z_before_mse": 3.862020254135132,
+              "z_after_mse": 3.8488123416900635,
+              "x_pred_mse": 0.8133028745651245,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 32,
+              "t": 0.14084367454051971,
+              "t_next": 0.14360114932060242,
+              "dt": 0.0027574747800827026,
+              "z_before_mse": 3.75166392326355,
+              "z_after_mse": 3.73237943649292,
+              "x_pred_mse": 0.8219865560531616,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 40,
+              "t": 0.1899641454219818,
+              "t_next": 0.19940608739852905,
+              "dt": 0.009441941976547241,
+              "z_before_mse": 3.4185571670532227,
+              "z_after_mse": 3.357125759124756,
+              "x_pred_mse": 0.8566630482673645,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 48,
+              "t": 0.24040716886520386,
+              "t_next": 0.24364832043647766,
+              "dt": 0.0032411515712738037,
+              "z_before_mse": 3.0996851921081543,
+              "z_after_mse": 3.07997989654541,
+              "x_pred_mse": 0.8977255821228027,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 56,
+              "t": 0.30046990513801575,
+              "t_next": 0.3139325678348541,
+              "dt": 0.013462662696838379,
+              "z_before_mse": 2.749660015106201,
+              "z_after_mse": 2.6758925914764404,
+              "x_pred_mse": 0.9938168525695801,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 64,
+              "t": 0.5713086128234863,
+              "t_next": 1.0,
+              "dt": 0.42869138717651367,
+              "z_before_mse": 1.5960724353790283,
+              "z_after_mse": 1.250046730041504,
+              "x_pred_mse": 1.250046730041504,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "input": "User: You must follow this format exactly:\nAnswer: <number>\nCompute 17 + 25 - 9.\nAssistant:",
+      "expected": "Answer: 33",
+      "clean_decode": {
+        "token_acc": 1.0,
+        "generated": "Answer: 33"
+      },
+      "runs": [
+        {
+          "t_start": 0.95,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 0.011884111911058426,
+          "final_mse": 0.07861369848251343,
+          "final_token_acc": 1.0,
+          "final_generated": "Answer: 33",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.949999988079071,
+              "t_next": 0.9515624642372131,
+              "dt": 0.0015624761581420898,
+              "z_before_mse": 0.011884111911058426,
+              "z_after_mse": 0.011850631795823574,
+              "x_pred_mse": 0.157838374376297,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 8,
+              "t": 0.9609375,
+              "t_next": 0.9624999761581421,
+              "dt": 0.0015624761581420898,
+              "z_before_mse": 0.017095789313316345,
+              "z_after_mse": 0.01866540126502514,
+              "x_pred_mse": 0.16693012416362762,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 16,
+              "t": 0.973437488079071,
+              "t_next": 0.9750000238418579,
+              "dt": 0.0015625357627868652,
+              "z_before_mse": 0.03310203179717064,
+              "z_after_mse": 0.03551705181598663,
+              "x_pred_mse": 0.17432737350463867,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 24,
+              "t": 0.9859374761581421,
+              "t_next": 0.987500011920929,
+              "dt": 0.0015625357627868652,
+              "z_before_mse": 0.053608160465955734,
+              "z_after_mse": 0.05622715875506401,
+              "x_pred_mse": 0.19410748779773712,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 32,
+              "t": 0.9984375238418579,
+              "t_next": 1.0,
+              "dt": 0.0015624761581420898,
+              "z_before_mse": 0.07565885037183762,
+              "z_after_mse": 0.07861369848251343,
+              "x_pred_mse": 0.21886320412158966,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.95,
+          "schedule": "logit_tail",
+          "num_steps": 1,
+          "initial_mse": 0.011884111911058426,
+          "final_mse": 0.1578383594751358,
+          "final_token_acc": 1.0,
+          "final_generated": "Answer: 33",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.949999988079071,
+              "t_next": 1.0,
+              "dt": 0.050000011920928955,
+              "z_before_mse": 0.011884111911058426,
+              "z_after_mse": 0.1578383594751358,
+              "x_pred_mse": 0.157838374376297,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.9,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 0.04502804949879646,
+          "final_mse": 0.15306861698627472,
+          "final_token_acc": 1.0,
+          "final_generated": "Answer: 33",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.8999999761581421,
+              "t_next": 0.903124988079071,
+              "dt": 0.003125011920928955,
+              "z_before_mse": 0.04502804949879646,
+              "z_after_mse": 0.04336948320269585,
+              "x_pred_mse": 0.15818668901920319,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 8,
+              "t": 0.921875,
+              "t_next": 0.9249999523162842,
+              "dt": 0.0031249523162841797,
+              "z_before_mse": 0.04087434336543083,
+              "z_after_mse": 0.041736703366041183,
+              "x_pred_mse": 0.16848821938037872,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 16,
+              "t": 0.9468749761581421,
+              "t_next": 0.949999988079071,
+              "dt": 0.003125011920928955,
+              "z_before_mse": 0.05865525081753731,
+              "z_after_mse": 0.06278283149003983,
+              "x_pred_mse": 0.1843925267457962,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 24,
+              "t": 0.971875011920929,
+              "t_next": 0.9750000238418579,
+              "dt": 0.003125011920928955,
+              "z_before_mse": 0.09865973144769669,
+              "z_after_mse": 0.10437064617872238,
+              "x_pred_mse": 0.23575250804424286,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 32,
+              "t": 0.996874988079071,
+              "t_next": 1.0,
+              "dt": 0.003125011920928955,
+              "z_before_mse": 0.14658066630363464,
+              "z_after_mse": 0.15306861698627472,
+              "x_pred_mse": 0.3082628548145294,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.9,
+          "schedule": "logit_tail",
+          "num_steps": 1,
+          "initial_mse": 0.04502804949879646,
+          "final_mse": 0.15818668901920319,
+          "final_token_acc": 1.0,
+          "final_generated": "Answer: 33",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.8999999761581421,
+              "t_next": 1.0,
+              "dt": 0.10000002384185791,
+              "z_before_mse": 0.04502804949879646,
+              "z_after_mse": 0.15818668901920319,
+              "x_pred_mse": 0.15818668901920319,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.7,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 0.43210646510124207,
+          "final_mse": 0.2708166539669037,
+          "final_token_acc": 1.0,
+          "final_generated": "Answer: 33",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.699999988079071,
+              "t_next": 0.7093749642372131,
+              "dt": 0.00937497615814209,
+              "z_before_mse": 0.43210646510124207,
+              "z_after_mse": 0.40939268469810486,
+              "x_pred_mse": 0.16234977543354034,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 8,
+              "t": 0.765625,
+              "t_next": 0.7749999761581421,
+              "dt": 0.00937497615814209,
+              "z_before_mse": 0.29277393221855164,
+              "z_after_mse": 0.27669504284858704,
+              "x_pred_mse": 0.17223934829235077,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 16,
+              "t": 0.840624988079071,
+              "t_next": 0.8500000238418579,
+              "dt": 0.009375035762786865,
+              "z_before_mse": 0.19163288176059723,
+              "z_after_mse": 0.1834356039762497,
+              "x_pred_mse": 0.2011319398880005,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 24,
+              "t": 0.9156249761581421,
+              "t_next": 0.925000011920929,
+              "dt": 0.009375035762786865,
+              "z_before_mse": 0.16419218480587006,
+              "z_after_mse": 0.1686275452375412,
+              "x_pred_mse": 0.2839463949203491,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 32,
+              "t": 0.9906250238418579,
+              "t_next": 1.0,
+              "dt": 0.00937497615814209,
+              "z_before_mse": 0.25942811369895935,
+              "z_after_mse": 0.2708166539669037,
+              "x_pred_mse": 0.3328980505466461,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.7,
+          "schedule": "logit_tail",
+          "num_steps": 1,
+          "initial_mse": 0.43210646510124207,
+          "final_mse": 0.16234977543354034,
+          "final_token_acc": 1.0,
+          "final_generated": "Answer: 33",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.699999988079071,
+              "t_next": 1.0,
+              "dt": 0.30000001192092896,
+              "z_before_mse": 0.43210646510124207,
+              "z_after_mse": 0.16234977543354034,
+              "x_pred_mse": 0.16234977543354034,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.5,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 1.2524333000183105,
+          "final_mse": 0.326154887676239,
+          "final_token_acc": 1.0,
+          "final_generated": "Answer: 33",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.5,
+              "t_next": 0.515625,
+              "dt": 0.015625,
+              "z_before_mse": 1.2524333000183105,
+              "z_after_mse": 1.1814905405044556,
+              "x_pred_mse": 0.1715058833360672,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.6666666865348816
+            },
+            {
+              "step": 8,
+              "t": 0.609375,
+              "t_next": 0.625,
+              "dt": 0.015625,
+              "z_before_mse": 0.8061992526054382,
+              "z_after_mse": 0.7530003190040588,
+              "x_pred_mse": 0.21527999639511108,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 16,
+              "t": 0.734375,
+              "t_next": 0.75,
+              "dt": 0.015625,
+              "z_before_mse": 0.4561079740524292,
+              "z_after_mse": 0.42407727241516113,
+              "x_pred_mse": 0.2583223581314087,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 24,
+              "t": 0.859375,
+              "t_next": 0.875,
+              "dt": 0.015625,
+              "z_before_mse": 0.28044816851615906,
+              "z_after_mse": 0.27333498001098633,
+              "x_pred_mse": 0.34444496035575867,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 32,
+              "t": 0.984375,
+              "t_next": 1.0,
+              "dt": 0.015625,
+              "z_before_mse": 0.31740856170654297,
+              "z_after_mse": 0.326154887676239,
+              "x_pred_mse": 0.3563770353794098,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.5,
+          "schedule": "logit_tail",
+          "num_steps": 3,
+          "initial_mse": 1.2524333000183105,
+          "final_mse": 0.21073012053966522,
+          "final_token_acc": 1.0,
+          "final_generated": "Answer: 33",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.5,
+              "t_next": 0.5121780037879944,
+              "dt": 0.012178003787994385,
+              "z_before_mse": 1.2524333000183105,
+              "z_after_mse": 1.1969350576400757,
+              "x_pred_mse": 0.1715058833360672,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.6666666865348816
+            },
+            {
+              "step": 3,
+              "t": 0.6903724670410156,
+              "t_next": 1.0,
+              "dt": 0.3096275329589844,
+              "z_before_mse": 0.550940990447998,
+              "z_after_mse": 0.21073012053966522,
+              "x_pred_mse": 0.21073012053966522,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.3,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 2.379301071166992,
+          "final_mse": 0.5393412709236145,
+          "final_token_acc": 0.6666666865348816,
+          "final_generated": "Option: 33",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.30000001192092896,
+              "t_next": 0.3218750059604645,
+              "dt": 0.021874994039535522,
+              "z_before_mse": 2.379301071166992,
+              "z_after_mse": 2.248425245285034,
+              "x_pred_mse": 0.28450050950050354,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.6666666865348816
+            },
+            {
+              "step": 8,
+              "t": 0.453125,
+              "t_next": 0.4750000238418579,
+              "dt": 0.02187502384185791,
+              "z_before_mse": 1.5657275915145874,
+              "z_after_mse": 1.4679046869277954,
+              "x_pred_mse": 0.4655005931854248,
+              "z_after_token_acc": 0.6666666865348816,
+              "x_pred_token_acc": 0.6666666865348816
+            },
+            {
+              "step": 16,
+              "t": 0.628125011920929,
+              "t_next": 0.6499999761581421,
+              "dt": 0.021874964237213135,
+              "z_before_mse": 0.910101592540741,
+              "z_after_mse": 0.8486928939819336,
+              "x_pred_mse": 0.4884816110134125,
+              "z_after_token_acc": 0.6666666865348816,
+              "x_pred_token_acc": 0.6666666865348816
+            },
+            {
+              "step": 24,
+              "t": 0.8031250238418579,
+              "t_next": 0.824999988079071,
+              "dt": 0.021874964237213135,
+              "z_before_mse": 0.5461624264717102,
+              "z_after_mse": 0.522814929485321,
+              "x_pred_mse": 0.5227966904640198,
+              "z_after_token_acc": 0.6666666865348816,
+              "x_pred_token_acc": 0.6666666865348816
+            },
+            {
+              "step": 32,
+              "t": 0.9781249761581421,
+              "t_next": 1.0,
+              "dt": 0.02187502384185791,
+              "z_before_mse": 0.5227519273757935,
+              "z_after_mse": 0.5393412709236145,
+              "x_pred_mse": 0.5645257830619812,
+              "z_after_token_acc": 0.6666666865348816,
+              "x_pred_token_acc": 0.6666666865348816
+            }
+          ]
+        },
+        {
+          "t_start": 0.3,
+          "schedule": "logit_tail",
+          "num_steps": 15,
+          "initial_mse": 2.379301071166992,
+          "final_mse": 0.47986355423927307,
+          "final_token_acc": 0.6666666865348816,
+          "final_generated": "Options: 33",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.30000001192092896,
+              "t_next": 0.30169516801834106,
+              "dt": 0.0016951560974121094,
+              "z_before_mse": 2.379301071166992,
+              "z_after_mse": 2.3690083026885986,
+              "x_pred_mse": 0.28450050950050354,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.6666666865348816
+            },
+            {
+              "step": 8,
+              "t": 0.3838699162006378,
+              "t_next": 0.38633352518081665,
+              "dt": 0.002463608980178833,
+              "z_before_mse": 1.9098806381225586,
+              "z_after_mse": 1.8970870971679688,
+              "x_pred_mse": 0.46456417441368103,
+              "z_after_token_acc": 0.6666666865348816,
+              "x_pred_token_acc": 0.6666666865348816
+            },
+            {
+              "step": 15,
+              "t": 0.5263543725013733,
+              "t_next": 1.0,
+              "dt": 0.4736456274986267,
+              "z_before_mse": 1.2629446983337402,
+              "z_after_mse": 0.47986355423927307,
+              "x_pred_mse": 0.47986355423927307,
+              "z_after_token_acc": 0.6666666865348816,
+              "x_pred_token_acc": 0.6666666865348816
+            }
+          ]
+        },
+        {
+          "t_start": 0.1,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 4.0612568855285645,
+          "final_mse": 1.2414547204971313,
+          "final_token_acc": 0.0,
+          "final_generated": "May each Do",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.10000000149011612,
+              "t_next": 0.12812499701976776,
+              "dt": 0.028124995529651642,
+              "z_before_mse": 4.0612568855285645,
+              "z_after_mse": 3.844148635864258,
+              "x_pred_mse": 0.5083761215209961,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 8,
+              "t": 0.296875,
+              "t_next": 0.32499998807907104,
+              "dt": 0.028124988079071045,
+              "z_before_mse": 2.718836784362793,
+              "z_after_mse": 2.5589759349823,
+              "x_pred_mse": 0.7452754378318787,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 16,
+              "t": 0.5218749642372131,
+              "t_next": 0.550000011920929,
+              "dt": 0.02812504768371582,
+              "z_before_mse": 1.6560264825820923,
+              "z_after_mse": 1.558487892150879,
+              "x_pred_mse": 1.0222989320755005,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 24,
+              "t": 0.746874988079071,
+              "t_next": 0.7749999761581421,
+              "dt": 0.028124988079071045,
+              "z_before_mse": 1.1176449060440063,
+              "z_after_mse": 1.0921496152877808,
+              "x_pred_mse": 1.2260760068893433,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 32,
+              "t": 0.971875011920929,
+              "t_next": 1.0,
+              "dt": 0.028124988079071045,
+              "z_before_mse": 1.202998161315918,
+              "z_after_mse": 1.2414547204971313,
+              "x_pred_mse": 1.2746734619140625,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.1,
+          "schedule": "logit_tail",
+          "num_steps": 50,
+          "initial_mse": 4.0612568855285645,
+          "final_mse": 1.162824273109436,
+          "final_token_acc": 0.0,
+          "final_generated": "Mayp O",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.10000000149011612,
+              "t_next": 0.10128141194581985,
+              "dt": 0.0012814104557037354,
+              "z_before_mse": 4.0612568855285645,
+              "z_after_mse": 4.0512166023254395,
+              "x_pred_mse": 0.5083761215209961,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 8,
+              "t": 0.13394929468631744,
+              "t_next": 0.14073941111564636,
+              "dt": 0.0067901164293289185,
+              "z_before_mse": 3.8021013736724854,
+              "z_after_mse": 3.7515411376953125,
+              "x_pred_mse": 0.544535219669342,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.3333333432674408
+            },
+            {
+              "step": 16,
+              "t": 0.17570000886917114,
+              "t_next": 0.17777836322784424,
+              "dt": 0.0020783543586730957,
+              "z_before_mse": 3.4995739459991455,
+              "z_after_mse": 3.485100507736206,
+              "x_pred_mse": 0.6388763785362244,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 24,
+              "t": 0.19921840727329254,
+              "t_next": 0.20735560357570648,
+              "dt": 0.00813719630241394,
+              "z_before_mse": 3.337883710861206,
+              "z_after_mse": 3.2829477787017822,
+              "x_pred_mse": 0.6626947522163391,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 32,
+              "t": 0.2739766836166382,
+              "t_next": 0.27870553731918335,
+              "dt": 0.004728853702545166,
+              "z_before_mse": 2.856938123703003,
+              "z_after_mse": 2.8283145427703857,
+              "x_pred_mse": 0.7086822986602783,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 40,
+              "t": 0.3303234279155731,
+              "t_next": 0.35653966665267944,
+              "dt": 0.026216238737106323,
+              "z_before_mse": 2.5289852619171143,
+              "z_after_mse": 2.3869943618774414,
+              "x_pred_mse": 0.7769922614097595,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 48,
+              "t": 0.5518423318862915,
+              "t_next": 0.568167507648468,
+              "dt": 0.016325175762176514,
+              "z_before_mse": 1.5329583883285522,
+              "z_after_mse": 1.479697585105896,
+              "x_pred_mse": 1.0667279958724976,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 50,
+              "t": 0.7604159712791443,
+              "t_next": 1.0,
+              "dt": 0.2395840287208557,
+              "z_before_mse": 1.0717109441757202,
+              "z_after_mse": 1.162824273109436,
+              "x_pred_mse": 1.162824273109436,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.0,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 4.7621564865112305,
+          "final_mse": 1.255015254020691,
+          "final_token_acc": 0.0,
+          "final_generated": "--- Word",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.0,
+              "t_next": 0.03125,
+              "dt": 0.03125,
+              "z_before_mse": 4.7621564865112305,
+              "z_after_mse": 4.512670040130615,
+              "x_pred_mse": 0.6968407034873962,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 8,
+              "t": 0.21875,
+              "t_next": 0.25,
+              "dt": 0.03125,
+              "z_before_mse": 3.1852519512176514,
+              "z_after_mse": 2.9945602416992188,
+              "x_pred_mse": 0.8712964057922363,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 16,
+              "t": 0.46875,
+              "t_next": 0.5,
+              "dt": 0.03125,
+              "z_before_mse": 1.9126548767089844,
+              "z_after_mse": 1.795892357826233,
+              "x_pred_mse": 1.17351233959198,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 24,
+              "t": 0.71875,
+              "t_next": 0.75,
+              "dt": 0.03125,
+              "z_before_mse": 1.2539706230163574,
+              "z_after_mse": 1.2157167196273804,
+              "x_pred_mse": 1.2623404264450073,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 32,
+              "t": 0.96875,
+              "t_next": 1.0,
+              "dt": 0.03125,
+              "z_before_mse": 1.2288212776184082,
+              "z_after_mse": 1.255015254020691,
+              "x_pred_mse": 1.273034930229187,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.0,
+          "schedule": "logit_tail",
+          "num_steps": 64,
+          "initial_mse": 4.7621564865112305,
+          "final_mse": 1.1941865682601929,
+          "final_token_acc": 0.0,
+          "final_generated": "--- Given",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.0,
+              "t_next": 0.03784624859690666,
+              "dt": 0.03784624859690666,
+              "z_before_mse": 4.7621564865112305,
+              "z_after_mse": 4.461018085479736,
+              "x_pred_mse": 0.6968407034873962,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 8,
+              "t": 0.08896856755018234,
+              "t_next": 0.09423671662807465,
+              "dt": 0.0052681490778923035,
+              "z_before_mse": 4.071685791015625,
+              "z_after_mse": 4.0328497886657715,
+              "x_pred_mse": 0.744408369064331,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 16,
+              "t": 0.1183539479970932,
+              "t_next": 0.11954262107610703,
+              "dt": 0.0011886730790138245,
+              "z_before_mse": 3.8579299449920654,
+              "z_after_mse": 3.849432945251465,
+              "x_pred_mse": 0.7421085238456726,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 24,
+              "t": 0.1431245058774948,
+              "t_next": 0.15419119596481323,
+              "dt": 0.01106669008731842,
+              "z_before_mse": 3.683295249938965,
+              "z_after_mse": 3.6069746017456055,
+              "x_pred_mse": 0.7453570365905762,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 32,
+              "t": 0.17036142945289612,
+              "t_next": 0.17130248248577118,
+              "dt": 0.000941053032875061,
+              "z_before_mse": 3.4973766803741455,
+              "z_after_mse": 3.4910662174224854,
+              "x_pred_mse": 0.7470054626464844,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 40,
+              "t": 0.18199522793293,
+              "t_next": 0.18506202101707458,
+              "dt": 0.0030667930841445923,
+              "z_before_mse": 3.419841766357422,
+              "z_after_mse": 3.399613380432129,
+              "x_pred_mse": 0.7496790885925293,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 48,
+              "t": 0.24096304178237915,
+              "t_next": 0.249080091714859,
+              "dt": 0.008117049932479858,
+              "z_before_mse": 3.045254945755005,
+              "z_after_mse": 2.996070146560669,
+              "x_pred_mse": 0.7807459235191345,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 56,
+              "t": 0.303489089012146,
+              "t_next": 0.3052438497543335,
+              "dt": 0.0017547607421875,
+              "z_before_mse": 2.682079315185547,
+              "z_after_mse": 2.672459363937378,
+              "x_pred_mse": 1.0050386190414429,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 64,
+              "t": 0.5234262943267822,
+              "t_next": 1.0,
+              "dt": 0.4765737056732178,
+              "z_before_mse": 1.709214210510254,
+              "z_after_mse": 1.1941865682601929,
+              "x_pred_mse": 1.1941865682601929,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "input": "User: Classify the sentiment of this sentence as Positive, Negative, or Neutral. Only output the label. Sentence: The run finally completed, but the generated answers are still not reliable.\nAssistant:",
+      "expected": "Negative",
+      "clean_decode": {
+        "token_acc": 1.0,
+        "generated": "Negative"
+      },
+      "runs": [
+        {
+          "t_start": 0.95,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 0.011766293086111546,
+          "final_mse": 0.05815695971250534,
+          "final_token_acc": 1.0,
+          "final_generated": "Negative",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.949999988079071,
+              "t_next": 0.9515624642372131,
+              "dt": 0.0015624761581420898,
+              "z_before_mse": 0.011766293086111546,
+              "z_after_mse": 0.011289002373814583,
+              "x_pred_mse": 0.0918440967798233,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 8,
+              "t": 0.9609375,
+              "t_next": 0.9624999761581421,
+              "dt": 0.0015624761581420898,
+              "z_before_mse": 0.012222407385706902,
+              "z_after_mse": 0.012899314053356647,
+              "x_pred_mse": 0.10136465728282928,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 16,
+              "t": 0.973437488079071,
+              "t_next": 0.9750000238418579,
+              "dt": 0.0015625357627868652,
+              "z_before_mse": 0.02051655575633049,
+              "z_after_mse": 0.021952124312520027,
+              "x_pred_mse": 0.11635839939117432,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 24,
+              "t": 0.9859374761581421,
+              "t_next": 0.987500011920929,
+              "dt": 0.0015625357627868652,
+              "z_before_mse": 0.03462923690676689,
+              "z_after_mse": 0.03686154633760452,
+              "x_pred_mse": 0.17267918586730957,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 32,
+              "t": 0.9984375238418579,
+              "t_next": 1.0,
+              "dt": 0.0015624761581420898,
+              "z_before_mse": 0.055204883217811584,
+              "z_after_mse": 0.05815695971250534,
+              "x_pred_mse": 0.23624595999717712,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.95,
+          "schedule": "logit_tail",
+          "num_steps": 1,
+          "initial_mse": 0.011766293086111546,
+          "final_mse": 0.0918440967798233,
+          "final_token_acc": 1.0,
+          "final_generated": "Negative",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.949999988079071,
+              "t_next": 1.0,
+              "dt": 0.050000011920928955,
+              "z_before_mse": 0.011766293086111546,
+              "z_after_mse": 0.0918440967798233,
+              "x_pred_mse": 0.0918440967798233,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.9,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 0.04520159587264061,
+          "final_mse": 0.13003334403038025,
+          "final_token_acc": 1.0,
+          "final_generated": "Negative",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.8999999761581421,
+              "t_next": 0.903124988079071,
+              "dt": 0.003125011920928955,
+              "z_before_mse": 0.04520159587264061,
+              "z_after_mse": 0.04309394210577011,
+              "x_pred_mse": 0.09276643395423889,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 8,
+              "t": 0.921875,
+              "t_next": 0.9249999523162842,
+              "dt": 0.0031249523162841797,
+              "z_before_mse": 0.035517238080501556,
+              "z_after_mse": 0.03517959266901016,
+              "x_pred_mse": 0.10288755595684052,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 16,
+              "t": 0.9468749761581421,
+              "t_next": 0.949999988079071,
+              "dt": 0.003125011920928955,
+              "z_before_mse": 0.041607074439525604,
+              "z_after_mse": 0.04420507699251175,
+              "x_pred_mse": 0.1435074806213379,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 24,
+              "t": 0.971875011920929,
+              "t_next": 0.9750000238418579,
+              "dt": 0.003125011920928955,
+              "z_before_mse": 0.0768146887421608,
+              "z_after_mse": 0.08282670378684998,
+              "x_pred_mse": 0.24632832407951355,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 32,
+              "t": 0.996874988079071,
+              "t_next": 1.0,
+              "dt": 0.003125011920928955,
+              "z_before_mse": 0.12431204319000244,
+              "z_after_mse": 0.13003334403038025,
+              "x_pred_mse": 0.25511789321899414,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.9,
+          "schedule": "logit_tail",
+          "num_steps": 1,
+          "initial_mse": 0.04520159587264061,
+          "final_mse": 0.09276643395423889,
+          "final_token_acc": 1.0,
+          "final_generated": "Negative",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.8999999761581421,
+              "t_next": 1.0,
+              "dt": 0.10000002384185791,
+              "z_before_mse": 0.04520159587264061,
+              "z_after_mse": 0.09276643395423889,
+              "x_pred_mse": 0.09276643395423889,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.7,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 0.4363422691822052,
+          "final_mse": 0.22616717219352722,
+          "final_token_acc": 1.0,
+          "final_generated": "Negative",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.699999988079071,
+              "t_next": 0.7093749642372131,
+              "dt": 0.00937497615814209,
+              "z_before_mse": 0.4363422691822052,
+              "z_after_mse": 0.4115981161594391,
+              "x_pred_mse": 0.09619051218032837,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 8,
+              "t": 0.765625,
+              "t_next": 0.7749999761581421,
+              "dt": 0.00937497615814209,
+              "z_before_mse": 0.2822405993938446,
+              "z_after_mse": 0.26399171352386475,
+              "x_pred_mse": 0.10424957424402237,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 16,
+              "t": 0.840624988079071,
+              "t_next": 0.8500000238418579,
+              "dt": 0.009375035762786865,
+              "z_before_mse": 0.16434438526630402,
+              "z_after_mse": 0.1546006202697754,
+              "x_pred_mse": 0.1427391767501831,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 24,
+              "t": 0.9156249761581421,
+              "t_next": 0.925000011920929,
+              "dt": 0.009375035762786865,
+              "z_before_mse": 0.13280436396598816,
+              "z_after_mse": 0.13673312962055206,
+              "x_pred_mse": 0.23914089798927307,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 32,
+              "t": 0.9906250238418579,
+              "t_next": 1.0,
+              "dt": 0.00937497615814209,
+              "z_before_mse": 0.2140224575996399,
+              "z_after_mse": 0.22616717219352722,
+              "x_pred_mse": 0.2937878966331482,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.7,
+          "schedule": "logit_tail",
+          "num_steps": 1,
+          "initial_mse": 0.4363422691822052,
+          "final_mse": 0.09619051218032837,
+          "final_token_acc": 1.0,
+          "final_generated": "Negative",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.699999988079071,
+              "t_next": 1.0,
+              "dt": 0.30000001192092896,
+              "z_before_mse": 0.4363422691822052,
+              "z_after_mse": 0.09619051218032837,
+              "x_pred_mse": 0.09619051218032837,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.5,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 1.2436010837554932,
+          "final_mse": 0.2625136077404022,
+          "final_token_acc": 1.0,
+          "final_generated": "Negative",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.5,
+              "t_next": 0.515625,
+              "dt": 0.015625,
+              "z_before_mse": 1.2436010837554932,
+              "z_after_mse": 1.170025110244751,
+              "x_pred_mse": 0.10165645182132721,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 8,
+              "t": 0.609375,
+              "t_next": 0.625,
+              "dt": 0.015625,
+              "z_before_mse": 0.7796434164047241,
+              "z_after_mse": 0.7232927680015564,
+              "x_pred_mse": 0.10864195972681046,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 16,
+              "t": 0.734375,
+              "t_next": 0.75,
+              "dt": 0.015625,
+              "z_before_mse": 0.4052737355232239,
+              "z_after_mse": 0.37173083424568176,
+              "x_pred_mse": 0.18121132254600525,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 24,
+              "t": 0.859375,
+              "t_next": 0.875,
+              "dt": 0.015625,
+              "z_before_mse": 0.21673983335494995,
+              "z_after_mse": 0.2065071165561676,
+              "x_pred_mse": 0.24985256791114807,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 32,
+              "t": 0.984375,
+              "t_next": 1.0,
+              "dt": 0.015625,
+              "z_before_mse": 0.24928808212280273,
+              "z_after_mse": 0.2625136077404022,
+              "x_pred_mse": 0.2993309497833252,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.5,
+          "schedule": "logit_tail",
+          "num_steps": 2,
+          "initial_mse": 1.2436010837554932,
+          "final_mse": 0.10400092601776123,
+          "final_token_acc": 1.0,
+          "final_generated": "Negative",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.5,
+              "t_next": 0.5604304671287537,
+              "dt": 0.06043046712875366,
+              "z_before_mse": 1.2436010837554932,
+              "z_after_mse": 0.9725978374481201,
+              "x_pred_mse": 0.10165645182132721,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 2,
+              "t": 0.5604304671287537,
+              "t_next": 1.0,
+              "dt": 0.43956953287124634,
+              "z_before_mse": 0.9725978374481201,
+              "z_after_mse": 0.10400092601776123,
+              "x_pred_mse": 0.10400091856718063,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.3,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 2.4466471672058105,
+          "final_mse": 0.2583566904067993,
+          "final_token_acc": 1.0,
+          "final_generated": "Negative",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.30000001192092896,
+              "t_next": 0.3218750059604645,
+              "dt": 0.021874994039535522,
+              "z_before_mse": 2.4466471672058105,
+              "z_after_mse": 2.3038430213928223,
+              "x_pred_mse": 0.11245684325695038,
+              "z_after_token_acc": 0.5,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 8,
+              "t": 0.453125,
+              "t_next": 0.4750000238418579,
+              "dt": 0.02187502384185791,
+              "z_before_mse": 1.537229061126709,
+              "z_after_mse": 1.4264088869094849,
+              "x_pred_mse": 0.12143249064683914,
+              "z_after_token_acc": 0.5,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 16,
+              "t": 0.628125011920929,
+              "t_next": 0.6499999761581421,
+              "dt": 0.021874964237213135,
+              "z_before_mse": 0.794773280620575,
+              "z_after_mse": 0.7242305874824524,
+              "x_pred_mse": 0.2196122705936432,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 24,
+              "t": 0.8031250238418579,
+              "t_next": 0.824999988079071,
+              "dt": 0.021874964237213135,
+              "z_before_mse": 0.3637617528438568,
+              "z_after_mse": 0.331534743309021,
+              "x_pred_mse": 0.24653896689414978,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 32,
+              "t": 0.9781249761581421,
+              "t_next": 1.0,
+              "dt": 0.02187502384185791,
+              "z_before_mse": 0.2517070174217224,
+              "z_after_mse": 0.2583566904067993,
+              "x_pred_mse": 0.26947522163391113,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.3,
+          "schedule": "logit_tail",
+          "num_steps": 14,
+          "initial_mse": 2.4466471672058105,
+          "final_mse": 0.1779397428035736,
+          "final_token_acc": 1.0,
+          "final_generated": "Negative",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.30000001192092896,
+              "t_next": 0.30540338158607483,
+              "dt": 0.005403369665145874,
+              "z_before_mse": 2.4466471672058105,
+              "z_after_mse": 2.4109535217285156,
+              "x_pred_mse": 0.11245684325695038,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 8,
+              "t": 0.3499346375465393,
+              "t_next": 0.38001495599746704,
+              "dt": 0.030080318450927734,
+              "z_before_mse": 2.1251463890075684,
+              "z_after_mse": 1.9428454637527466,
+              "x_pred_mse": 0.1032351553440094,
+              "z_after_token_acc": 0.5,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 14,
+              "t": 0.5811338424682617,
+              "t_next": 1.0,
+              "dt": 0.4188661575317383,
+              "z_before_mse": 0.9558848738670349,
+              "z_after_mse": 0.1779397428035736,
+              "x_pred_mse": 0.1779397428035736,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.1,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 3.7386622428894043,
+          "final_mse": 0.27429360151290894,
+          "final_token_acc": 1.0,
+          "final_generated": "Negative",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.10000000149011612,
+              "t_next": 0.12812499701976776,
+              "dt": 0.028124995529651642,
+              "z_before_mse": 3.7386622428894043,
+              "z_after_mse": 3.522995948791504,
+              "x_pred_mse": 0.21503502130508423,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 8,
+              "t": 0.296875,
+              "t_next": 0.32499998807907104,
+              "dt": 0.028124988079071045,
+              "z_before_mse": 2.3533976078033447,
+              "z_after_mse": 2.182556390762329,
+              "x_pred_mse": 0.23017734289169312,
+              "z_after_token_acc": 0.5,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 16,
+              "t": 0.5218749642372131,
+              "t_next": 0.550000011920929,
+              "dt": 0.02812504768371582,
+              "z_before_mse": 1.1916289329528809,
+              "z_after_mse": 1.0787296295166016,
+              "x_pred_mse": 0.2627500593662262,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 24,
+              "t": 0.746874988079071,
+              "t_next": 0.7749999761581421,
+              "dt": 0.028124988079071045,
+              "z_before_mse": 0.4917857348918915,
+              "z_after_mse": 0.4371402859687805,
+              "x_pred_mse": 0.26674526929855347,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 32,
+              "t": 0.971875011920929,
+              "t_next": 1.0,
+              "dt": 0.028124988079071045,
+              "z_before_mse": 0.26856762170791626,
+              "z_after_mse": 0.27429360151290894,
+              "x_pred_mse": 0.2807682752609253,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.1,
+          "schedule": "logit_tail",
+          "num_steps": 51,
+          "initial_mse": 3.7386622428894043,
+          "final_mse": 0.27467551827430725,
+          "final_token_acc": 1.0,
+          "final_generated": "Negative",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.10000000149011612,
+              "t_next": 0.1007450595498085,
+              "dt": 0.0007450580596923828,
+              "z_before_mse": 3.7386622428894043,
+              "z_after_mse": 3.732861042022705,
+              "x_pred_mse": 0.21503502130508423,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 8,
+              "t": 0.11963677406311035,
+              "t_next": 0.12088821083307266,
+              "dt": 0.0012514367699623108,
+              "z_before_mse": 3.5869975090026855,
+              "z_after_mse": 3.5774035453796387,
+              "x_pred_mse": 0.20349760353565216,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 16,
+              "t": 0.14232152700424194,
+              "t_next": 0.14322684705257416,
+              "dt": 0.0009053200483322144,
+              "z_before_mse": 3.4147610664367676,
+              "z_after_mse": 3.4079556465148926,
+              "x_pred_mse": 0.1979120969772339,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 24,
+              "t": 0.17714299261569977,
+              "t_next": 0.17827288806438446,
+              "dt": 0.0011298954486846924,
+              "z_before_mse": 3.1573710441589355,
+              "z_after_mse": 3.1492116451263428,
+              "x_pred_mse": 0.21163569390773773,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 32,
+              "t": 0.21370196342468262,
+              "t_next": 0.21581757068634033,
+              "dt": 0.002115607261657715,
+              "z_before_mse": 2.89957857131958,
+              "z_after_mse": 2.885007858276367,
+              "x_pred_mse": 0.23474612832069397,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 40,
+              "t": 0.28686439990997314,
+              "t_next": 0.3370527923107147,
+              "dt": 0.05018839240074158,
+              "z_before_mse": 2.4189820289611816,
+              "z_after_mse": 2.1169493198394775,
+              "x_pred_mse": 0.2628193497657776,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 48,
+              "t": 0.4682069718837738,
+              "t_next": 0.5051090121269226,
+              "dt": 0.036902040243148804,
+              "z_before_mse": 1.43295156955719,
+              "z_after_mse": 1.268728256225586,
+              "x_pred_mse": 0.27423369884490967,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            },
+            {
+              "step": 51,
+              "t": 0.6644695401191711,
+              "t_next": 1.0,
+              "dt": 0.33553045988082886,
+              "z_before_mse": 0.7028750777244568,
+              "z_after_mse": 0.27467551827430725,
+              "x_pred_mse": 0.27467551827430725,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 1.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.0,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 5.010708332061768,
+          "final_mse": 0.9016575813293457,
+          "final_token_acc": 0.0,
+          "final_generated": "Let'",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.0,
+              "t_next": 0.03125,
+              "dt": 0.03125,
+              "z_before_mse": 5.010708332061768,
+              "z_after_mse": 4.741544723510742,
+              "x_pred_mse": 0.5506607294082642,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 8,
+              "t": 0.21875,
+              "t_next": 0.25,
+              "dt": 0.03125,
+              "z_before_mse": 3.317004442214966,
+              "z_after_mse": 3.1102638244628906,
+              "x_pred_mse": 0.6597054600715637,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 16,
+              "t": 0.46875,
+              "t_next": 0.5,
+              "dt": 0.03125,
+              "z_before_mse": 1.9111133813858032,
+              "z_after_mse": 1.77688467502594,
+              "x_pred_mse": 0.9045660495758057,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 24,
+              "t": 0.71875,
+              "t_next": 0.75,
+              "dt": 0.03125,
+              "z_before_mse": 1.0999325513839722,
+              "z_after_mse": 1.0408434867858887,
+              "x_pred_mse": 0.9127087593078613,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 32,
+              "t": 0.96875,
+              "t_next": 1.0,
+              "dt": 0.03125,
+              "z_before_mse": 0.8924347162246704,
+              "z_after_mse": 0.9016575813293457,
+              "x_pred_mse": 0.9092953205108643,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.0,
+          "schedule": "logit_tail",
+          "num_steps": 64,
+          "initial_mse": 5.010708332061768,
+          "final_mse": 0.9116477966308594,
+          "final_token_acc": 0.0,
+          "final_generated": "Let'",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.0,
+              "t_next": 0.030057184398174286,
+              "dt": 0.030057184398174286,
+              "z_before_mse": 5.010708332061768,
+              "z_after_mse": 4.751665115356445,
+              "x_pred_mse": 0.5506607294082642,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 8,
+              "t": 0.06787195056676865,
+              "t_next": 0.08604715019464493,
+              "dt": 0.018175199627876282,
+              "z_before_mse": 4.4385786056518555,
+              "z_after_mse": 4.29272985458374,
+              "x_pred_mse": 0.6450669765472412,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 16,
+              "t": 0.10051559656858444,
+              "t_next": 0.10062019526958466,
+              "dt": 0.00010459870100021362,
+              "z_before_mse": 4.178815841674805,
+              "z_after_mse": 4.177999496459961,
+              "x_pred_mse": 0.6546292901039124,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 24,
+              "t": 0.1403522938489914,
+              "t_next": 0.1408105045557022,
+              "dt": 0.00045821070671081543,
+              "z_before_mse": 3.875147819519043,
+              "z_after_mse": 3.8717401027679443,
+              "x_pred_mse": 0.6645255088806152,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 32,
+              "t": 0.16126585006713867,
+              "t_next": 0.1653561294078827,
+              "dt": 0.0040902793407440186,
+              "z_before_mse": 3.721590995788574,
+              "z_after_mse": 3.6920382976531982,
+              "x_pred_mse": 0.6825047135353088,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 40,
+              "t": 0.19686245918273926,
+              "t_next": 0.2090667188167572,
+              "dt": 0.012204259634017944,
+              "z_before_mse": 3.469538688659668,
+              "z_after_mse": 3.38578462600708,
+              "x_pred_mse": 0.7243720293045044,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 48,
+              "t": 0.2651885449886322,
+              "t_next": 0.2661341428756714,
+              "dt": 0.0009455978870391846,
+              "z_before_mse": 3.018160820007324,
+              "z_after_mse": 3.012211799621582,
+              "x_pred_mse": 0.862333357334137,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 56,
+              "t": 0.3005214035511017,
+              "t_next": 0.35793536901474,
+              "dt": 0.057413965463638306,
+              "z_before_mse": 2.801468849182129,
+              "z_after_mse": 2.474226951599121,
+              "x_pred_mse": 0.8921034932136536,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 64,
+              "t": 0.5522090792655945,
+              "t_next": 1.0,
+              "dt": 0.4477909207344055,
+              "z_before_mse": 1.5964033603668213,
+              "z_after_mse": 0.9116477966308594,
+              "x_pred_mse": 0.9116477966308594,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "input": "User: Extract the action items from the note below. Return a numbered list with no extra commentary. Note: We need to evaluate the SFT checkpoint, compare it with the old checkpoint, and then decide whether to scale pretraining data or move to multimodal training.\nAssistant:",
+      "expected": "1. Evaluate the SFT checkpoint.\n2. Compare it with the old checkpoint.\n3. Decide whether to scale pretraining data or move to multimodal training.",
+      "clean_decode": {
+        "token_acc": 1.0,
+        "generated": "1. Evaluate the SFT checkpoint. 2. Compare it with the old checkpoint. 3. Decide whether to scale pretraining data or move to multimodal training."
+      },
+      "runs": [
+        {
+          "t_start": 0.95,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 0.011807050555944443,
+          "final_mse": 0.030350733548402786,
+          "final_token_acc": 0.7647058963775635,
+          "final_generated": "(1) evaluateluate the SFT checkpoint. 2. compare it with the old checkpoint. 3. Determineate whether to scale unnecessaryt data or move to multi man training.",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.949999988079071,
+              "t_next": 0.9515624642372131,
+              "dt": 0.0015624761581420898,
+              "z_before_mse": 0.011807050555944443,
+              "z_after_mse": 0.011290271766483784,
+              "x_pred_mse": 0.06316908448934555,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.7352941036224365
+            },
+            {
+              "step": 8,
+              "t": 0.9609375,
+              "t_next": 0.9624999761581421,
+              "dt": 0.0015624761581420898,
+              "z_before_mse": 0.010913321748375893,
+              "z_after_mse": 0.011206352151930332,
+              "x_pred_mse": 0.06514327228069305,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.7352941036224365
+            },
+            {
+              "step": 16,
+              "t": 0.973437488079071,
+              "t_next": 0.9750000238418579,
+              "dt": 0.0015625357627868652,
+              "z_before_mse": 0.015057507902383804,
+              "z_after_mse": 0.01579541712999344,
+              "x_pred_mse": 0.06674325466156006,
+              "z_after_token_acc": 0.970588207244873,
+              "x_pred_token_acc": 0.7058823704719543
+            },
+            {
+              "step": 24,
+              "t": 0.9859374761581421,
+              "t_next": 0.987500011920929,
+              "dt": 0.0015625357627868652,
+              "z_before_mse": 0.021715804934501648,
+              "z_after_mse": 0.02263788878917694,
+              "x_pred_mse": 0.0702652558684349,
+              "z_after_token_acc": 0.8235294222831726,
+              "x_pred_token_acc": 0.7058823704719543
+            },
+            {
+              "step": 32,
+              "t": 0.9984375238418579,
+              "t_next": 1.0,
+              "dt": 0.0015624761581420898,
+              "z_before_mse": 0.029366331174969673,
+              "z_after_mse": 0.030350733548402786,
+              "x_pred_mse": 0.07488493621349335,
+              "z_after_token_acc": 0.7647058963775635,
+              "x_pred_token_acc": 0.6470588445663452
+            }
+          ]
+        },
+        {
+          "t_start": 0.95,
+          "schedule": "logit_tail",
+          "num_steps": 1,
+          "initial_mse": 0.011807050555944443,
+          "final_mse": 0.06316908448934555,
+          "final_token_acc": 0.7352941036224365,
+          "final_generated": "2. evaluateile the SFT checkpoint. 2. None it with the old checkpoint. 3. Determineate decision to scale pret data or move to multi man training.",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.949999988079071,
+              "t_next": 1.0,
+              "dt": 0.050000011920928955,
+              "z_before_mse": 0.011807050555944443,
+              "z_after_mse": 0.06316908448934555,
+              "x_pred_mse": 0.06316908448934555,
+              "z_after_token_acc": 0.7352941036224365,
+              "x_pred_token_acc": 0.7352941036224365
+            }
+          ]
+        },
+        {
+          "t_start": 0.9,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 0.04731670022010803,
+          "final_mse": 0.05601712316274643,
+          "final_token_acc": 0.6470588445663452,
+          "final_generated": "(1) evaluateate the S 48 checkpoint. 2. None it with the old checkpoint. (3) Determineate decision to scale unnecessaryt data or move to multi man training.",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.8999999761581421,
+              "t_next": 0.903124988079071,
+              "dt": 0.003125011920928955,
+              "z_before_mse": 0.04731670022010803,
+              "z_after_mse": 0.04473072290420532,
+              "x_pred_mse": 0.06331443041563034,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.7352941036224365
+            },
+            {
+              "step": 8,
+              "t": 0.921875,
+              "t_next": 0.9249999523162842,
+              "dt": 0.0031249523162841797,
+              "z_before_mse": 0.0334259495139122,
+              "z_after_mse": 0.03225548192858696,
+              "x_pred_mse": 0.0653015673160553,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.7352941036224365
+            },
+            {
+              "step": 16,
+              "t": 0.9468749761581421,
+              "t_next": 0.949999988079071,
+              "dt": 0.003125011920928955,
+              "z_before_mse": 0.02993164397776127,
+              "z_after_mse": 0.03048034943640232,
+              "x_pred_mse": 0.06891737878322601,
+              "z_after_token_acc": 0.8823529481887817,
+              "x_pred_token_acc": 0.7058823704719543
+            },
+            {
+              "step": 24,
+              "t": 0.971875011920929,
+              "t_next": 0.9750000238418579,
+              "dt": 0.003125011920928955,
+              "z_before_mse": 0.038876838982105255,
+              "z_after_mse": 0.0404331348836422,
+              "x_pred_mse": 0.07839424163103104,
+              "z_after_token_acc": 0.7352941036224365,
+              "x_pred_token_acc": 0.5588235259056091
+            },
+            {
+              "step": 32,
+              "t": 0.996874988079071,
+              "t_next": 1.0,
+              "dt": 0.003125011920928955,
+              "z_before_mse": 0.05374637246131897,
+              "z_after_mse": 0.05601712316274643,
+              "x_pred_mse": 0.1122552752494812,
+              "z_after_token_acc": 0.6470588445663452,
+              "x_pred_token_acc": 0.6176470518112183
+            }
+          ]
+        },
+        {
+          "t_start": 0.9,
+          "schedule": "logit_tail",
+          "num_steps": 1,
+          "initial_mse": 0.04731670022010803,
+          "final_mse": 0.06331443041563034,
+          "final_token_acc": 0.7352941036224365,
+          "final_generated": "2. evaluateile the SFT checkpoint. 2. None it with the old checkpoint. 3. Determineate decision to scale pret data or move to multi man training.",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.8999999761581421,
+              "t_next": 1.0,
+              "dt": 0.10000002384185791,
+              "z_before_mse": 0.04731670022010803,
+              "z_after_mse": 0.06331443041563034,
+              "x_pred_mse": 0.06331443041563034,
+              "z_after_token_acc": 0.7352941036224365,
+              "x_pred_token_acc": 0.7352941036224365
+            }
+          ]
+        },
+        {
+          "t_start": 0.7,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 0.4254738688468933,
+          "final_mse": 0.11545727401971817,
+          "final_token_acc": 0.6764705777168274,
+          "final_generated": "(1) evaluateate the St checkpoint. 2. None it with the old checkpoint. (3) determinecu whether to scale unnecessaryt data or move to multi available training.",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.699999988079071,
+              "t_next": 0.7093749642372131,
+              "dt": 0.00937497615814209,
+              "z_before_mse": 0.4254738688468933,
+              "z_after_mse": 0.4005279839038849,
+              "x_pred_mse": 0.06680845469236374,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.7352941036224365
+            },
+            {
+              "step": 8,
+              "t": 0.765625,
+              "t_next": 0.7749999761581421,
+              "dt": 0.00937497615814209,
+              "z_before_mse": 0.26912733912467957,
+              "z_after_mse": 0.25033894181251526,
+              "x_pred_mse": 0.06727094948291779,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.7352941036224365
+            },
+            {
+              "step": 16,
+              "t": 0.840624988079071,
+              "t_next": 0.8500000238418579,
+              "dt": 0.009375035762786865,
+              "z_before_mse": 0.14395704865455627,
+              "z_after_mse": 0.13239920139312744,
+              "x_pred_mse": 0.07085007429122925,
+              "z_after_token_acc": 0.7647058963775635,
+              "x_pred_token_acc": 0.7058823704719543
+            },
+            {
+              "step": 24,
+              "t": 0.9156249761581421,
+              "t_next": 0.925000011920929,
+              "dt": 0.009375035762786865,
+              "z_before_mse": 0.07989870011806488,
+              "z_after_mse": 0.07766658812761307,
+              "x_pred_mse": 0.1077108085155487,
+              "z_after_token_acc": 0.6764705777168274,
+              "x_pred_token_acc": 0.5882353186607361
+            },
+            {
+              "step": 32,
+              "t": 0.9906250238418579,
+              "t_next": 1.0,
+              "dt": 0.00937497615814209,
+              "z_before_mse": 0.10924714058637619,
+              "z_after_mse": 0.11545727401971817,
+              "x_pred_mse": 0.15232360363006592,
+              "z_after_token_acc": 0.6764705777168274,
+              "x_pred_token_acc": 0.7941176295280457
+            }
+          ]
+        },
+        {
+          "t_start": 0.7,
+          "schedule": "logit_tail",
+          "num_steps": 1,
+          "initial_mse": 0.4254738688468933,
+          "final_mse": 0.06680845469236374,
+          "final_token_acc": 0.7352941036224365,
+          "final_generated": "2. evaluateile the SFT checkpoint. 2. None it with the old checkpoint. 3. Determineate decision to scale pret data or move to multi man training.",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.699999988079071,
+              "t_next": 1.0,
+              "dt": 0.30000001192092896,
+              "z_before_mse": 0.4254738688468933,
+              "z_after_mse": 0.06680845469236374,
+              "x_pred_mse": 0.06680845469236374,
+              "z_after_token_acc": 0.7352941036224365,
+              "x_pred_token_acc": 0.7352941036224365
+            }
+          ]
+        },
+        {
+          "t_start": 0.5,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 1.1618739366531372,
+          "final_mse": 0.1477460116147995,
+          "final_token_acc": 0.7647058963775635,
+          "final_generated": "(1) evaluateate the SFG checkpoint. 2. connect it with the old checkpoint. 3. Determinede whether to scale pret data or move to multi available training.",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.5,
+              "t_next": 0.515625,
+              "dt": 0.015625,
+              "z_before_mse": 1.1618739366531372,
+              "z_after_mse": 1.092301845550537,
+              "x_pred_mse": 0.07069350779056549,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.7352941036224365
+            },
+            {
+              "step": 8,
+              "t": 0.609375,
+              "t_next": 0.625,
+              "dt": 0.015625,
+              "z_before_mse": 0.7226473093032837,
+              "z_after_mse": 0.6690282821655273,
+              "x_pred_mse": 0.07010338455438614,
+              "z_after_token_acc": 1.0,
+              "x_pred_token_acc": 0.7058823704719543
+            },
+            {
+              "step": 16,
+              "t": 0.734375,
+              "t_next": 0.75,
+              "dt": 0.015625,
+              "z_before_mse": 0.3580876588821411,
+              "z_after_mse": 0.3230412006378174,
+              "x_pred_mse": 0.07810479402542114,
+              "z_after_token_acc": 0.7941176295280457,
+              "x_pred_token_acc": 0.6764705777168274
+            },
+            {
+              "step": 24,
+              "t": 0.859375,
+              "t_next": 0.875,
+              "dt": 0.015625,
+              "z_before_mse": 0.15259145200252533,
+              "z_after_mse": 0.13947904109954834,
+              "x_pred_mse": 0.13378338515758514,
+              "z_after_token_acc": 0.6470588445663452,
+              "x_pred_token_acc": 0.6176470518112183
+            },
+            {
+              "step": 32,
+              "t": 0.984375,
+              "t_next": 1.0,
+              "dt": 0.015625,
+              "z_before_mse": 0.14167538285255432,
+              "z_after_mse": 0.1477460116147995,
+              "x_pred_mse": 0.16734257340431213,
+              "z_after_token_acc": 0.7647058963775635,
+              "x_pred_token_acc": 0.8235294222831726
+            }
+          ]
+        },
+        {
+          "t_start": 0.5,
+          "schedule": "logit_tail",
+          "num_steps": 1,
+          "initial_mse": 1.1618739366531372,
+          "final_mse": 0.07069350779056549,
+          "final_token_acc": 0.7352941036224365,
+          "final_generated": "2. evaluateile the SFT checkpoint. 2. None it with the old checkpoint. 3. Determineate decision to scale pret data or move to multi man training.",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.5,
+              "t_next": 1.0,
+              "dt": 0.5,
+              "z_before_mse": 1.1618739366531372,
+              "z_after_mse": 0.07069350779056549,
+              "x_pred_mse": 0.07069350779056549,
+              "z_after_token_acc": 0.7352941036224365,
+              "x_pred_token_acc": 0.7352941036224365
+            }
+          ]
+        },
+        {
+          "t_start": 0.3,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 2.3341925144195557,
+          "final_mse": 0.15554529428482056,
+          "final_token_acc": 0.8823529481887817,
+          "final_generated": "1. E evaluate the SFT checkpoint. 2. compare it with the old checkpoint. 3. Decide whether to scale pretraining data or move to multilingual training.",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.30000001192092896,
+              "t_next": 0.3218750059604645,
+              "dt": 0.021874994039535522,
+              "z_before_mse": 2.3341925144195557,
+              "z_after_mse": 2.195375680923462,
+              "x_pred_mse": 0.09935031831264496,
+              "z_after_token_acc": 0.8529411554336548,
+              "x_pred_token_acc": 0.7352941036224365
+            },
+            {
+              "step": 8,
+              "t": 0.453125,
+              "t_next": 0.4750000238418579,
+              "dt": 0.02187502384185791,
+              "z_before_mse": 1.448585033416748,
+              "z_after_mse": 1.3398159742355347,
+              "x_pred_mse": 0.08140403032302856,
+              "z_after_token_acc": 0.970588207244873,
+              "x_pred_token_acc": 0.7058823704719543
+            },
+            {
+              "step": 16,
+              "t": 0.628125011920929,
+              "t_next": 0.6499999761581421,
+              "dt": 0.021874964237213135,
+              "z_before_mse": 0.7065935730934143,
+              "z_after_mse": 0.6347705125808716,
+              "x_pred_mse": 0.1115819588303566,
+              "z_after_token_acc": 0.7647058963775635,
+              "x_pred_token_acc": 0.7058823704719543
+            },
+            {
+              "step": 24,
+              "t": 0.8031250238418579,
+              "t_next": 0.824999988079071,
+              "dt": 0.021874964237213135,
+              "z_before_mse": 0.2673942446708679,
+              "z_after_mse": 0.23460467159748077,
+              "x_pred_mse": 0.14789122343063354,
+              "z_after_token_acc": 0.8529411554336548,
+              "x_pred_token_acc": 0.8235294222831726
+            },
+            {
+              "step": 32,
+              "t": 0.9781249761581421,
+              "t_next": 1.0,
+              "dt": 0.02187502384185791,
+              "z_before_mse": 0.15027062594890594,
+              "z_after_mse": 0.15554529428482056,
+              "x_pred_mse": 0.16505473852157593,
+              "z_after_token_acc": 0.8823529481887817,
+              "x_pred_token_acc": 0.8823529481887817
+            }
+          ]
+        },
+        {
+          "t_start": 0.3,
+          "schedule": "logit_tail",
+          "num_steps": 14,
+          "initial_mse": 2.3341925144195557,
+          "final_mse": 0.09196508675813675,
+          "final_token_acc": 0.7058823704719543,
+          "final_generated": "(1) evaluateate the SFT checkpoint. 2. None it with the old 100point. 3. Determinere decision to scale pret data or move to multi man training.",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.30000001192092896,
+              "t_next": 0.31055593490600586,
+              "dt": 0.010555922985076904,
+              "z_before_mse": 2.3341925144195557,
+              "z_after_mse": 2.2666499614715576,
+              "x_pred_mse": 0.09935031831264496,
+              "z_after_token_acc": 0.7647058963775635,
+              "x_pred_token_acc": 0.7352941036224365
+            },
+            {
+              "step": 8,
+              "t": 0.37887781858444214,
+              "t_next": 0.3807084262371063,
+              "dt": 0.0018306076526641846,
+              "z_before_mse": 1.8506230115890503,
+              "z_after_mse": 1.8400697708129883,
+              "x_pred_mse": 0.0795842632651329,
+              "z_after_token_acc": 0.9411764740943909,
+              "x_pred_token_acc": 0.7352941036224365
+            },
+            {
+              "step": 14,
+              "t": 0.5404384136199951,
+              "t_next": 1.0,
+              "dt": 0.4595615863800049,
+              "z_before_mse": 1.0411832332611084,
+              "z_after_mse": 0.09196508675813675,
+              "x_pred_mse": 0.09196508675813675,
+              "z_after_token_acc": 0.7058823704719543,
+              "x_pred_token_acc": 0.7058823704719543
+            }
+          ]
+        },
+        {
+          "t_start": 0.1,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 3.8090007305145264,
+          "final_mse": 0.5794280171394348,
+          "final_token_acc": 0.47058823704719543,
+          "final_generated": "Eulyzing the SFT checkpoint for and compare it with the old checkpoint, it does not have to scale pretraining data. Into trainingrs to",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.10000000149011612,
+              "t_next": 0.12812499701976776,
+              "dt": 0.028124995529651642,
+              "z_before_mse": 3.8090007305145264,
+              "z_after_mse": 3.60461163520813,
+              "x_pred_mse": 0.4814475476741791,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.29411765933036804
+            },
+            {
+              "step": 8,
+              "t": 0.296875,
+              "t_next": 0.32499998807907104,
+              "dt": 0.028124988079071045,
+              "z_before_mse": 2.463935375213623,
+              "z_after_mse": 2.296560287475586,
+              "x_pred_mse": 0.4180769920349121,
+              "z_after_token_acc": 0.47058823704719543,
+              "x_pred_token_acc": 0.47058823704719543
+            },
+            {
+              "step": 16,
+              "t": 0.5218749642372131,
+              "t_next": 0.550000011920929,
+              "dt": 0.02812504768371582,
+              "z_before_mse": 1.333898663520813,
+              "z_after_mse": 1.2267059087753296,
+              "x_pred_mse": 0.5537135004997253,
+              "z_after_token_acc": 0.44117647409439087,
+              "x_pred_token_acc": 0.47058823704719543
+            },
+            {
+              "step": 24,
+              "t": 0.746874988079071,
+              "t_next": 0.7749999761581421,
+              "dt": 0.028124988079071045,
+              "z_before_mse": 0.6926558613777161,
+              "z_after_mse": 0.6479398608207703,
+              "x_pred_mse": 0.5792028307914734,
+              "z_after_token_acc": 0.44117647409439087,
+              "x_pred_token_acc": 0.47058823704719543
+            },
+            {
+              "step": 32,
+              "t": 0.971875011920929,
+              "t_next": 1.0,
+              "dt": 0.028124988079071045,
+              "z_before_mse": 0.5657232403755188,
+              "z_after_mse": 0.5794280171394348,
+              "x_pred_mse": 0.5927760004997253,
+              "z_after_token_acc": 0.47058823704719543,
+              "x_pred_token_acc": 0.47058823704719543
+            }
+          ]
+        },
+        {
+          "t_start": 0.1,
+          "schedule": "logit_tail",
+          "num_steps": 57,
+          "initial_mse": 3.8090007305145264,
+          "final_mse": 0.5699054598808289,
+          "final_token_acc": 0.47058823704719543,
+          "final_generated": "Evalyzing the SFT checkpoint before and compare it with the old checkpoint, it does not seem to scale pretraining data. Suppose scaling other services to",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.10000000149011612,
+              "t_next": 0.10636287182569504,
+              "dt": 0.0063628703355789185,
+              "z_before_mse": 3.8090007305145264,
+              "z_after_mse": 3.7621936798095703,
+              "x_pred_mse": 0.4814475476741791,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.29411765933036804
+            },
+            {
+              "step": 8,
+              "t": 0.12879681587219238,
+              "t_next": 0.1322072595357895,
+              "dt": 0.003410443663597107,
+              "z_before_mse": 3.59653377532959,
+              "z_after_mse": 3.570965528488159,
+              "x_pred_mse": 0.30520036816596985,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.5588235259056091
+            },
+            {
+              "step": 16,
+              "t": 0.15092533826828003,
+              "t_next": 0.1543060839176178,
+              "dt": 0.0033807456493377686,
+              "z_before_mse": 3.4299678802490234,
+              "z_after_mse": 3.404672384262085,
+              "x_pred_mse": 0.2568762004375458,
+              "z_after_token_acc": 0.0882352963089943,
+              "x_pred_token_acc": 0.5588235259056091
+            },
+            {
+              "step": 24,
+              "t": 0.17561180889606476,
+              "t_next": 0.17581139504909515,
+              "dt": 0.0001995861530303955,
+              "z_before_mse": 3.2477939128875732,
+              "z_after_mse": 3.246346950531006,
+              "x_pred_mse": 0.28830963373184204,
+              "z_after_token_acc": 0.0882352963089943,
+              "x_pred_token_acc": 0.5
+            },
+            {
+              "step": 32,
+              "t": 0.2171635627746582,
+              "t_next": 0.2203119844198227,
+              "dt": 0.0031484216451644897,
+              "z_before_mse": 2.9569265842437744,
+              "z_after_mse": 2.9356155395507812,
+              "x_pred_mse": 0.35493800044059753,
+              "z_after_token_acc": 0.1764705926179886,
+              "x_pred_token_acc": 0.5588235259056091
+            },
+            {
+              "step": 40,
+              "t": 0.28769391775131226,
+              "t_next": 0.2939060628414154,
+              "dt": 0.006212145090103149,
+              "z_before_mse": 2.502366542816162,
+              "z_after_mse": 2.4645800590515137,
+              "x_pred_mse": 0.4240362048149109,
+              "z_after_token_acc": 0.4117647111415863,
+              "x_pred_token_acc": 0.47058823704719543
+            },
+            {
+              "step": 48,
+              "t": 0.3350437581539154,
+              "t_next": 0.3494163751602173,
+              "dt": 0.01437261700630188,
+              "z_before_mse": 2.223400592803955,
+              "z_after_mse": 2.142857789993286,
+              "x_pred_mse": 0.47643542289733887,
+              "z_after_token_acc": 0.47058823704719543,
+              "x_pred_token_acc": 0.47058823704719543
+            },
+            {
+              "step": 56,
+              "t": 0.565886378288269,
+              "t_next": 0.6200398802757263,
+              "dt": 0.054153501987457275,
+              "z_before_mse": 1.165079116821289,
+              "z_after_mse": 0.9907704591751099,
+              "x_pred_mse": 0.5573556423187256,
+              "z_after_token_acc": 0.4117647111415863,
+              "x_pred_token_acc": 0.47058823704719543
+            },
+            {
+              "step": 57,
+              "t": 0.6200398802757263,
+              "t_next": 1.0,
+              "dt": 0.3799601197242737,
+              "z_before_mse": 0.9907704591751099,
+              "z_after_mse": 0.5699054598808289,
+              "x_pred_mse": 0.5699054598808289,
+              "z_after_token_acc": 0.47058823704719543,
+              "x_pred_token_acc": 0.47058823704719543
+            }
+          ]
+        },
+        {
+          "t_start": 0.0,
+          "schedule": "uniform",
+          "num_steps": 32,
+          "initial_mse": 4.744652271270752,
+          "final_mse": 1.2042200565338135,
+          "final_token_acc": 0.0,
+          "final_generated": "# Create an JavaScript Graph for JP like:  int components = ','inp('), int('), '",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.0,
+              "t_next": 0.03125,
+              "dt": 0.03125,
+              "z_before_mse": 4.744652271270752,
+              "z_after_mse": 4.49138069152832,
+              "x_pred_mse": 0.6377072334289551,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 8,
+              "t": 0.21875,
+              "t_next": 0.25,
+              "dt": 0.03125,
+              "z_before_mse": 3.155165195465088,
+              "z_after_mse": 2.9627954959869385,
+              "x_pred_mse": 0.8653693199157715,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 16,
+              "t": 0.46875,
+              "t_next": 0.5,
+              "dt": 0.03125,
+              "z_before_mse": 1.8737003803253174,
+              "z_after_mse": 1.7560889720916748,
+              "x_pred_mse": 1.1645255088806152,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 24,
+              "t": 0.71875,
+              "t_next": 0.75,
+              "dt": 0.03125,
+              "z_before_mse": 1.208663821220398,
+              "z_after_mse": 1.1701128482818604,
+              "x_pred_mse": 1.2194433212280273,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 32,
+              "t": 0.96875,
+              "t_next": 1.0,
+              "dt": 0.03125,
+              "z_before_mse": 1.179654598236084,
+              "z_after_mse": 1.2042200565338135,
+              "x_pred_mse": 1.2213950157165527,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            }
+          ]
+        },
+        {
+          "t_start": 0.0,
+          "schedule": "logit_tail",
+          "num_steps": 64,
+          "initial_mse": 4.744652271270752,
+          "final_mse": 1.1845332384109497,
+          "final_token_acc": 0.0,
+          "final_generated": "Start, we automatize the probability of MinS as follows: First, define the coordinates: (f1), (a2),",
+          "trace": [
+            {
+              "step": 1,
+              "t": 0.0,
+              "t_next": 0.02056821808218956,
+              "dt": 0.02056821808218956,
+              "z_before_mse": 4.744652271270752,
+              "z_after_mse": 4.577046871185303,
+              "x_pred_mse": 0.6377072334289551,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 8,
+              "t": 0.0703745037317276,
+              "t_next": 0.07413571327924728,
+              "dt": 0.003761209547519684,
+              "z_before_mse": 4.187500953674316,
+              "z_after_mse": 4.158991813659668,
+              "x_pred_mse": 0.6852003931999207,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 16,
+              "t": 0.11394929885864258,
+              "t_next": 0.11480282992124557,
+              "dt": 0.0008535310626029968,
+              "z_before_mse": 3.8647420406341553,
+              "z_after_mse": 3.8585877418518066,
+              "x_pred_mse": 0.7385174036026001,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 24,
+              "t": 0.14415453374385834,
+              "t_next": 0.15025962889194489,
+              "dt": 0.006105095148086548,
+              "z_before_mse": 3.6508681774139404,
+              "z_after_mse": 3.6086201667785645,
+              "x_pred_mse": 0.8726584911346436,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 32,
+              "t": 0.19018599390983582,
+              "t_next": 0.19151555001735687,
+              "dt": 0.0013295561075210571,
+              "z_before_mse": 3.3404064178466797,
+              "z_after_mse": 3.3317317962646484,
+              "x_pred_mse": 0.9592403173446655,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 40,
+              "t": 0.20906776189804077,
+              "t_next": 0.2097645401954651,
+              "dt": 0.0006967782974243164,
+              "z_before_mse": 3.218881607055664,
+              "z_after_mse": 3.2144618034362793,
+              "x_pred_mse": 1.0233590602874756,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 48,
+              "t": 0.2615914046764374,
+              "t_next": 0.28120774030685425,
+              "dt": 0.01961633563041687,
+              "z_before_mse": 2.8981211185455322,
+              "z_after_mse": 2.784792900085449,
+              "x_pred_mse": 1.073190450668335,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 56,
+              "t": 0.3311326801776886,
+              "t_next": 0.3321577310562134,
+              "dt": 0.0010250508785247803,
+              "z_before_mse": 2.512815475463867,
+              "z_after_mse": 2.507481336593628,
+              "x_pred_mse": 1.1364660263061523,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            },
+            {
+              "step": 64,
+              "t": 0.5222072601318359,
+              "t_next": 1.0,
+              "dt": 0.47779273986816406,
+              "z_before_mse": 1.6915910243988037,
+              "z_after_mse": 1.1845332384109497,
+              "x_pred_mse": 1.1845332384109497,
+              "z_after_token_acc": 0.0,
+              "x_pred_token_acc": 0.0
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -177,13 +177,18 @@
         <strong>上海侧最大文本候选数据</strong>
         <p class="muted">`38b_solar_0320_fix_anwser_mmdata` 是目前看到的最大纯文本候选，但需要质量过滤。</p>
       </div>
+      <div class="card">
+        <span class="metric">t=0</span>
+        <strong>SFT 后完整采样仍会崩</strong>
+        <p class="muted">checkpoint_5402 的 clean decode 正常，低噪声修复正常，但从纯噪声 reverse 时 prompt/target 对齐失败。</p>
+      </div>
     </div>
 
     <div class="callout">
       <strong>核心判断：</strong>
-      当前多模态效果弱，主要不是单点 bug，而是文本 backbone 的预训练 token 量、数据质量、SFT 指令跟随和 encoder 表征都偏弱。
-      最稳的下一步不是立刻换 encoder，而是先在现有 T5-small latent 体系下把 text pretrain 数据和训练 token budget scale 上去，
-      产出一个更强的 text-only checkpoint，再接 Tulu3 SFT 和多模态 Stage 1/Stage 2。
+      当前多模态效果弱不只是“缺一轮 SFT”。Tulu3 SFT 已经能让 decoder 从真实 target latent 几乎无损还原文本，也能在低噪声区域利用 prompt 做局部修复；
+      但从纯噪声开始的全局 reverse trajectory 仍会很快进入错误语义盆地。
+      因此下一步需要同时解决两件事：一是把 text pretrain 数据和 token budget scale 上去，二是针对 continuous flow matching 的高噪声 conditional generation 做专门诊断和训练改造。
     </div>
   </section>
 
@@ -215,8 +220,8 @@
         </tr>
         <tr>
           <td>当前 SFT 数据</td>
-          <td>Tulu3-SFT filtered，691,541 样本，约 260.5M T5 token / epoch，2 epochs 约 521.0M token。</td>
-          <td>适合补 instruction following，但不能弥补底层语言建模能力不足。SFT 前最好先加强 text pretrain。</td>
+          <td>Tulu3-SFT filtered，691,541 样本，约 260.5M T5 token / epoch。32GPU SFT 已完成 2 epochs，最终 checkpoint 为 <code>checkpoint_5402</code>。</td>
+          <td>只靠 SFT 没有把完整采样打通。当前证据显示 decoder 和低噪声 denoise 可用，主要瓶颈在高噪声全局 conditional flow。</td>
         </tr>
         <tr>
           <td>多模态训练</td>
@@ -225,6 +230,119 @@
         </tr>
       </tbody>
     </table>
+  </section>
+
+  <section>
+    <h2>SFT 诊断实验结果（2026-05-30）</h2>
+    <p>
+      本节记录 32GPU Tulu3 SFT 结束后的诊断结果。所有 probe 文件已放在仓库
+      <code class="path">eval_probes/</code> 下，主要使用
+      <code>outputs/elf_l-tulu3-sft-t5-1024-hope-32gpu/checkpoint_5402</code> 的 raw params；
+      EMA 在短 SFT 后局部指标更弱，因此当前诊断优先看 raw params。
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>诊断项</th>
+          <th>观测结果</th>
+          <th>判断</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>直接从噪声完整采样</td>
+          <td>32/64 step ODE/SDE 都能生成英文文本，但经常答非所问，训练集短样本也不稳定。</td>
+          <td>“会说话”不等于“按 prompt 生成 target”。完整 reverse trajectory 没有被 SFT 打通。</td>
+        </tr>
+        <tr>
+          <td>CleanNet decode sanity</td>
+          <td>真实 target latent 直接经 decoder 还原：seen-style train short 平均 token acc 99.57%，自造 instruction probe 为 100%。</td>
+          <td>latent-to-token decoder 没有崩，T5 latent 本身可以被当前 head 解回 target。</td>
+        </tr>
+        <tr>
+          <td>Controlled denoise sanity</td>
+          <td>从 target latent 加噪后单步预测，正确 prompt 明显优于 zero / shuffled prompt。instruction probe 在 t=0.5 时 x_mse 0.084 vs 0.184/0.188，t=0.3 时 0.153 vs 0.371/0.403。</td>
+          <td>模型在低到中噪声区能利用 condition，不是完全忽略 prompt。</td>
+        </tr>
+        <tr>
+          <td>Sampling trajectory probe</td>
+          <td>固定 prompt+target，从真实 target latent 加不同强度噪声再 reverse。t_start=0.5 以后基本还能局部修复；t_start=0.1 明显退化；t_start=0 几乎失败。</td>
+          <td>崩点在高噪声全局生成区，而不是最后 decode 或低噪声修复区。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Trajectory probe（5 条英文指令，raw params）</th>
+          <th>logit-tail final acc / mse</th>
+          <th>uniform final acc / mse</th>
+          <th>结论</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>t_start=0.95</td>
+          <td>0.838 / 0.098</td>
+          <td>0.829 / 0.050</td>
+          <td>极低噪声下基本可恢复。</td>
+        </tr>
+        <tr>
+          <td>t_start=0.70</td>
+          <td>0.838 / 0.101</td>
+          <td>0.826 / 0.191</td>
+          <td>低噪声修复稳定。</td>
+        </tr>
+        <tr>
+          <td>t_start=0.50</td>
+          <td>0.823 / 0.120</td>
+          <td>0.834 / 0.242</td>
+          <td>仍能保住主要语义，但输出开始有局部词错。</td>
+        </tr>
+        <tr>
+          <td>t_start=0.30</td>
+          <td>0.687 / 0.281</td>
+          <td>0.752 / 0.359</td>
+          <td>进入不稳定区，部分样本还能恢复，部分已偏离。</td>
+        </tr>
+        <tr>
+          <td>t_start=0.10</td>
+          <td>0.304 / 0.840</td>
+          <td>0.324 / 0.822</td>
+          <td>高噪声语义锚定失败，生成内容开始泛化到无关答案。</td>
+        </tr>
+        <tr>
+          <td>t_start=0.00</td>
+          <td>0.000 / 1.136</td>
+          <td>0.005 / 1.154</td>
+          <td>从纯噪声采样基本失败；uniform 和 logit-tail 都失败，说明不是单纯 timestep 离散化问题。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout warn">
+      <strong>当前最可能原因：</strong>
+      SFT 的 CE 分支主要训练 latent decoder，而不是像 AR LM 那样直接教模型从 prefix 自回归生成答案；
+      L2/flow 分支虽然能在靠近 target 的局部区域修复，但高噪声区的 conditional vector field 没有学到稳定指向 target answer manifold 的全局方向。
+      换句话说，instruction tuning 的文本监督进来了，但没有充分变成“从随机 latent 出发也能按 prompt 走到正确答案”的 flow 能力。
+    </div>
+
+    <ul>
+      <li>可能原因 1：高噪声区域 condition 信号太弱，第一步 <code>x_pred</code> 已经落到错误语义盆地，后续 ODE 只是沿着错误方向积分。</li>
+      <li>可能原因 2：当前 CE/L2 混合目标不等价于 AR SFT；CE 让 decoder 会读 latent，但不保证 denoiser 从噪声生成对应 latent。</li>
+      <li>可能原因 3：训练数据没有显式 EOS / target length 建模，<code>add_special_tokens=False</code> 可能让答案边界和短回答控制更难。</li>
+      <li>可能原因 4：T5-small tokenizer/encoder 对中文和多轮指令并不理想，中文 probe 的 token acc 和文本可读性会被 tokenizer 质量放大影响。</li>
+      <li>可能原因 5：短 SFT 后 EMA 滞后于 raw params；当前 checkpoint 诊断应优先用 raw params，EMA 只作为补充。</li>
+      <li>可能原因 6：sampling schedule 是次要因素。uniform 和 logit-tail 在 t_start=0/0.1 都崩，说明主问题不是多加几步就能解决。</li>
+    </ul>
+
+    <div class="callout">
+      <strong>下一轮优先 sanity：</strong>
+      不急着直接扩大多模态训练。先做短答案、小数据 overfit，显式加入 EOS/长度控制，并把 t_start=0 到 0.3 的高噪声 conditional trajectory 作为核心指标。
+      只有当 text-only flow 能稳定从纯噪声按 prompt 生成 target，再继续接多模态 Stage 1/Stage 2 才更有意义。
+    </div>
   </section>
 
   <section>
@@ -299,12 +417,12 @@
 
   <section>
     <h2>推荐主路线</h2>
-    <h3>阶段 0：先恢复当前 SFT 路线，拿到可用 baseline</h3>
+    <h3>阶段 0：先把 text-only flow 的 instruction generation 打通</h3>
     <ul>
-      <li>保留当前 T5-small encoder 和 ELF-L checkpoint。</li>
-      <li>使用已经修复的 3D T5 attention mask 逻辑恢复 Tulu3 SFT。</li>
-      <li>SFT 使用 2 epochs、global batch 256、decoder_prob 0.5、lr 2e-5。</li>
-      <li>训练结束后做 text instruction 和 multimodal VQA probe，判断“是否开始说人话、是否能按图回答”。</li>
+      <li>保留当前 T5-small encoder 和 ELF-L checkpoint，先不引入多模态变量。</li>
+      <li>基于本次 <code>checkpoint_5402</code> 的诊断，优先做短答案 overfit、EOS/长度建模和高噪声 trajectory sanity。</li>
+      <li>继续使用 CleanNet decode、Controlled denoise、Sampling trajectory 三类 probe 作为每轮训练后的固定报告。</li>
+      <li>当 text-only 从纯噪声能按 prompt 稳定生成 target，再接回多模态 Stage 1 / Stage 2。</li>
     </ul>
 
     <h3>阶段 1：构建更强 text pretrain corpus</h3>
@@ -340,9 +458,16 @@
         <tr>
           <td>A. 当前 SFT baseline</td>
           <td>验证 Tulu3 SFT 是否能明显改善 instruction following。</td>
-          <td>当前 ELF-L OWT checkpoint + Tulu3 filtered 2 epochs。</td>
-          <td>训练 loss 正常下降；文本回答更通顺；多模态 probe 不再完全跑偏。</td>
-          <td>底座太弱，SFT 改善有限。</td>
+          <td>已完成：当前 ELF-L OWT checkpoint + Tulu3 filtered 2 epochs。</td>
+          <td>Clean decode 和低噪声 denoise 通过，但完整采样仍不按 prompt。</td>
+          <td>已证实只做常规 SFT 不够，需要专门解决高噪声 conditional flow。</td>
+        </tr>
+        <tr>
+          <td>A2. 短答案 flow overfit</td>
+          <td>判断当前架构能否在很小数据上从纯噪声按 prompt 生成 target。</td>
+          <td>100 到 1k 条短英文 QA；max length 128/256；显式 EOS；提高高噪声监督权重。</td>
+          <td>t_start=0 的 trajectory final token acc 明显上升，完整采样稳定输出 target。</td>
+          <td>如果小数据都过拟合不了，说明训练目标或采样公式需要更底层改造。</td>
         </tr>
         <tr>
           <td>B. 38b_solar 子集继续预训练</td>
@@ -425,11 +550,13 @@
   <section>
     <h2>执行清单</h2>
     <ol>
-      <li>恢复当前 32GPU Tulu3 SFT，验证 3D mask 修复后能进入 loss 曲线。</li>
+      <li>已完成：32GPU Tulu3 SFT、CleanNet decode sanity、Controlled denoise sanity、Sampling trajectory sanity。</li>
+      <li>新增固定实验记录：每次训练后把 probe 脚本、prompt、结果 JSON/JSONL 和分析写入 <code>eval_probes/</code> 与本 HTML。</li>
+      <li>下一步先做短答案 flow overfit，验证 t_start=0 是否能被训练打通。</li>
+      <li>加入 EOS / target length 控制实验，确认长尾乱码和过长输出是否下降。</li>
       <li>写数据审计脚本，对 `38b_solar` 和 `experiment_1997` 抽样输出 HTML/CSV 报告。</li>
       <li>实现 JSONL `{"input": ...}` 到 T5 Arrow 的离线转换工具，支持分片、去重、长度过滤和 max_length=1024 packing。</li>
-      <li>先做 1B 到 5B token positions 的 smoke pretrain，确认 dataloader、loss、checkpoint、resume、PPL/generation eval 都稳定。</li>
-      <li>扩大到 50B 到 100B token positions 的 text pretrain，产出 stronger text checkpoint。</li>
+      <li>在 text-only flow sanity 通过后，扩大到 50B 到 100B token positions 的 text pretrain，产出 stronger text checkpoint。</li>
       <li>重新跑 Tulu3 SFT，然后接多模态 Stage 1 / Stage 2。</li>
       <li>并行开一个小规模 encoder pilot，但不要阻塞当前 T5-small 主线。</li>
     </ol>
@@ -437,7 +564,11 @@
 
   <section>
     <h2>当前推荐路线图</h2>
-    <pre>当前 bugfix + Tulu3 SFT baseline
+    <pre>已完成：3D mask fix + Tulu3 SFT checkpoint_5402
+        ↓
+已完成：clean decode / controlled denoise / trajectory probe
+        ↓
+短答案 flow overfit + EOS / length control
         ↓
 数据审计：38b_solar / experiment_1997
         ↓
@@ -460,8 +591,10 @@ Tulu3 SFT 2 到 4 epochs
       <li>项目路径：<code class="path">/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro</code></li>
       <li>当前 Tulu3 filtered：<code class="path">/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/native_mm/mmdata/text_sft/tulu3_sft_mixture_t5_1024_filtered</code></li>
       <li>当前 OWT checkpoint：<code class="path">/mnt/dolphinfs/ssd_pool/docker/user/hadoop-hldy-nlp/3A/multimodal/yaxinluo/projects/elf-pro/outputs/elf_l-owt-hf-torch/checkpoint_57051</code></li>
+      <li>当前 SFT checkpoint：<code class="path">outputs/elf_l-tulu3-sft-t5-1024-hope-32gpu/checkpoint_5402</code></li>
       <li>当前 32GPU SFT submit：<code class="path">submit/submit_elf_l_tulu3_sft_32gpu.hope</code></li>
       <li>3D mask 修复文件：<code class="path">src/modules/t5_encoder.py</code></li>
+      <li>SFT 诊断结果：<code class="path">eval_probes/</code></li>
     </ul>
   </section>
 </main>
