@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ELF 多模态训练规模化路线与数据调查</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --ink: #18202f;
+      --muted: #59647a;
+      --line: #dfe3ec;
+      --blue: #1f5eff;
+      --green: #0d8f61;
+      --amber: #a86d00;
+      --red: #b3261e;
+      --code: #f0f3f8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 24px 56px;
+    }
+    header {
+      padding: 28px 0 18px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 24px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 30px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+    h2 {
+      margin: 34px 0 14px;
+      font-size: 22px;
+      line-height: 1.3;
+      letter-spacing: 0;
+    }
+    h3 {
+      margin: 24px 0 10px;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+    p { margin: 8px 0; }
+    .subtitle {
+      color: var(--muted);
+      max-width: 920px;
+      margin: 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin: 18px 0 8px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .metric {
+      display: block;
+      font-size: 24px;
+      line-height: 1.25;
+      font-weight: 700;
+      color: var(--blue);
+      margin-bottom: 6px;
+    }
+    .muted { color: var(--muted); }
+    .tag {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 2px 9px;
+      margin: 0 4px 4px 0;
+      font-size: 12px;
+      font-weight: 650;
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      white-space: nowrap;
+    }
+    .tag.good { color: var(--green); border-color: #a9dec7; background: #ecfbf4; }
+    .tag.warn { color: var(--amber); border-color: #ead39a; background: #fff8e8; }
+    .tag.risk { color: var(--red); border-color: #e7afa9; background: #fff1ef; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 12px 0 22px;
+    }
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    th {
+      color: #273247;
+      background: #eef2f8;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    tr:last-child td { border-bottom: 0; }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      background: var(--code);
+      border-radius: 5px;
+    }
+    code { padding: 1px 5px; }
+    pre {
+      padding: 12px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      white-space: pre-wrap;
+    }
+    ul, ol { padding-left: 22px; }
+    li { margin: 6px 0; }
+    .callout {
+      border-left: 4px solid var(--blue);
+      background: #eef4ff;
+      padding: 12px 14px;
+      border-radius: 6px;
+      margin: 14px 0;
+    }
+    .callout.warn { border-left-color: var(--amber); background: #fff8e8; }
+    .callout.risk { border-left-color: var(--red); background: #fff1ef; }
+    .path {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    @media (max-width: 860px) {
+      main { padding: 22px 14px 40px; }
+      .grid { grid-template-columns: 1fr; }
+      table { display: block; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>ELF 多模态训练规模化路线与数据调查</h1>
+    <p class="subtitle">
+      记录当前 ELF 文本与多模态训练的瓶颈、上海侧可用数据资产、下一阶段可落地路线，以及更激进的 encoder / 模型规模化试验方向。
+      本文基于 2026-05-30 对代码库、HOPE 配置和上海 DolphinFS 存储的调查。
+    </p>
+  </header>
+
+  <section>
+    <h2>结论摘要</h2>
+    <div class="grid">
+      <div class="card">
+        <span class="metric">652M</span>
+        <strong>当前 ELF-L 参数量</strong>
+        <p class="muted">不包含 frozen T5-small encoder。B/M/L 约为 105M / 343M / 652M。</p>
+      </div>
+      <div class="card">
+        <span class="metric">~30B</span>
+        <strong>当前 OWT checkpoint 的 padded token 量级</strong>
+        <p class="muted">按 checkpoint_57051、global batch 512、context 1024 粗算，约 29.9B token positions。</p>
+      </div>
+      <div class="card">
+        <span class="metric">12T+</span>
+        <strong>上海侧最大文本候选数据</strong>
+        <p class="muted">`38b_solar_0320_fix_anwser_mmdata` 是目前看到的最大纯文本候选，但需要质量过滤。</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>核心判断：</strong>
+      当前多模态效果弱，主要不是单点 bug，而是文本 backbone 的预训练 token 量、数据质量、SFT 指令跟随和 encoder 表征都偏弱。
+      最稳的下一步不是立刻换 encoder，而是先在现有 T5-small latent 体系下把 text pretrain 数据和训练 token budget scale 上去，
+      产出一个更强的 text-only checkpoint，再接 Tulu3 SFT 和多模态 Stage 1/Stage 2。
+    </div>
+  </section>
+
+  <section>
+    <h2>当前系统状态</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>模块</th>
+          <th>当前设置</th>
+          <th>风险与判断</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>文本 encoder</td>
+          <td>T5-small，d_model=512，frozen。路径：<br><code class="path">models/t5-small</code></td>
+          <td>encoder 偏老且容量小，但所有现有 checkpoint 都绑定这个 latent space。直接换 encoder 会导致文本预训练、SFT、多模态 projector 基本都要重训。</td>
+        </tr>
+        <tr>
+          <td>ELF-L backbone</td>
+          <td>depth=32，hidden=1280，heads=16，约 652M 参数。</td>
+          <td>模型参数量可以继续 scale，但先看数据和训练 token 是否成为更明显瓶颈。</td>
+        </tr>
+        <tr>
+          <td>当前文本预训练</td>
+          <td>OpenWebText-T5，context=1024，checkpoint 约 57k step。</td>
+          <td>对 652M diffusion LM 来说 token budget 偏保守，语料也偏单一。SFT 和多模态训练前的语言能力底座不够强。</td>
+        </tr>
+        <tr>
+          <td>当前 SFT 数据</td>
+          <td>Tulu3-SFT filtered，691,541 样本，约 260.5M T5 token / epoch，2 epochs 约 521.0M token。</td>
+          <td>适合补 instruction following，但不能弥补底层语言建模能力不足。SFT 前最好先加强 text pretrain。</td>
+        </tr>
+        <tr>
+          <td>多模态训练</td>
+          <td>SigLIP2 vision encoder + projector + ELF latent。vision tokens 与 text latents 拼接训练。</td>
+          <td>如果 text backbone 不会稳定说话，图文对话也会表现成“能生成文本但不按图回答”。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>上海侧数据资产调查</h2>
+    <p>
+      搜索范围主要是：
+      <code class="path">/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/native_mm/mmdata</code>
+      以及相关 `3A` 路径。下面只列当前最相关的数据。
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>数据路径</th>
+          <th>规模</th>
+          <th>格式与抽样观察</th>
+          <th>建议用途</th>
+          <th>优先级</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code class="path">mmdata/38b_solar_0320_fix_anwser_mmdata</code></td>
+          <td>149 个 JSONL；apparent size 约 20.98 TiB；`du -sh` 约 12T。</td>
+          <td>每行 schema 为 <code>{"input": ...}</code>。抽样看到中文长文本、网页、小说、诗词、文章片段等，偏中文。</td>
+          <td>作为大规模中文 text pretrain 主候选。需要先做抽样质量评估、去重、长度过滤、低质网页过滤，再 T5 tokenize 成 ELF Arrow。</td>
+          <td><span class="tag good">P0</span></td>
+        </tr>
+        <tr>
+          <td><code class="path">mmdata/experiment_1997-task_255743-node_670117-version_1_shard-*.jsonl</code></td>
+          <td>128 个 JSONL；总 apparent size 约 974.2 GiB。</td>
+          <td>每行 schema 为 <code>{"input": ...}</code>。抽样看到中英混合内容，包含 instruction-like 文本、代码问答、网页文本。</td>
+          <td>适合作为英文和 instruction-like 混合补充，可用于 pretrain 后段 anneal 或 hybrid pretrain，但需要区分 web / SFT-like / code。</td>
+          <td><span class="tag good">P0</span></td>
+        </tr>
+        <tr>
+          <td><code class="path">mmdata/text_sft/tulu3_sft_mixture_t5_1024_filtered</code></td>
+          <td>691,541 样本；约 260.5M prompt+answer T5 token / epoch。</td>
+          <td>已经按 T5 tokenizer 过滤到 max length 1024，字段包含 condition_input_ids 和 input_ids。</td>
+          <td>当前 text-only SFT 数据。建议在更强 text pretrain checkpoint 后继续使用。</td>
+          <td><span class="tag good">P0</span></td>
+        </tr>
+        <tr>
+          <td><code class="path">mmdata/unified-SFT-conversations</code></td>
+          <td>约 3.7G。</td>
+          <td>conversation JSONL，示例是中文数学问答。需要角色顺序、空 answer、长度和质量过滤。</td>
+          <td>可作为第二批 SFT 或中文 instruction 补充，不建议直接混入 pretrain。</td>
+          <td><span class="tag warn">P1</span></td>
+        </tr>
+        <tr>
+          <td><code class="path">mmdata/cluster_imgtxtemb_norepeat_ocr1122_450m</code></td>
+          <td>约 527G；old 版本约 685G。</td>
+          <td>图文类数据，名字显示 OCR / image-text embedding / dedup。</td>
+          <td>多模态 Stage 1 / Stage 2 图文预训练候选，不是纯 text pretrain 首选。</td>
+          <td><span class="tag warn">P1</span></td>
+        </tr>
+        <tr>
+          <td><code class="path">mmdata/decay_1T_merge_v20250403_mmdata</code></td>
+          <td>目录 `du -sh` 约 512B；首个 JSONL 文件大小为 0。</td>
+          <td>名字像 1T 数据，但当前路径下基本为空。</td>
+          <td>暂不使用，除非找到真实数据落盘位置。</td>
+          <td><span class="tag risk">Drop</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout warn">
+      <strong>注意：</strong>
+      `38b_solar` 和 `experiment_1997` 虽然规模大，但并不等于“可以直接训练”。必须先做抽样评估和过滤，否则大规模训练只会放大低质数据、重复数据和格式污染。
+    </div>
+  </section>
+
+  <section>
+    <h2>推荐主路线</h2>
+    <h3>阶段 0：先恢复当前 SFT 路线，拿到可用 baseline</h3>
+    <ul>
+      <li>保留当前 T5-small encoder 和 ELF-L checkpoint。</li>
+      <li>使用已经修复的 3D T5 attention mask 逻辑恢复 Tulu3 SFT。</li>
+      <li>SFT 使用 2 epochs、global batch 256、decoder_prob 0.5、lr 2e-5。</li>
+      <li>训练结束后做 text instruction 和 multimodal VQA probe，判断“是否开始说人话、是否能按图回答”。</li>
+    </ul>
+
+    <h3>阶段 1：构建更强 text pretrain corpus</h3>
+    <ol>
+      <li>从 `38b_solar` 和 `experiment_1997` 各抽样 10k 到 100k 条，做语言、长度、重复率、乱码率、URL/HTML 比例、代码比例、问答格式比例统计。</li>
+      <li>先构建一个 50B 到 100B token positions 的 text pretrain 子集，不直接吃完整 12T。</li>
+      <li>统一转换为当前 ELF loader 可读的 Arrow 格式：字段为 <code>input_ids</code>，max length 1024，T5 tokenizer。</li>
+      <li>训练一个 stronger text checkpoint，保留 OWT checkpoint 作为初始化，对比从零训练和继续训练两种方式。</li>
+    </ol>
+
+    <h3>阶段 2：Text SFT 和多模态训练</h3>
+    <ol>
+      <li>用更强 text checkpoint 初始化 Tulu3 SFT，继续使用 CE/L2 各半的 decoder_prob=0.5。</li>
+      <li>在 text-only SFT 后再进入多模态 Stage 1 projector warmup。</li>
+      <li>Stage 2 多模态 instruction 从 text-SFT checkpoint 初始化，并加载 Stage 1 projector。</li>
+      <li>多模态评估必须加入 shuffled-image control，避免只看 caption-like 输出误判模型真的用图。</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>可尝试实验矩阵</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>实验</th>
+          <th>目标</th>
+          <th>配置建议</th>
+          <th>成功信号</th>
+          <th>主要风险</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>A. 当前 SFT baseline</td>
+          <td>验证 Tulu3 SFT 是否能明显改善 instruction following。</td>
+          <td>当前 ELF-L OWT checkpoint + Tulu3 filtered 2 epochs。</td>
+          <td>训练 loss 正常下降；文本回答更通顺；多模态 probe 不再完全跑偏。</td>
+          <td>底座太弱，SFT 改善有限。</td>
+        </tr>
+        <tr>
+          <td>B. 38b_solar 子集继续预训练</td>
+          <td>强化中文长文本和通用语言能力。</td>
+          <td>抽样过滤后 50B token positions；从 checkpoint_57051 continue。</td>
+          <td>中文生成质量、长文本连贯性和 SFT 后稳定性提升。</td>
+          <td>数据可能小说/网页占比过高，重复和低质内容会污染模型。</td>
+        </tr>
+        <tr>
+          <td>C. experiment_1997 子集继续预训练</td>
+          <td>补英文、代码、instruction-like 分布。</td>
+          <td>过滤后 30B 到 50B token positions；可与 38b_solar 混合。</td>
+          <td>英文问答、代码片段、通用 instruction response 改善。</td>
+          <td>pretrain 和 SFT 格式混杂，需要控制问答模板污染。</td>
+        </tr>
+        <tr>
+          <td>D. 混合 pretrain + anneal</td>
+          <td>兼顾大规模语言建模和指令风格。</td>
+          <td>前段高比例 38b_solar，后段提高 experiment_1997 / Tulu-like 数据占比。</td>
+          <td>text-only SFT 前的模型 already more controllable。</td>
+          <td>需要认真做采样权重和去重，否则训练曲线可看但效果不稳。</td>
+        </tr>
+        <tr>
+          <td>E. Encoder pilot</td>
+          <td>验证更 modern text encoder 是否能提高 latent 表征上限。</td>
+          <td>优先试 T5-v1.1-small 或同 d_model=512 的 encoder；另开分支。</td>
+          <td>同 token budget 下 PPL、decode CE、SFT 效果明显提升。</td>
+          <td>latent space 改变，旧 checkpoint 不能直接复用，需要重训 text backbone 和多模态 projector。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>关于换 Encoder 的判断</h2>
+    <div class="callout risk">
+      <strong>不建议把 encoder 替换作为当前主线第一步。</strong>
+      这个项目不是普通 AR LM，ELF 在 frozen encoder latent space 里做 flow matching，并且 decoder head 要从 latent 解回 token。
+      一旦换 encoder，latent 分布、hidden size、tokenizer、decoder head、latent mean/std、text checkpoint 和多模态 projector 都会受到影响。
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>方案</th>
+          <th>兼容性</th>
+          <th>预期收益</th>
+          <th>建议</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>T5-small 继续 scale</td>
+          <td>最高，现有 checkpoint 可复用。</td>
+          <td>主要提升来自数据量和训练步数。</td>
+          <td><span class="tag good">主线</span> 先把范式训通。</td>
+        </tr>
+        <tr>
+          <td>T5-v1.1-small</td>
+          <td>hidden size 接近，改动相对可控，但 latent 分布仍变。</td>
+          <td>可能获得更干净的 encoder 表征。</td>
+          <td><span class="tag warn">pilot</span> 可以单独小规模验证。</td>
+        </tr>
+        <tr>
+          <td>T5-base / T5-large / UL2</td>
+          <td>hidden size 变化，模型输入/输出层和 checkpoint 兼容性差。</td>
+          <td>encoder 容量更高，上限更高。</td>
+          <td><span class="tag warn">下一代</span> 需要重训成本预算。</td>
+        </tr>
+        <tr>
+          <td>BGE / E5 等 sentence encoder</td>
+          <td>不适合作为直接替换。</td>
+          <td>句向量强，但 token-level generation latent 不匹配。</td>
+          <td><span class="tag risk">不推荐</span> 除非重新设计目标。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>执行清单</h2>
+    <ol>
+      <li>恢复当前 32GPU Tulu3 SFT，验证 3D mask 修复后能进入 loss 曲线。</li>
+      <li>写数据审计脚本，对 `38b_solar` 和 `experiment_1997` 抽样输出 HTML/CSV 报告。</li>
+      <li>实现 JSONL `{"input": ...}` 到 T5 Arrow 的离线转换工具，支持分片、去重、长度过滤和 max_length=1024 packing。</li>
+      <li>先做 1B 到 5B token positions 的 smoke pretrain，确认 dataloader、loss、checkpoint、resume、PPL/generation eval 都稳定。</li>
+      <li>扩大到 50B 到 100B token positions 的 text pretrain，产出 stronger text checkpoint。</li>
+      <li>重新跑 Tulu3 SFT，然后接多模态 Stage 1 / Stage 2。</li>
+      <li>并行开一个小规模 encoder pilot，但不要阻塞当前 T5-small 主线。</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>当前推荐路线图</h2>
+    <pre>当前 bugfix + Tulu3 SFT baseline
+        ↓
+数据审计：38b_solar / experiment_1997
+        ↓
+T5-tokenized Arrow corpus v1：50B 到 100B token positions
+        ↓
+ELF-L stronger text pretrain checkpoint
+        ↓
+Tulu3 SFT 2 到 4 epochs
+        ↓
+多模态 Stage 1 projector warmup
+        ↓
+多模态 Stage 2 instruction tuning
+        ↓
+文本 + 图文 QA + shuffled-image control 评估</pre>
+  </section>
+
+  <section>
+    <h2>附：关键路径</h2>
+    <ul>
+      <li>项目路径：<code class="path">/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro</code></li>
+      <li>当前 Tulu3 filtered：<code class="path">/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/native_mm/mmdata/text_sft/tulu3_sft_mixture_t5_1024_filtered</code></li>
+      <li>当前 OWT checkpoint：<code class="path">/mnt/dolphinfs/ssd_pool/docker/user/hadoop-hldy-nlp/3A/multimodal/yaxinluo/projects/elf-pro/outputs/elf_l-owt-hf-torch/checkpoint_57051</code></li>
+      <li>当前 32GPU SFT submit：<code class="path">submit/submit_elf_l_tulu3_sft_32gpu.hope</code></li>
+      <li>3D mask 修复文件：<code class="path">src/modules/t5_encoder.py</code></li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

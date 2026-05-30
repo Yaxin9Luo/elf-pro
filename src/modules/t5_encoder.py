@@ -63,25 +63,74 @@ class T5Encoder(nn.Module):
         config.is_gated_act = bool(getattr(hf, "is_gated_act", False))
         self.config = config
 
+    def _forward_with_3d_attention_mask(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor,
+    ) -> torch.Tensor:
+        """Run the HF T5 encoder with an asymmetric self-attention mask."""
+        encoder = self.model.encoder
+        input_shape = input_ids.size()
+        if attention_mask.shape != (input_shape[0], input_shape[1], input_shape[1]):
+            raise ValueError(
+                "3D T5 encoder attention_mask must have shape "
+                f"(batch, seq, seq), got {tuple(attention_mask.shape)} for input_ids {tuple(input_shape)}"
+            )
+
+        input_ids = input_ids.view(-1, input_shape[-1])
+        inputs_embeds = encoder.embed_tokens(input_ids)
+        seq_length = input_shape[1]
+        cache_position = torch.arange(seq_length, device=inputs_embeds.device)
+
+        additive_mask = attention_mask[:, None, :, :].to(dtype=inputs_embeds.dtype, device=inputs_embeds.device)
+        additive_mask = (1.0 - additive_mask) * torch.finfo(inputs_embeds.dtype).min
+
+        head_mask = encoder.get_head_mask(None, encoder.config.num_layers)
+        hidden_states = encoder.dropout(inputs_embeds)
+        position_bias = None
+
+        for i, layer_module in enumerate(encoder.block):
+            layer_outputs = layer_module(
+                hidden_states,
+                additive_mask,
+                position_bias,
+                None,
+                None,
+                None,
+                layer_head_mask=head_mask[i],
+                cross_attn_layer_head_mask=None,
+                past_key_values=None,
+                use_cache=False,
+                output_attentions=False,
+                return_dict=True,
+                cache_position=cache_position,
+            )
+            hidden_states = layer_outputs[0]
+            position_bias = layer_outputs[1]
+
+        hidden_states = encoder.final_layer_norm(hidden_states)
+        hidden_states = encoder.dropout(hidden_states)
+        return hidden_states
+
     def forward(
         self,
         input_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         deterministic: bool = True,
     ) -> torch.Tensor:
+        use_3d_mask = False
         if attention_mask is not None and attention_mask.ndim == 3:
             first_row = attention_mask[:, :1, :]
             if torch.all(attention_mask == first_row):
                 attention_mask = first_row.squeeze(1)
             else:
-                raise ValueError(
-                    "T5Encoder received a 3D custom attention mask, but this "
-                    "Transformers T5 version only supports 2D padding masks."
-                )
+                use_3d_mask = True
         was_training = self.model.training
         if deterministic:
             self.model.eval()
         try:
+            if use_3d_mask:
+                return self._forward_with_3d_attention_mask(input_ids=input_ids, attention_mask=attention_mask)
             out = self.model(input_ids=input_ids, attention_mask=attention_mask)
         finally:
             if not deterministic and was_training:

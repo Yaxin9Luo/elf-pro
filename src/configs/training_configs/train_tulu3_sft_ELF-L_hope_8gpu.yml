@@ -1,0 +1,93 @@
+# ELF-L text-only SFT on filtered Tulu3-SFT, single-node 8-GPU HOPE run.
+#
+# Token accounting for one epoch after filtering with the local T5 tokenizer:
+#   examples: 691,541
+#   actual prompt + answer tokens: ~260.5M / epoch, ~521.0M / 2 epochs
+#   answer/loss tokens: ~172.4M / epoch, ~344.9M / 2 epochs
+#   padded compute tokens at max_length=1024: ~708.1M / epoch, ~1.416B / 2 epochs
+
+data_modality: text
+train_stage: text
+data_path: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/native_mm/mmdata/text_sft/tulu3_sft_mixture_t5_1024_filtered"
+eval_data_path: null
+max_length: 1024
+max_input_length: null
+pad_token: "pad"
+
+# Encoder / tokenizer. Length filtering was done with this T5 tokenizer and
+# add_special_tokens=False, matching the training loader.
+encoder_model_name: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/models/t5-small"
+tokenizer_name: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/models/t5-small"
+latent_mean: 0.0
+latent_std: 0.2
+
+# Model architecture
+model: ELF-L
+bottleneck_dim: 128
+num_time_tokens: 4
+num_self_cond_cfg_tokens: 4
+num_model_mode_tokens: 4
+
+# Start from the official ELF-L OWT checkpoint, not the earlier local 5-epoch run.
+init_checkpoint: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-hldy-nlp/3A/multimodal/yaxinluo/projects/elf-pro/outputs/elf_l-owt-hf-torch/checkpoint_57051"
+init_checkpoint_use_ema: true
+init_checkpoint_strict: false
+
+# Denoiser objective
+denoiser_p_mean: -1.5
+denoiser_p_std: 0.8
+denoiser_noise_scale: 2.0
+t_eps: 0.05
+time_schedule: "logit_normal"
+
+# Decoder objective
+decoder_prob: 0.5
+decoder_noise_scale: 5.0
+decoder_p_mean: 0.8
+decoder_p_std: 0.8
+
+# Conditioning / CFG
+label_drop_prob: 0.0
+self_cond_prob: 0.5
+
+# SFT schedule. Fixed LR avoids the OWT `blr` scaling recipe.
+epochs: 2
+global_batch_size: 256
+grad_accum_steps: 1
+lr: 0.00002
+weight_decay: 0.0
+warmup_epochs: 0.03
+warmup_steps: -1
+optimizer: adamw
+adam_b1: 0.9
+adam_b2: 0.95
+
+use_bf16: true
+use_compile: false
+gradient_checkpointing: true
+
+# EMA
+ema_decay1: 0.9999
+
+# Keep SFT training focused; sample/eval after the checkpoint is produced.
+sampling_configs_path: null
+num_samples: 0
+online_eval: false
+
+# Logging & Checkpointing
+log_freq: 50
+save_freq: 0.2
+eval_freq: 0
+max_checkpoints_to_keep: 3
+
+output_dir: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/outputs/elf_l-tulu3-sft-t5-1024-hope-8gpu"
+hf_repo_id: null
+resume: null
+
+use_wandb: false
+wandb_project: elf
+wandb_entity: null
+wandb_run_name: elf_l-tulu3-sft-t5-1024-hope-8gpu
+
+seed: 42
+num_workers: 4
