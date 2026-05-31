@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flow Matching 语言模型的 Teacher Forcing、Trajectory Gap 与修正路线</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #59647a;
+      --line: #dfe3ec;
+      --blue: #1f5eff;
+      --green: #0d8f61;
+      --amber: #a86d00;
+      --red: #b3261e;
+      --code: #f0f3f8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 32px 24px 58px;
+    }
+    header {
+      padding: 28px 0 18px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 24px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 30px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+    h2 {
+      margin: 34px 0 14px;
+      font-size: 22px;
+      line-height: 1.3;
+      letter-spacing: 0;
+    }
+    h3 {
+      margin: 24px 0 10px;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+    p { margin: 8px 0; }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .subtitle {
+      color: var(--muted);
+      max-width: 900px;
+      margin: 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin: 18px 0 8px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .metric {
+      display: block;
+      font-size: 22px;
+      line-height: 1.25;
+      font-weight: 750;
+      color: var(--blue);
+      margin-bottom: 6px;
+    }
+    .muted { color: var(--muted); }
+    .tag {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 2px 9px;
+      margin: 0 4px 4px 0;
+      font-size: 12px;
+      font-weight: 650;
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      white-space: nowrap;
+    }
+    .tag.good { color: var(--green); border-color: #a9dec7; background: #ecfbf4; }
+    .tag.warn { color: var(--amber); border-color: #ead39a; background: #fff8e8; }
+    .tag.risk { color: var(--red); border-color: #e7afa9; background: #fff1ef; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 12px 0 22px;
+    }
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    th {
+      color: #273247;
+      background: #eef2f8;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    tr:last-child td { border-bottom: 0; }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      background: var(--code);
+      border-radius: 5px;
+    }
+    code { padding: 1px 5px; }
+    pre {
+      padding: 12px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      white-space: pre-wrap;
+    }
+    ul, ol { padding-left: 22px; }
+    li { margin: 6px 0; }
+    .callout {
+      border-left: 4px solid var(--blue);
+      background: #eef4ff;
+      padding: 12px 14px;
+      border-radius: 6px;
+      margin: 14px 0;
+    }
+    .callout.warn { border-left-color: var(--amber); background: #fff8e8; }
+    .callout.risk { border-left-color: var(--red); background: #fff1ef; }
+    .two-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px;
+      margin: 14px 0;
+    }
+    .small { font-size: 13px; }
+    @media (max-width: 820px) {
+      main { padding: 22px 14px 42px; }
+      .grid, .two-col { grid-template-columns: 1fr; }
+      th { white-space: normal; }
+      table { font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Flow Matching 语言模型的 Teacher Forcing、Trajectory Gap 与修正路线</h1>
+    <p class="subtitle">
+      2026-05-31 讨论整理。本文把 AR Teacher Forcing、ELF/CFM 的连续 latent 训练方式、
+      instruction SFT 失败模式、conditioned pretrain 与可落地修正方案放到同一张图里。
+    </p>
+  </header>
+
+  <section>
+    <h2>一句话结论</h2>
+    <div class="callout">
+      ELF 当前的核心问题不是“DLM decoder 读不出 target latent”，也不是“loss 没下降”。
+      更准确地说，是 <strong>Flow Matching 在真实 bridge state 上学到的局部 vector field，
+      没有稳定转化成从纯噪声出发、按 prompt 进入正确 answer basin 的 self-rollout 能力</strong>。
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <span class="metric">AR</span>
+        <p>Teacher forcing 直接训练真实 prefix 下的 next-token 分布。</p>
+      </div>
+      <div class="card">
+        <span class="metric">FM / CFM</span>
+        <p>训练时看真实 <code>x0</code> 加噪得到的 bridge state，推理时看模型自己走出的 state。</p>
+      </div>
+      <div class="card">
+        <span class="metric">ELF-SFT</span>
+        <p>失败集中在高噪声 conditional routing，而不是 clean decode 或低噪声 repair。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>AR Teacher Forcing 到底是什么</h2>
+    <p>
+      自回归语言模型训练时，模型在每个位置预测下一个 token，但它看到的历史前缀永远是数据里的
+      gold prefix，而不是模型自己前一步生成出来的 prefix。
+    </p>
+
+    <pre>真实序列:
+&lt;BOS&gt; The cat sat
+
+训练输入:
+&lt;BOS&gt; The cat
+
+训练标签:
+The   cat sat</pre>
+
+    <p>所以训练目标是：</p>
+    <pre>L_AR = - Σ_t log pθ(x_t | x_&lt;t)</pre>
+
+    <p>
+      这个目标和 AR 模型的概率分解完全一致：
+    </p>
+    <pre>pθ(x_1, ..., x_T) = Π_t pθ(x_t | x_&lt;t)</pre>
+
+    <div class="callout">
+      因此，AR validation loss 下降通常是很强的信号：模型在真实文本前缀下给真实下一个 token 的概率变高了。
+      它仍然有 exposure bias，但训练目标本身和推理模型定义是对齐的。
+    </div>
+  </section>
+
+  <section>
+    <h2>Flow Matching 里的“类 Teacher Forcing”</h2>
+    <p>
+      Flow Matching 训练时也有一种连续空间里的 teacher-forced state。给定真实 target latent <code>x0</code>
+      和随机噪声 <code>eps</code>，训练输入是：
+    </p>
+
+    <pre>z_t = t * x0 + (1 - t) * eps
+target = x0
+v_target = (x0 - z_t) / (1 - t)</pre>
+
+    <p>
+      这意味着模型在每个 noise level 看到的是“真实答案桥”上的中间状态。它学的是：
+      在这条真实桥附近，应该往哪个方向走。
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>范式</th>
+          <th>训练时输入</th>
+          <th>推理时输入</th>
+          <th>主要 mismatch</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>AR LM</td>
+          <td>真实 token prefix</td>
+          <td>模型自己生成的 token prefix</td>
+          <td>错 token 会进入非 gold prefix，但仍是合法离散文本前缀。</td>
+        </tr>
+        <tr>
+          <td>Flow Matching LM</td>
+          <td>真实 <code>x0</code> 加噪得到的 continuous bridge state</td>
+          <td>模型 rollout 得到的 continuous latent state</td>
+          <td>早期偏离后可能进入非自然文本轨迹，后续 vector field 在 off-trajectory latent 上工作。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout warn">
+      所以，controlled denoise 通过只能说明模型在真实 bridge 附近会修。
+      它不保证模型从纯噪声开始时能自己找到那条 bridge。
+    </div>
+  </section>
+
+  <section>
+    <h2>为什么语言比图像更容易暴露这个问题</h2>
+    <p>
+      图像 pixel/latent space 的局部几何相对平滑。vector field 的小误差通常仍会把样本推向一个相近图像区域，
+      后续步骤还有机会修正。
+    </p>
+    <p>
+      语言 latent 则不同。最终输出要经过 DLM head 的 token argmax。连续 latent 的小偏移可能跨过离散 token
+      边界，尤其是数字、yes/no、标签、实体名、短答案这类信息密度很高的 target。
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>错误类型</th>
+          <th>图像 FM 中的表现</th>
+          <th>语言 ELF 中的表现</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>局部 vector field 小偏差</td>
+          <td>图像轻微模糊、纹理变差、构图偏一点。</td>
+          <td>数字、label、实体或首词变成另一个合法但错误的 token。</td>
+        </tr>
+        <tr>
+          <td>高噪声语义盆地选错</td>
+          <td>可能仍是同类对象或相近图像。</td>
+          <td>生成“合理回答”，但不是当前 prompt 的答案。</td>
+        </tr>
+        <tr>
+          <td>多步 rollout 累积</td>
+          <td>后续步骤可能继续朝图像 manifold 修。</td>
+          <td>进入错误 answer basin 后，低噪声修复只是在错误语义上精修。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>当前 ELF 证据链</h2>
+    <p>
+      最新诊断见 <a href="elf_multimodal_scaling_plan.html">elf_multimodal_scaling_plan.html</a> 和
+      <a href="cfm_sft_eval_harness.md">cfm_sft_eval_harness.md</a>。
+      关键信号是：
+    </p>
+
+    <ul>
+      <li><strong>Clean decode 好：</strong>真实 target latent 经 DLM head 能还原 token，说明 decoder 不是主因。</li>
+      <li><strong>Controlled denoise 好：</strong>从 target latent 加噪后，correct prompt 明显优于 zero/shuffled prompt。</li>
+      <li><strong>Full rollout 差：</strong>从纯噪声 <code>t_start=0</code> 起步时，经常生成英文但答非所问。</li>
+      <li><strong>采样 schedule 是次要因素：</strong>uniform 和 logit-tail 在高噪声失败模式相近。</li>
+      <li><strong>真实 Tulu 分布更难：</strong>synthetic short QA 能训通，Tulu Short/Mixed 暴露离散答案漂移和语义盆地偏移。</li>
+    </ul>
+
+    <div class="callout risk">
+      只看 loss、clean decode 或低噪声 denoise，会误判 checkpoint 已经学会 instruction following。
+      CFM SFT 的硬指标必须包含 <code>t_start=0</code> trajectory 和 high-noise condition gap。
+    </div>
+  </section>
+
+  <section>
+    <h2>一步生成能不能解决错误累积</h2>
+    <p>
+      如果模型真的能在 <code>t=0</code> 从纯噪声一步预测出可 decode 的 clean latent，那么它确实可以避免多步
+      vector field 误差累积。
+    </p>
+
+    <pre>多步:
+z_0 noise -> z_0.1 -> z_0.3 -> ... -> z_1 -> DLM decode
+
+一步:
+z_0 noise -> x_pred ~= target clean latent -> DLM decode</pre>
+
+    <p>
+      但一步生成不是免费午餐。它把问题从“局部速度准不准”变成“全局 transport map 准不准”。
+      对语言来说，这要求模型在最高噪声处就选中正确 answer basin。
+    </p>
+
+    <div class="callout">
+      ELF 当前模型形式上已经可以做 <code>t=0 direct x_pred decode</code>：
+      因为网络输出就是 <code>x_pred</code>。真正问题是 <code>x_pred(t=0, prompt)</code>
+      是否足够可靠。
+    </div>
+  </section>
+
+  <section>
+    <h2>Pretrain 阶段为什么看起来没这个问题</h2>
+    <p>
+      严格讲，无条件 pretrain 也有 Flow Matching 的 train/inference state mismatch。
+      但它没有 instruction SFT 中最致命的 <strong>conditional binding</strong> 问题。
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>阶段</th>
+          <th>训练目标</th>
+          <th>失败是否容易暴露</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Unconditional pretrain</td>
+          <td><code>noise -> 某个像 OpenWebText 的文本 latent</code></td>
+          <td>不要求对应某个指定答案。trajectory 漂到另一个合理文本区域，PPL/entropy 可能仍可接受。</td>
+        </tr>
+        <tr>
+          <td>Instruction SFT</td>
+          <td><code>prompt + noise -> 当前 prompt 的 answer latent</code></td>
+          <td>必须按 prompt 进入唯一或少数正确 answer basin。数字、label、实体一错就是任务失败。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>
+      因此，当前问题更像是：无条件 text prior 会说话，但 conditional transport
+      <code>p(answer | prompt)</code> 没学稳。
+    </p>
+  </section>
+
+  <section>
+    <h2>Conditioned Pretrain / Prefix Continuation Pretrain</h2>
+    <p>
+      Prefix continuation pretrain 和 instruction SFT 在代码形态上很像，都是：
+    </p>
+
+    <pre>condition_input_ids = 条件部分
+input_ids = 要生成的 target 部分</pre>
+
+    <p>但二者语义不同。</p>
+
+    <div class="two-col">
+      <div class="card">
+        <h3>Prefix continuation pretrain</h3>
+        <p><span class="tag good">自监督</span> <span class="tag good">大规模</span></p>
+        <pre>原文:
+The city council approved the new transit plan after months of debate.
+The proposal will add new bus lanes downtown.
+
+condition:
+The city council approved the new transit plan after months of debate.
+
+target:
+The proposal will add new bus lanes downtown.</pre>
+        <p>目标是让 flow 学会“给定自然文本前缀，继续生成后文”。</p>
+      </div>
+
+      <div class="card">
+        <h3>Instruction SFT</h3>
+        <p><span class="tag warn">监督</span> <span class="tag warn">任务化</span></p>
+        <pre>condition:
+User: What is 39 minus 10?
+Assistant:
+
+target:
+29</pre>
+        <p>目标是让模型学会任务格式、回答偏好、拒答、安全、标签、数学等行为。</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      AR pretrain 天然就是 prefix -> next token。ELF 的无条件 pretrain 没有充分训练
+      “condition 控制 generation” 这件事，所以在 OWT pretrain 和 Tulu SFT 之间加
+      prefix continuation pretrain 是合理的中间阶段。
+    </div>
+  </section>
+
+  <section>
+    <h2>修正路线</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>优先级</th>
+          <th>方向</th>
+          <th>要修的问题</th>
+          <th>具体做法</th>
+          <th>风险</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="tag good">P0</span></td>
+          <td>固定诊断闭环</td>
+          <td>避免继续被 clean decode / loss 误导。</td>
+          <td>每个 checkpoint 固定跑 clean、controlled denoise、<code>t_start=0</code> trajectory、zero/shuffled gap。</td>
+          <td>只是诊断，不直接提升模型。</td>
+        </tr>
+        <tr>
+          <td><span class="tag good">P0</span></td>
+          <td>High-noise reweighting</td>
+          <td>高噪声区 condition 信号弱。</td>
+          <td>提高 <code>t=0~0.3</code> 采样和 loss 权重；单独记录该区间指标。</td>
+          <td>可能牺牲低噪声精修或整体 loss 曲线。</td>
+        </tr>
+        <tr>
+          <td><span class="tag good">P0</span></td>
+          <td>Prefix continuation pretrain</td>
+          <td>无条件 pretrain 没训练 prompt-conditioned routing。</td>
+          <td>从普通 text corpus 切 prefix/continuation，走现有 conditional mask 管线。</td>
+          <td>切分策略、长度分布和 EOS 控制会影响结果。</td>
+        </tr>
+        <tr>
+          <td><span class="tag warn">P1</span></td>
+          <td>Endpoint / token-aware loss</td>
+          <td>latent L2 接近不等于 token 正确。</td>
+          <td>在高噪声 <code>x_pred</code> 上加 <code>CE(DLM(x_pred), target_tokens)</code>。</td>
+          <td>DLM 在粗糙 latent 上不稳时，CE 可能噪声大。</td>
+        </tr>
+        <tr>
+          <td><span class="tag warn">P1</span></td>
+          <td>DLM robustness probe</td>
+          <td>确认 DLM 是否能评价 noisy / rough latent。</td>
+          <td>扫 <code>x0 + sigma * noise</code> 的 decode token acc；必要时先 finetune DLM head。</td>
+          <td>如果 DLM 本身不鲁棒，token-aware loss 要先 warmup。</td>
+        </tr>
+        <tr>
+          <td><span class="tag warn">P2</span></td>
+          <td>Trajectory / rollout training</td>
+          <td>训练 state 与推理 state 不一致。</td>
+          <td>把 teacher rollout 或 self-rollout 中间状态加入训练，做 trajectory consistency。</td>
+          <td>训练成本上升，teacher 轨迹质量会限制上限。</td>
+        </tr>
+        <tr>
+          <td><span class="tag risk">P2</span></td>
+          <td>Shortcut / stride-conditioned ELF</td>
+          <td>局部速度场不适合少步/一步生成。</td>
+          <td>给模型加 stride token，训练 <code>model(z,t,d)</code> 预测多步后状态或终点。</td>
+          <td>模型和训练目标改动更大，需要小规模验证。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>建议下一组实验</h2>
+    <ol>
+      <li>
+        先写一个 <code>t=0 direct x_pred decode</code> probe，和现有 32/64-step trajectory 对比。
+        如果 direct decode 已经优于多步，说明 rollout 本身在伤害生成。
+      </li>
+      <li>
+        对 Tulu Short 10K / Mixed 10K 做 high-noise weighted ablation：
+        <code>denoiser_p_mean</code>、低 <code>t</code> oversampling、decoder_prob、EOS/length 控制一起记录。
+      </li>
+      <li>
+        构造 OWT 或大 corpus 的 prefix continuation 数据集，先用当前 T5-small latent 和现有 loader，不换 encoder。
+      </li>
+      <li>
+        在 prefix continuation checkpoint 上重新跑 Tulu3 SFT，再看 high-noise condition gap 和
+        <code>t_start=0</code> 是否显著改善。
+      </li>
+      <li>
+        如果仍不稳，再进入 token-CE distillation / shortcut ELF，而不是直接扩大多模态训练。
+      </li>
+    </ol>
+
+    <div class="callout warn">
+      多模态 Stage 1 / Stage 2 应该等 text-only conditional flow 在真实短答和混合长度子集上稳定后再继续。
+      否则图文训练只会把“会生成文本但不按条件回答”的问题换成“会生成文本但不按图回答”。
+    </div>
+  </section>
+
+  <section>
+    <h2>相关文档与背景</h2>
+    <ul>
+      <li><a href="elf_multimodal_scaling_plan.html">ELF 多模态训练规模化路线与数据调查</a></li>
+      <li><a href="cfm_sft_eval_harness.md">CFM SFT Eval Harness</a></li>
+      <li><a href="elf_pro_research_plan.html">elf-pro 研究路线</a></li>
+      <li><a href="https://arxiv.org/abs/2210.02747">Flow Matching for Generative Modeling</a></li>
+      <li><a href="https://arxiv.org/abs/2209.03003">Rectified Flow</a></li>
+      <li><a href="https://arxiv.org/abs/2303.01469">Consistency Models</a></li>
+      <li><a href="https://openreview.net/forum?id=OlzB6LnXcS">One Step Diffusion via Shortcut Models</a></li>
+      <li><a href="https://arxiv.org/abs/2505.13447">Mean Flows for One-step Generative Modeling</a></li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>
