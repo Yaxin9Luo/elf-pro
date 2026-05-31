@@ -4,6 +4,7 @@
 #   rows: 580,336
 #   prompt+target tokens / epoch: 232.3M
 #   target/loss tokens / epoch: 154.6M
+# With global_batch_size=512, each epoch is 1,133 optimizer steps on 32 GPUs.
 # 20 epochs therefore expose ~4.65B prompt+target tokens and ~3.09B target tokens.
 
 data_modality: text
@@ -52,9 +53,9 @@ self_cond_cfg_min: 0.5
 self_cond_cfg_max: 5.0
 
 epochs: 20
-global_batch_size: 256
+global_batch_size: 512
 grad_accum_steps: 1
-lr: 0.00002
+lr: 0.00004
 min_lr: 0.0
 lr_schedule: "constant"
 weight_decay: 0.0
