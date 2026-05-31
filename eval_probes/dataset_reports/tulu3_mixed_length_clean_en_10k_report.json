@@ -1,0 +1,401 @@
+{
+  "input_dataset": "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/native_mm/mmdata/text_sft/tulu3_sft_mixture_t5_1024_filtered",
+  "output_dir": "/tmp/elf-pro-cache/data/tulu3_mixed_length_clean_en_10k_t5_1024_eos",
+  "probe_jsonl": "/tmp/elf-pro-cache/data/tulu3_mixed_length_clean_en_10k_probe.jsonl",
+  "max_examples": 10000,
+  "selected_examples": 10000,
+  "candidate_examples": 101417,
+  "pre_dedupe_candidate_examples": 117325,
+  "source_examples": 691541,
+  "reject_counts": {
+    "target_multiline": 349635,
+    "source_excluded": 142817,
+    "refusal_target": 25393,
+    "prompt_too_long": 14438,
+    "non_english_like": 12988,
+    "target_too_long": 12950,
+    "not_single_turn": 10776,
+    "conflicting_prompt_targets": 5478,
+    "code_marker": 5154,
+    "duplicate_prompt_same_target": 1281,
+    "tool_marker": 39,
+    "image_marker": 26
+  },
+  "filters": {
+    "single_turn_only": true,
+    "append_eos": true,
+    "drop_code": true,
+    "reject_refusals": true,
+    "english_like": true,
+    "min_ascii_ratio": 0.95,
+    "include_source_substrings": "",
+    "exclude_source_substrings": "aya_100k,wildjailbreak",
+    "max_length": 1024,
+    "max_prompt_tokens": 512,
+    "max_target_tokens_no_eos": 128,
+    "max_target_newlines": 4,
+    "target_token_buckets": "1-16:3000,17-64:5000,65-128:2000"
+  },
+  "bucket_candidate_counts": {
+    "1-16": 28885,
+    "17-64": 43601,
+    "65-128": 28931
+  },
+  "prompt_tokens": {
+    "min": 5,
+    "max": 512,
+    "mean": 166.8895
+  },
+  "target_tokens_with_eos": {
+    "min": 2,
+    "max": 129,
+    "mean": 37.7925,
+    "histogram": {
+      "2": 1043,
+      "3": 410,
+      "4": 288,
+      "5": 177,
+      "6": 115,
+      "7": 122,
+      "8": 80,
+      "9": 79,
+      "10": 76,
+      "11": 82,
+      "12": 78,
+      "13": 81,
+      "14": 89,
+      "15": 90,
+      "16": 99,
+      "17": 91,
+      "18": 139,
+      "19": 155,
+      "20": 174,
+      "21": 202,
+      "22": 200,
+      "23": 227,
+      "24": 233,
+      "25": 202,
+      "26": 221,
+      "27": 181,
+      "28": 187,
+      "29": 201,
+      "30": 193,
+      "31": 140,
+      "32": 143,
+      "33": 147,
+      "34": 115,
+      "35": 126,
+      "36": 106,
+      "37": 96,
+      "38": 80,
+      "39": 89,
+      "40": 84,
+      "41": 72,
+      "42": 63,
+      "43": 69,
+      "44": 73,
+      "45": 57,
+      "46": 61,
+      "47": 58,
+      "48": 64,
+      "49": 57,
+      "50": 48,
+      "51": 58,
+      "52": 57,
+      "53": 49,
+      "54": 45,
+      "55": 48,
+      "56": 47,
+      "57": 47,
+      "58": 41,
+      "59": 49,
+      "60": 78,
+      "61": 41,
+      "62": 34,
+      "63": 56,
+      "64": 45,
+      "65": 42,
+      "66": 30,
+      "67": 26,
+      "68": 40,
+      "69": 17,
+      "70": 36,
+      "71": 21,
+      "72": 32,
+      "73": 28,
+      "74": 42,
+      "75": 36,
+      "76": 40,
+      "77": 38,
+      "78": 44,
+      "79": 41,
+      "80": 33,
+      "81": 37,
+      "82": 31,
+      "83": 40,
+      "84": 30,
+      "85": 41,
+      "86": 32,
+      "87": 35,
+      "88": 46,
+      "89": 30,
+      "90": 48,
+      "91": 37,
+      "92": 44,
+      "93": 42,
+      "94": 36,
+      "95": 37,
+      "96": 29,
+      "97": 49,
+      "98": 41,
+      "99": 34,
+      "100": 51,
+      "101": 31,
+      "102": 30,
+      "103": 36,
+      "104": 30,
+      "105": 26,
+      "106": 31,
+      "107": 32,
+      "108": 28,
+      "109": 34,
+      "110": 24,
+      "111": 28,
+      "112": 30,
+      "113": 24,
+      "114": 20,
+      "115": 30,
+      "116": 28,
+      "117": 18,
+      "118": 25,
+      "119": 27,
+      "120": 29,
+      "121": 16,
+      "122": 22,
+      "123": 16,
+      "124": 26,
+      "125": 22,
+      "126": 21,
+      "127": 16,
+      "128": 11,
+      "129": 15
+    }
+  },
+  "total_tokens": {
+    "min": 13,
+    "max": 625,
+    "mean": 204.682
+  },
+  "top_sources": [
+    [
+      "ai2-adapt-dev/flan_v2_converted",
+      6578
+    ],
+    [
+      "ai2-adapt-dev/tulu_v3.9_synthetic_finalresp_wildguardmixtrain_decontaminated_50k",
+      981
+    ],
+    [
+      "ai2-adapt-dev/tulu_v3.9_open_math_2_gsm8k_50k",
+      556
+    ],
+    [
+      "ai2-adapt-dev/personahub_ifdata_manual_seed_v3_29980",
+      512
+    ],
+    [
+      "ai2-adapt-dev/coconot_converted",
+      302
+    ],
+    [
+      "ai2-adapt-dev/tulu_v3.9_sciriff_10k",
+      273
+    ],
+    [
+      "ai2-adapt-dev/tulu_v3.9_wildchat_100k",
+      243
+    ],
+    [
+      "ai2-adapt-dev/no_robots_converted",
+      231
+    ],
+    [
+      "ai2-adapt-dev/tulu_v3.9_table_gpt_5k",
+      185
+    ],
+    [
+      "ai2-adapt-dev/evol_codealpaca_heval_decontaminated",
+      77
+    ],
+    [
+      "ai2-adapt-dev/oasst1_converted",
+      61
+    ],
+    [
+      "allenai/tulu-3-sft-personas-math-grade",
+      1
+    ]
+  ],
+  "samples": [
+    {
+      "id": "ai2-adapt-dev/no_robots_converted_2224",
+      "source": "ai2-adapt-dev/no_robots_converted",
+      "input": "User: Rewrite this news headline as a traditional haiku poem:\n\nAnalysis: Experts are frantically sounding the alarm over AI. Are we taking it seriously?\nAssistant:",
+      "target": "Frantic experts cry,\nAI alarms echo far,\nAre we listening?",
+      "prompt_tokens": 39,
+      "target_tokens": 16
+    },
+    {
+      "id": "ai2-adapt-dev/tulu_v3.9_table_gpt_5k_992",
+      "source": "ai2-adapt-dev/tulu_v3.9_table_gpt_5k",
+      "input": "User: Description: It falls under your responsibility to complete the missing value in the input table, denoted as '[MISSING]'. Provide just the filled-in value; the rest of the table is not needed. Return the final result as JSON in the format {\"value\": \"<value filled in>\"}.\n\nQ:\n|Location|Lake|Area (sq mi)|\n|---|---|---|\n|England|Thirlmere|1.25|\n|Wales|Llyn Celyn|1.25|\n|Wales|Llyn Clywedog|1.55|\n|[MISSING]|Chew Valley Lake|1.88|\n|Wales|Llyn Brenig|1.44|\n\nA:\n{\"value\": \"England\"}\n\nQ:\n|Location|Lake|Area (sq mi)|\n|---|---|---|\n|Wales|Llyn Celyn|1.25|\n|Wales|Trawsfynydd|1.84|\n|England|Chew Valley Lake|1.88|\n|Wales|Llyn Clywedog|1.55|\n|[MISSING]|Carron Valley|1.51|\n\nA:\n{\"value\": \"Scotland\"}\n\nQ:\n|Location|Lake|Area (sq mi)|\n|---|---|---|\n|England|Rutland Water|4.86|\n|England|Kielder Water|4.25|\n|[MISSING]|Lake Vyrnwy|3.18|\n|England|Pitsford Water|2.85|\n|England|Grafham Water|2.85|\n\nReturn the final result as JSON in the format {\"value\": \"<value filled in>\"}.\nA:\nAssistant:",
+      "target": "{\"value\": \"Wales\"}",
+      "prompt_tokens": 430,
+      "target_tokens": 12
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_1994",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Detailed Instructions: In this task, you need to count the number of vowels (letters 'a', 'e', 'i', 'o', 'u') / consonants (all letters other than vowels) in the given sentence.\nSee one example below:\nProblem: Sentence: 'a white cat on a desk near a computer monitor'. Count the number of vowels in the given sentence.\nSolution: 16\nExplanation: This sentence has 5 occurrences of letter 'a', 4 of 'e', 2 of 'i', 4 of 'o', and 1 of 'u'. This adds up to 16. So, the answer is 16.\n\nProblem: Sentence: 'the police car is parked next to the curb'. Count the number of consonants in the given sentence.\nSolution:\nAssistant:",
+      "target": "21",
+      "prompt_tokens": 204,
+      "target_tokens": 2
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_46797",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Q: Given a sentence, generate what should be the most likely next statement. The next statement should be reasonable and logically correct.\nThe tire is now sitting on top of an object and they take it off. A person\nA:\nAssistant:",
+      "target": "brings out an old bike and talk about what needs to be done.",
+      "prompt_tokens": 53,
+      "target_tokens": 15
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_20558",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Q: In this task, you are given a short passage that may convey stereotype, anti-stereotype, or is unrelated. A stereotype is an over-generalized belief about a particular group of people. An anti-stereotype is an idea that goes against a common stereotype. The passage is unrelated if it does not convey a stereotype or anti-stereotype. You are expected to classify the passage into three classes: stereotype, anti-stereotype, and unrelated.\nPassage: Iranian people are always involved with elephant\nA:\nAssistant:",
+      "target": "Unrelated",
+      "prompt_tokens": 128,
+      "target_tokens": 3
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_55358",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: In this task you will be given a list of integers. You should find the minimum absolute difference between 2 integers in the list. The absolute difference is the absolute value of one integer subtracted by another. The output should be a single integer which is the smallest possible absolute distance.\nQ: [52, 48, 17, -54]\nA:\nAssistant:",
+      "target": "4",
+      "prompt_tokens": 79,
+      "target_tokens": 2
+    },
+    {
+      "id": "ai2-adapt-dev/tulu_v3.9_table_gpt_5k_1219",
+      "source": "ai2-adapt-dev/tulu_v3.9_table_gpt_5k",
+      "input": "User: # Task Description: It falls under your responsibility to complete the missing value in the input table, denoted as '[MISSING]'. Provide just the filled-in value; the rest of the table is not needed. Return the final result as JSON in the format {\"value\": \"<value filled in>\"}.\n\nQuestion:\n|Year|Record label|Title|Notes|\n|---|---|---|---|\n|2001|JSP Records|Put Your Trust in Me|nan|\n|2008|Catfood Records|Red Cadillac|nan|\n|2016|[MISSING]|Tiger In A Cage|nan|\n|2013|Catfood Records|Remembering O. V.|with special guest Otis Clay|\n|2005|Topcat Records/Catfood Records|No Boundaries|nan|\n\nAnswer:\n{\"value\": \"Catfood Records\"}\n\nQuestion:\n|Year|Record label|Title|Notes|\n|---|---|---|---|\n|1994|Rooster Blues|Can't Sleep At Night|Billed as Rawls & Luckett|\n|1995|[MISSING]|Down to Earth|Billed as Rawls & Luckett|\n|1996|JSP Records|Here We Go|nan|\n|1997|JSP Records|Louisiana Woman|nan|\n|1999|JSP Records|My Turn to Win|nan|\n\nReturn the final result as JSON in the format {\"value\": \"<value filled in>\"}.\nAnswer:\nAssistant:",
+      "target": "{\"value\": \"Rooster Blues\"}",
+      "prompt_tokens": 370,
+      "target_tokens": 14
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_22442",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: In this task, you are given a sentence. You are expected to recognize the name of gene or protein. Although there might be several correct answers, you need to write one of them.\n--------\nQuestion:  Suppression of macrophage antimicrobial activity should thus be considered when treating patients with glucocorticoids ; its prevention by gamma - interferon might be beneficial for some but not all pathogens .\n\nAnswer: gamma - interferon\n\n\nQuestion:  Interestingly , addition of PGF ( 2alpha ) , which was not known to affect lymphocytes , dramatically attenuated the deleterious effects of PPAR - gamma agonists on B lymphomas .\n\nAnswer: PPAR - gamma\n\n\nQuestion:  A novel NF - kappa B complex containing p65 homodimers : implications for transcriptional control at the level of subunit dimerization .\n\nAnswer:\nAssistant:",
+      "target": "p65 homodimers",
+      "prompt_tokens": 224,
+      "target_tokens": 8
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_14385",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Q: In this task, you need to answer the given multiple-choice question on the physics. Classify your answers into 'a', 'b', 'c', 'd', and 'e'.\nProblem: a is twice as good a workman as b and together they complete a work in 12 days . in how many days a alone can do the work ? \nOptions: a ) 32 , b ) 33 , c ) 34 , d ) 35 , e ) 36\nA:\nAssistant:",
+      "target": "e",
+      "prompt_tokens": 134,
+      "target_tokens": 3
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_11791",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: lebanese officials on friday vowed to take action against villagers who lynched a murder suspect and hung him with a butcher 's hook in the village square in a shocking crime described as barbaric .\n\nWrite a brief summary in a sentence or less.\nAssistant:",
+      "target": "mob lynching of murder suspect shocks lebanon",
+      "prompt_tokens": 72,
+      "target_tokens": 15
+    },
+    {
+      "id": "science.craftchem_ner.617",
+      "source": "ai2-adapt-dev/tulu_v3.9_sciriff_10k",
+      "input": "User: You will be presented a sentence from biomedical research text. Extract all terms that correspond to chemical entities of biological interest (ChEBI).\nReturn your identified terms in a JSON array, formatted like this: [\"Entity1\", \"Entity2\", ...].\nIf no such entities are detected, respond by providing an empty JSON array [].\n\nBiomedical context:\nR1EScells[20]weremaintainedunderstandardcultureconditionsinthepresenceofLIF,asdescribedpreviously[21].\nAssistant:",
+      "target": "[]",
+      "prompt_tokens": 121,
+      "target_tokens": 3
+    },
+    {
+      "id": "personahub_ld7zpewuy1j8lljju1znqk7y",
+      "source": "ai2-adapt-dev/personahub_ifdata_manual_seed_v3_29980",
+      "input": "User: What is the most iconic Broadway musical to watch for inspiration? Choose from the following: ('Hamilton', 'The Phantom of the Opera', 'Cats') -- please include the exact phrase in your response.\nAssistant:",
+      "target": "The most iconic Broadway musical to watch for inspiration is \"Hamilton\".",
+      "prompt_tokens": 53,
+      "target_tokens": 16
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_58925",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Given the task definition, example input & output, solve the new input case.\nIn this task you are given a premise and two alternatives in Swahili. You must choose the alternative that is more plausibly the cause or effect of the situation described by the premise. The input format is \"premise\n(1)alternative_1(2)alternative_2\", the output should either be \"1\" or \"2\" based on your judgment.\nExample: Kifaa kilikuwa kimefungwa kwenye mfuko vibofu.\n(1)Kikuwa nyepesi kuvunjika.(2)Kilikuwa kidogo.\nOutput: 1\nThe first alternative makes more sense because you put object is bubble wrap if they are delicate.\n\nNew input case for you: Mtoto alichululiwa  na usingizi.\n(1)Baba alibadilisha nepi ya mtoto.(2)Baba taratibu alimtikisa mtoto.\nOutput:\nAssistant:",
+      "target": "2",
+      "prompt_tokens": 255,
+      "target_tokens": 2
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_20246",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Teacher:Given a set of four words, generate the category that the words belong to. Words are separated by commas. The possible categories are social gathering, accomodation, physical property, measurement unit, corporate, nutritional value, boats, police punishment, location (proximity), card games, outdoor sport activity, military rank, baby animals, weather, consumer product, animals, boxing terminology, food, chocolate food, bird, type of sandwich, date status, body part, ocean, employment activity, moral characteristic, elements, poker, computers, construction, guitar part, shady activities, physical activity, kitchenware, temperature, type of rigidity, emotional status, season, mode of transportation, window material, activity, emotional display, geographical property, fried food, store status, widespread, aesthetic characteristic, alcoholic drinks, secretary duty, direction, personal characteristic, and animal.\nTeacher: Now, understand the problem? Solve this instance: content, substance, file, thing\nStudent:\nAssistant:",
+      "target": "consumer product",
+      "prompt_tokens": 216,
+      "target_tokens": 3
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_58242",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: In this task, we have Spanish and Catalan tweets for automatic stance detection. The data has three labels Against, Favor, and Neutral which express the stance towards the target -independence of Catalonia. If the tweet criticizes the independence of Catalonia then it's 'Against' and if the tweets support it then it will be labeled as 'Favor' also if the tweets state information or news  rather than stating opinion then it will be characterized as 'Neutral'.\nOne example is below.\nQ: Tweet: Vull votar i votaré.  Hi ha quelcom que no em permet no fer-ho. Ara bé tinc un greu problema.  No sé a qui!!\nA: Favor\nRationale: The tweet asks for the right to vote for the independence of Catalonia and it supports the movement so it will be characterized as 'Favor'.\nQ: Tweet: 🔊 Gir inesperat: Després de les acusacions de passivitat als Mossos, el primer comandament de la policia catalana a testificar trasllada la responsabilitat al Govern. L'anàlisi de Judit Perpinyà. #JudiciTV3CatRàdio   https://t.co/K7mSI1P6Xh https://t.co/eU01KKOX6y\nA:\nAssistant:",
+      "target": "Neutral",
+      "prompt_tokens": 354,
+      "target_tokens": 3
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_27281",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Detailed Instructions: In this task, you're given the title of a five-sentence story, the first four sentences, and two options for the fifth sentence as a and b. Your job is to pick the sentence option that does not connect with the rest of the story, indicating your choice as 'a' or 'b'. If both sentences are plausible, pick the one that makes less sense.\nSee one example below:\nProblem: Title: Marcus Buys Khakis. Sentence 1: Marcus needed clothing for a business casual event. Sentence 2: All of his clothes were either too formal or too casual. Sentence 3: He decided to buy a pair of khakis. Sentence 4: The pair he bought fit him perfectly. Choices: a. Marcus was happy to have the right clothes for the event. b. He left in a huff for having his ideas mocked.\nSolution: b\nExplanation: Marcus is buying clothes for a business event and not presenting an idea.\n\nProblem: Title: Dental Work. Sentence 1: Gary needed extensive dental work. Sentence 2: Gary knew he could not afford the cost of the dental work. Sentence 3: After researching, Gary found a cheaper alternative. Sentence 4: Gary saw that dental work in Mexico was much cheaper that the US. Choices: a. Gary decided he would go to Mexico to get his dental work done. b. When it was time for tryouts, Kyle could hardly wait!\nSolution:\nAssistant:",
+      "target": "b",
+      "prompt_tokens": 348,
+      "target_tokens": 3
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_74303",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Given scientific fact as input, generate the question from this fact such that it can be answered from the input.\nOne example: Earth rotates on its axis once times in one day.\nSolution is here: How many times does Earth rotate on its axis in one day?\nExplanation: The given output correctly poses a question based on the scientific fact given.\n\nNow, solve this: Local winds type of winds blow over a limited area.\nSolution:\nAssistant:",
+      "target": "What type of winds blow over a limited area?",
+      "prompt_tokens": 101,
+      "target_tokens": 12
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_65063",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Q: Does the following sentence make sense?\n\"Members of the Power Rangers can provide electricity to the city.\"\nOptions:\n- yes\n- no\nChain-of-thought:\nAssistant:",
+      "target": "The Power Rangers is a show for children. The answer: no.",
+      "prompt_tokens": 44,
+      "target_tokens": 17
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_61083",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Given a set of four words, generate the category that the words belong to. Words are separated by commas. The possible categories are social gathering, accomodation, physical property, measurement unit, corporate, nutritional value, boats, police punishment, location (proximity), card games, outdoor sport activity, military rank, baby animals, weather, consumer product, animals, boxing terminology, food, chocolate food, bird, type of sandwich, date status, body part, ocean, employment activity, moral characteristic, elements, poker, computers, construction, guitar part, shady activities, physical activity, kitchenware, temperature, type of rigidity, emotional status, season, mode of transportation, window material, activity, emotional display, geographical property, fried food, store status, widespread, aesthetic characteristic, alcoholic drinks, secretary duty, direction, personal characteristic, and animal.\n\nEx Input:\nfirm, common, corporation, combined\n\nEx Output:\ncorporate\n\n\nEx Input:\npie, fudge, brownies, cream\n\nEx Output:\nchocolate food\n\n\nEx Input:\nopposite of up, downward, forward, down\n\nEx Output:\nAssistant:",
+      "target": "direction",
+      "prompt_tokens": 243,
+      "target_tokens": 2
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_72356",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Teacher:In this task, you need to answer the given multiple-choice question on the general math. Classify your answers into 'a', 'b', 'c', 'd', and 'e'.\nTeacher: Now, understand the problem? Solve this instance: Problem: according to the direction on a can of frozen orange juice concentrate is to be mixed with 3 cans of water to make orange juice . how many 20 - ounce cans of the concentrate are required to prepare 200 6 - ounce servings of orange juice ? \nOptions: a ) 15 , b ) 34 , c ) 50 , d ) 67 , e ) 100\nStudent:\nAssistant:",
+      "target": "a",
+      "prompt_tokens": 168,
+      "target_tokens": 3
+    }
+  ]
+}

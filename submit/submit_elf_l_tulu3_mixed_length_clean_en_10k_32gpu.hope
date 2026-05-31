@@ -1,0 +1,52 @@
+[resource]
+usergroup = hadoop-aipnlp
+queue = root.shxs_training_cluster.hadoop-aipnlp.h800_m17_public
+
+[base]
+type = ml-easy-job
+
+[others]
+afo.role.worker.task.attempt.max.retry = 50
+afo.app.env.YARN_CONTAINER_RUNTIME_DOCKER_SHM_SIZE_BYTES = 343597383680
+afo.xm.notice.receivers.account = luoyaxin03
+with_requirements = false
+afo.docker.rw.volume.paths = /ssd_pool/docker/user/hadoop-hdp-hldy:/mnt/dolphinfs/ssd_pool/docker/user/hadoop-hdp-hldy,/hdd_pool/docker/user/hadoop-hdp-hldy:/mnt/dolphinfs/hdd_pool/docker/user/hadoop-hdp-hldy
+afo.dolphinfs.otherusers = hadoop-aipnlp,hadoop-mlp-ckpt,hadoop-hldy-nlp,hadoop-basecv-hl,hadoop-imagen-hl,hadoop-hdp,hadoop-hdp-hldy,hadoop-nlp-hl02,hadoop-nlp-sh02,hadoop-mlm-hl,hadoop-hlsc02-3a
+afo.app.env.DFS_CLIENT_WRITE_ZONE = SH02
+afo.use.hdfs.fuse = true
+afo.use.hdfs.fuse.subpath = :/mnt/hdfs
+afo.use.hdfs.fuse.readonly = false
+afo.use.kms = true
+hope.resource.experiment = multi_modal_h800_tokenizer
+appName = [hope/ml-easy-job]luoyaxin03
+afo.app.name = [mlp/Hope]@luoyaxin03
+afo.engine.wait_for_job_finished = false
+source.system = kinet
+
+[roles]
+worker.script = bash /mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/submit/run_elf_l_hope.sh src/configs/training_configs/train_tulu3_mixed_length_clean_en_10k_ELF-L_hope_32gpu.yml
+workers = 4
+worker.memory = 2000000
+worker.vcore = 176
+worker.gcoresh800-141g = 8
+worker.ports = 1
+
+[user_args]
+afo.app.suspend.max = 2
+afo.app.suspend = false
+
+[am]
+afo.app.am.resource.mb = 4096
+
+[tensorboard]
+with.tensor.board = false
+
+[docker]
+afo.docker.image.name = registryonline-hulk.sankuai.com/custom_prod/com.sankuai.phxmlp.mtjupyter.singleuser/aipnlp_training_pytorch2.1.0_cuda12.2.1_python39_taming_moe_0830_v2_5b02255b
+afo.use.acceleration.submission = true
+
+[data]
+afo.data.prefetch = false
+
+[failover]
+afo.app.support.engine.failover = true

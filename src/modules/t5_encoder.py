@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Frozen T5 text embedder, wrapping `transformers.T5EncoderModel`."""
 
+import inspect
 from typing import Any, Optional
 
 import torch
@@ -90,21 +91,27 @@ class T5Encoder(nn.Module):
         position_bias = None
 
         for i, layer_module in enumerate(encoder.block):
-            layer_outputs = layer_module(
-                hidden_states,
-                additive_mask,
-                position_bias,
-                None,
-                None,
-                None,
-                layer_head_mask=head_mask[i],
-                cross_attn_layer_head_mask=None,
-                past_key_values=None,
-                use_cache=False,
-                output_attentions=False,
-                return_dict=True,
-                cache_position=cache_position,
-            )
+            layer_kwargs = {
+                "attention_mask": additive_mask,
+                "position_bias": position_bias,
+                "encoder_hidden_states": None,
+                "encoder_attention_mask": None,
+                "encoder_decoder_position_bias": None,
+                "layer_head_mask": head_mask[i],
+                "cross_attn_layer_head_mask": None,
+                "use_cache": False,
+                "output_attentions": False,
+                "return_dict": True,
+            }
+            params = inspect.signature(layer_module.forward).parameters
+            if "past_key_value" in params:
+                layer_kwargs["past_key_value"] = None
+            if "past_key_values" in params:
+                layer_kwargs["past_key_values"] = None
+            if "cache_position" in params:
+                layer_kwargs["cache_position"] = cache_position
+            layer_kwargs = {k: v for k, v in layer_kwargs.items() if k in params}
+            layer_outputs = layer_module(hidden_states, **layer_kwargs)
             hidden_states = layer_outputs[0]
             position_bias = layer_outputs[1]
 

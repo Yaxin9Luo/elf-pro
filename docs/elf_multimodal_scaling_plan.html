@@ -154,8 +154,8 @@
   <header>
     <h1>ELF 多模态训练规模化路线与数据调查</h1>
     <p class="subtitle">
-      记录当前 ELF 文本与多模态训练的瓶颈、上海侧可用数据资产、下一阶段可落地路线，以及更激进的 encoder / 模型规模化试验方向。
-      本文基于 2026-05-30 对代码库、HOPE 配置和上海 DolphinFS 存储的调查。
+      记录当前 ELF 文本与多模态训练的瓶颈、上海侧可用数据资产、SFT/overfit/ablation 诊断结果，以及下一阶段可落地路线。
+      本文更新于 2026-05-31，重点加入 full Tulu3 SFT、synthetic short QA、Tulu3 Short QA 10K 和 Tulu3 Mixed Length 10K 的诊断统计。
     </p>
   </header>
 
@@ -182,13 +182,25 @@
         <strong>SFT 后完整采样仍会崩</strong>
         <p class="muted">checkpoint_5402 的 clean decode 正常，低噪声修复正常，但从纯噪声 reverse 时 prompt/target 对齐失败。</p>
       </div>
+      <div class="card">
+        <span class="metric">0.992</span>
+        <strong>短 QA overfit 已打通高噪声采样</strong>
+        <p class="muted">128 条短答案从 t=0 纯噪声 reverse，uniform / logit-tail token acc 均为 0.9922。</p>
+      </div>
+      <div class="card">
+        <span class="metric">10K</span>
+        <strong>三组 10K 消融已完成</strong>
+        <p class="muted">Synthetic 10K 基本可训通；Tulu Short 和 Tulu Mixed 暴露真实分布、长度和采样轨迹问题。</p>
+      </div>
     </div>
 
     <div class="callout">
       <strong>核心判断：</strong>
       当前多模态效果弱不只是“缺一轮 SFT”。Tulu3 SFT 已经能让 decoder 从真实 target latent 几乎无损还原文本，也能在低噪声区域利用 prompt 做局部修复；
-      但从纯噪声开始的全局 reverse trajectory 仍会很快进入错误语义盆地。
-      因此下一步需要同时解决两件事：一是把 text pretrain 数据和 token budget scale 上去，二是针对 continuous flow matching 的高噪声 conditional generation 做专门诊断和训练改造。
+      但在真实 SFT 分布上，从纯噪声开始的全局 reverse trajectory 仍会很快进入错误语义盆地。
+      进一步的短答案 overfit 证明：当前 ELF 架构并非天然无法从高噪声按 prompt 回到 target；问题更可能出在真实 SFT 的数据复杂度、目标权重、答案边界/长度建模和高噪声 conditional vector field 学习不足。
+      10K ablation 进一步说明：纯合成短 QA 可以学到从纯噪声到答案的条件场，但迁移到真实 Tulu 分布后，低/中噪声 denoise 与多步 sampling 之间仍有明显 gap。
+      因此下一步不是直接开更大的多模态训练，而是先把 text-only flow 的高噪声 instruction generation、数据 curriculum、采样和目标权重稳定下来。
     </div>
   </section>
 
@@ -340,8 +352,246 @@
 
     <div class="callout">
       <strong>下一轮优先 sanity：</strong>
-      不急着直接扩大多模态训练。先做短答案、小数据 overfit，显式加入 EOS/长度控制，并把 t_start=0 到 0.3 的高噪声 conditional trajectory 作为核心指标。
-      只有当 text-only flow 能稳定从纯噪声按 prompt 生成 target，再继续接多模态 Stage 1/Stage 2 才更有意义。
+      不急着直接扩大多模态训练。短答案 overfit 已证明小规模可训通；下一轮应扩大到更丰富的短指令、多 token answer 和少量长回答，
+      显式保留 EOS/长度控制，并把 t_start=0 到 0.3 的高噪声 conditional trajectory 作为核心指标。
+      只有当 text-only flow 能在更接近真实 SFT 的分布上稳定从纯噪声按 prompt 生成 target，再继续接多模态 Stage 1/Stage 2 才更有意义。
+    </div>
+  </section>
+
+  <section>
+    <h2>短答案 Flow Overfit 实验结果（2026-05-30）</h2>
+    <p>
+      为了区分“Flow Matching 范式本身从高噪声无法生成”与“当前大规模 SFT 训练没有把高噪声条件场训好”，
+      在服务器本机 2 张 H100 上跑了一个 128 条英文短 QA 的 overfit 实验。该实验从
+      <code>checkpoint_5402</code> raw params 初始化，保持 <code>max_length=1024</code>，对 target 显式追加 EOS，
+      使用短 prompt / 短答案来最大限度排除长文本、图像和复杂 instruction 分布的干扰。
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>项目</th>
+          <th>设置 / 结果</th>
+          <th>备注</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>训练配置</td>
+          <td>128 条 synthetic short QA；global batch 8；200 epochs；3200 steps；AdamW；lr=5e-5；<code>decoder_prob=0.25</code>；<code>denoiser_p_mean=-2.0</code>。</td>
+          <td>脚本：<code>scripts/run_short_qa_overfit_local.sh</code>；配置：<code>src/configs/training_configs/train_short_qa_overfit_ELF-L_local_2gpu.yml</code>。</td>
+        </tr>
+        <tr>
+          <td>运行资源</td>
+          <td>2 张 H100，本机直接跑；训练速度约 2.2 steps/sec；显存约 19.6G / 卡。</td>
+          <td>中间 checkpoint 写 DolphinFS 太慢，因此正式 run 使用 <code>/tmp/elf-pro-cache</code> 作为 output_dir。</td>
+        </tr>
+        <tr>
+          <td>最终 checkpoint</td>
+          <td><code class="path">/tmp/elf-pro-cache/short_qa_overfit_ELF-L_t5_1024_from_sft5402/checkpoint_3200</code>，约 9.8G。</td>
+          <td>最终训练日志：loss=0.0492，l2=0.0114，ce=0.0817。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Probe</th>
+          <th>结果</th>
+          <th>判断</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>CleanNet decode sanity</td>
+          <td>128 条 mean token acc = 0.9922；唯一失败样本为 <code>Return the first word: red blue green</code>，expected <code>red</code>，generated <code>green</code>。</td>
+          <td>decoder head 可以从 target latent 还原几乎全部短答案，主要不是 decode 崩。</td>
+        </tr>
+        <tr>
+          <td>Controlled denoise sanity</td>
+          <td>正确 condition 下 t=0.9/0.7/0.5/0.3/0.1 的 token acc 均为 0.9922。zero / shuffled condition 明显下降，例如 t=0.5 时为 0.0651 / 0.0521，t=0.1 时为 0.0312 / 0.0404。</td>
+          <td>短答案 overfit 后模型确实使用 prompt condition，不是只靠 answer prior 或 decoder 记忆。</td>
+        </tr>
+        <tr>
+          <td>Sampling trajectory（16 条，多 t_start）</td>
+          <td>t_start=0.95/0.70/0.50/0.30/0.10/0.00，uniform 和 logit-tail 均达到 final token acc = 1.000。</td>
+          <td>在小数据短答案分布上，从中低噪声到纯噪声都能被 reverse 回正确答案。</td>
+        </tr>
+        <tr>
+          <td>Sampling trajectory（128 条，t_start=0）</td>
+          <td>uniform 32 steps：token acc = 0.9922，final_mse = 0.349；logit-tail 64 steps：token acc = 0.9922，final_mse = 0.350。</td>
+          <td>纯噪声起步并非必然失败。真实 SFT 的失败更像训练分布和目标设计问题，而不是算法范式直接不可行。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <strong>实验判断：</strong>
+      这个结果把问题边界向前推了一步：ELF-L + T5-small latent + 当前采样公式可以在小数据上学会高噪声 conditional generation。
+      因此主线不应立刻放弃 Flow Matching 范式，也不应把失败完全归因于模型参数量不够。
+      更合理的下一步是逐步增加 overfit 难度。2026-05-31 已经完成 Synthetic 10K、Tulu3 Short QA 10K 和 Tulu3 Mixed Length 10K 三组 ablation；
+      下面的统计显示，断点不在 clean decode，而在真实分布下的高噪声 conditional denoise 和多步 trajectory 稳定性。
+    </div>
+  </section>
+
+  <section>
+    <h2>10K Ablation 诊断结果（2026-05-31）</h2>
+    <p>
+      这轮没有启动新训练，只对已经完成的三个 10K checkpoint 做只读统计：Synthetic Short QA 10K、本地/HOPE 的 Tulu3 Short QA 10K、
+      以及 Tulu3 Mixed Length 10K。三者都从 full Tulu3 SFT 的 <code>checkpoint_5402</code> raw params 初始化，
+      保持 <code>max_length=1024</code>，显式 EOS，<code>denoiser_p_mean=-2.0</code>，<code>decoder_prob=0.25</code>。
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>实验</th>
+          <th>数据与训练</th>
+          <th>最终训练状态</th>
+          <th>诊断 checkpoint</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Synthetic Short QA 10K</td>
+          <td>10,000 条合成英文短 QA；prompt mean 12.93 tokens；target+EOS mean 2.19 tokens；<code>max_input_length=96</code>。</td>
+          <td>20 epochs，3120 steps，global batch 64；最终约 0.204B padded tokens / 0.003B non-pad target tokens。</td>
+          <td><code class="path">/tmp/elf-pro-cache/short_qa_10k_ELF-L_t5_1024_from_sft5402_run3/checkpoint_3120</code></td>
+        </tr>
+        <tr>
+          <td>Tulu3 Short QA 10K</td>
+          <td>从 full Tulu3 filtered 691,541 条中筛出 10,000 条英文单轮短答；target+EOS mean 6.01 tokens，max 17；top source 是 FLAN v2，占 8,553 条。</td>
+          <td>80 epochs，3120 steps，8GPU HOPE；最终 loss 0.1175，l2 0.1277，ce 0.0832，约 0.818B padded tokens / 0.117B non-pad target tokens。</td>
+          <td><code class="path">outputs/tulu3_short_answer_clean_en_10k_ELF-L_hope_8gpu_from_sft5402/checkpoint_3120</code></td>
+        </tr>
+        <tr>
+          <td>Tulu3 Mixed Length 10K</td>
+          <td>真实 Tulu3 英文单轮混合长度；target buckets 为 1-16:3000、17-64:5000、65-128:2000；target+EOS mean 37.79 tokens。</td>
+          <td>160 epochs，3040 steps，32GPU HOPE；最终 loss 0.2041，l2 0.2578，ce 0.0399，约 1.594B padded tokens / 0.321B non-pad target tokens。</td>
+          <td><code class="path">outputs/tulu3_mixed_length_clean_en_10k_ELF-L_hope_32gpu_from_sft5402/checkpoint_3040</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Clean Decode 与 Controlled Denoise</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>实验</th>
+          <th>Clean decode token acc</th>
+          <th>t=0.9 correct / zero / shuffled</th>
+          <th>t=0.5 correct / zero / shuffled</th>
+          <th>t=0.1 correct / zero / shuffled</th>
+          <th>判断</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Synthetic 128</td>
+          <td>0.9922</td>
+          <td>0.9922 / 0.5313 / 0.1003</td>
+          <td>0.9922 / 0.0651 / 0.0521</td>
+          <td>0.9922 / 0.0313 / 0.0404</td>
+          <td>最干净的 sanity：各噪声段都能依赖 prompt 回到 target。</td>
+        </tr>
+        <tr>
+          <td>Synthetic 10K</td>
+          <td>0.9922</td>
+          <td>0.9551 / 0.9688 / 0.7324</td>
+          <td>0.8477 / 0.1621 / 0.1042</td>
+          <td>0.7923 / 0.0059 / 0.0176</td>
+          <td>从 128 扩到 10K 后仍基本可训通，但高噪声下已经出现数学/标签答案漂移。</td>
+        </tr>
+        <tr>
+          <td>Tulu3 Short QA 10K</td>
+          <td>0.9974</td>
+          <td>0.6088 / 0.5875 / 0.5208</td>
+          <td>0.5847 / 0.2972 / 0.3260</td>
+          <td>0.5548 / 0.0096 / 0.0077</td>
+          <td>decoder 很好，但 denoiser 没有把真实短答分布拟合到 synthetic 水平；高噪声时 condition 有用，但 correct 本身只有约 0.55。</td>
+        </tr>
+        <tr>
+          <td>Tulu3 Mixed Length 10K</td>
+          <td>0.9962</td>
+          <td>0.8562 / 0.6632 / 0.8445</td>
+          <td>0.8435 / 0.4586 / 0.6954</td>
+          <td>0.6362 / 0.0023 / 0.0075</td>
+          <td>latent denoise 比 Short QA 更好，但长答案导致多步采样和 exact match 更容易累积偏差。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Sampling Trajectory 对比</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>实验</th>
+          <th>t_start=0 uniform</th>
+          <th>t_start=0 logit-tail</th>
+          <th>中途最高点</th>
+          <th>主要现象</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Full Tulu3 SFT</td>
+          <td>0.0049 token acc，0/5 exact</td>
+          <td>0.0000 token acc，0/5 exact</td>
+          <td>t=0.5 到 0.95 约 0.82-0.84 token acc，2/5 exact</td>
+          <td>从纯噪声失败，但从 target latent 的低/中噪声附近可以局部修复。</td>
+        </tr>
+        <tr>
+          <td>Synthetic 128</td>
+          <td>0.9922，127/128 exact</td>
+          <td>0.9922，127/128 exact</td>
+          <td>只测 t=0 全量，也通过。</td>
+          <td>证明当前 CFM 代码路径不是天然无法做高噪声条件生成。</td>
+        </tr>
+        <tr>
+          <td>Synthetic 10K</td>
+          <td>0.6875，10/16 exact</td>
+          <td>0.7812，12/16 exact</td>
+          <td>t=0.95 为 0.9688，15/16 exact；t=0.5 为 0.8438-0.9062。</td>
+          <td>基本能过，但从纯噪声还有 20-30% 失败，错误集中在数字、yes/no、短标签。</td>
+        </tr>
+        <tr>
+          <td>Tulu3 Short QA 10K</td>
+          <td>0.7987，10/16 exact</td>
+          <td>0.8250，11/16 exact</td>
+          <td>t=0.1 为 0.8406-0.8531；t=0.95 uniform 为 0.8024。</td>
+          <td>trajectory 小样本 exact 看起来不差，但 controlled denoise 只有约 0.55-0.61，说明 probe 子集和 token acc 容易掩盖真实任务难度。</td>
+        </tr>
+        <tr>
+          <td>Tulu3 Mixed Length 10K</td>
+          <td>0.6625，2/16 exact</td>
+          <td>0.5993，2/16 exact</td>
+          <td>t=0.5 uniform 达 0.9352，10/16 exact。</td>
+          <td>长答案局部修复很强，但从纯噪声全局生成时语义和风格会漂，exact match 随长度快速变差。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>样本级失败模式</h3>
+    <ul>
+      <li>Synthetic 10K 失败多是离散短答案漂移：例如 <code>39 minus 10</code> 期望 <code>29</code> 生成 <code>23</code>，<code>Is 1129 even?</code> 期望 <code>no</code> 生成 <code>yes</code>。</li>
+      <li>Tulu3 Short QA 失败常见于分类标签、数字、模板化 FLAN 任务：例如期望 <code>No</code> 生成 <code>.</code>，或期望 <code>Completion D</code> 生成 <code>100%letion D</code>。</li>
+      <li>Tulu3 Mixed 失败更像语义盆地偏移：长回答仍像同类任务的答案，但实体、标题、叙事开头或步骤细节不对；token acc 受长度累积影响明显。</li>
+      <li>所有真实 Tulu ablation 的 clean decode 都接近 1.0，因此“解码头读不出 target latent”不是主因。</li>
+    </ul>
+
+    <div class="callout">
+      <strong>这一轮 ablation 的核心结论：</strong>
+      当前建模方式能够在简单合成分布上学习从高噪声到 target 的 conditional flow；真实 Tulu 分布失败并不是单一的 max length 或 decoder 问题。
+      更接近根因的是：真实 prompt 过长、答案类型离散且信息密度高、FLAN/Natural Instructions 风格占比过大、部分 source 的模板任务与 open-ended 对话混杂，
+      导致高噪声区的 vector field 学到的是“合理答案流形”而不是“当前 prompt 的唯一 target latent”。
+      Mixed Length 的结果还说明，局部 denoise 和全局多步采样要分开看：低噪声修复强，不代表从纯噪声可以稳定抵达同一个语义目标。
+    </div>
+
+    <div class="callout warn">
+      <strong>对后续训练的约束：</strong>
+      后续所有 text-only SFT / 多模态 SFT 都应该把 <code>t_start=0</code> trajectory、zero/shuffled condition gap、短答案 exact、长答案语义相似度四类指标固定下来。
+      只看训练 loss、clean decode 或单步低噪声 denoise，会误判模型已经学会 instruction following。
     </div>
   </section>
 
@@ -417,15 +667,26 @@
 
   <section>
     <h2>推荐主路线</h2>
-    <h3>阶段 0：先把 text-only flow 的 instruction generation 打通</h3>
+    <h3>阶段 0：把诊断闭环固定下来</h3>
     <ul>
       <li>保留当前 T5-small encoder 和 ELF-L checkpoint，先不引入多模态变量。</li>
-      <li>基于本次 <code>checkpoint_5402</code> 的诊断，优先做短答案 overfit、EOS/长度建模和高噪声 trajectory sanity。</li>
-      <li>继续使用 CleanNet decode、Controlled denoise、Sampling trajectory 三类 probe 作为每轮训练后的固定报告。</li>
-      <li>当 text-only 从纯噪声能按 prompt 稳定生成 target，再接回多模态 Stage 1 / Stage 2。</li>
+      <li>每个 checkpoint 固定输出四类指标：clean decode、controlled denoise、sampling trajectory、zero/shuffled condition gap。</li>
+      <li>短答案 128 条和 Synthetic 10K 证明当前架构可在简单分布上从 t=0 高噪声按 prompt 生成 target。</li>
+      <li>Tulu Short / Mixed 说明真实分布下仍存在高噪声条件场和多步 trajectory gap，不能只看 loss 或 clean decode。</li>
+      <li>下一步先补更细的诊断统计：按 source、prompt length、target length、答案类型、模板任务/开放对话分别切分 probe 结果。</li>
+      <li>当 text-only 从纯噪声能在真实短答和混合长度子集上稳定生成 target，再接回多模态 Stage 1 / Stage 2。</li>
     </ul>
 
-    <h3>阶段 1：构建更强 text pretrain corpus</h3>
+    <h3>阶段 1：做真实分布的 recipe ablation</h3>
+    <ol>
+      <li>主数据先用 Tulu Short 10K / Mixed 10K，不再直接用 full Tulu3 做盲训。</li>
+      <li>优先试高噪声区加权：调整 timestep 分布、增加 t=0/0.1 附近的 denoise 监督，或加入 trajectory consistency 类辅助目标。</li>
+      <li>对比 <code>decoder_prob=0.25</code>、<code>0.5</code> 和更低 CE 比例，确认 CE 是帮助 decoder 还是挤占 denoiser 的高噪声学习。</li>
+      <li>把 FLAN/Natural Instructions、open-ended chat、math/label、拒答/安全类样本拆开训练小模型，确认哪类 source 最容易让 vector field 漂移。</li>
+      <li>采样侧对比 uniform/logit-tail、32/64/128 steps、ODE/二阶 solver；但只有当 controlled denoise 提升后，采样优化才可能成为主收益。</li>
+    </ol>
+
+    <h3>阶段 2：构建更强 text pretrain corpus</h3>
     <ol>
       <li>从 `38b_solar` 和 `experiment_1997` 各抽样 10k 到 100k 条，做语言、长度、重复率、乱码率、URL/HTML 比例、代码比例、问答格式比例统计。</li>
       <li>先构建一个 50B 到 100B token positions 的 text pretrain 子集，不直接吃完整 12T。</li>
@@ -433,9 +694,10 @@
       <li>训练一个 stronger text checkpoint，保留 OWT checkpoint 作为初始化，对比从零训练和继续训练两种方式。</li>
     </ol>
 
-    <h3>阶段 2：Text SFT 和多模态训练</h3>
+    <h3>阶段 3：Text SFT 和多模态训练</h3>
     <ol>
-      <li>用更强 text checkpoint 初始化 Tulu3 SFT，继续使用 CE/L2 各半的 decoder_prob=0.5。</li>
+      <li>用 recipe ablation 选出的设置重新训练 text SFT，再决定是否扩大到 full Tulu3。</li>
+      <li>用更强 text checkpoint 初始化 Tulu3 SFT，<code>decoder_prob</code> 不先拍脑袋固定为 0.5，而是以 high-noise trajectory 指标选型。</li>
       <li>在 text-only SFT 后再进入多模态 Stage 1 projector warmup。</li>
       <li>Stage 2 多模态 instruction 从 text-SFT checkpoint 初始化，并加载 Stage 1 projector。</li>
       <li>多模态评估必须加入 shuffled-image control，避免只看 caption-like 输出误判模型真的用图。</li>
@@ -465,9 +727,37 @@
         <tr>
           <td>A2. 短答案 flow overfit</td>
           <td>判断当前架构能否在很小数据上从纯噪声按 prompt 生成 target。</td>
-          <td>100 到 1k 条短英文 QA；max length 128/256；显式 EOS；提高高噪声监督权重。</td>
-          <td>t_start=0 的 trajectory final token acc 明显上升，完整采样稳定输出 target。</td>
-          <td>如果小数据都过拟合不了，说明训练目标或采样公式需要更底层改造。</td>
+          <td>已完成：128 条短英文 QA；max length 1024；显式 EOS；2 H100；3200 steps。</td>
+          <td>t_start=0 全 128 条 token acc = 0.9922；说明小数据高噪声条件生成可以被训通。</td>
+          <td>只证明小分布可行，不能直接外推到 Tulu3 和多模态长回答。</td>
+        </tr>
+        <tr>
+          <td>A3. Synthetic 10K short QA</td>
+          <td>验证从 128 条扩到 10K 条合成短 QA 后是否仍能从纯噪声生成。</td>
+          <td>已完成：10K synthetic；20 epochs；3120 steps；target+EOS mean 2.19 tokens。</td>
+          <td>t_start=0 random16 uniform/logit-tail 为 0.6875/0.7812，10/16 和 12/16 exact；不是完美，但已经远强于 full Tulu SFT。</td>
+          <td>短数字/yes-no/标签类答案仍会漂移，说明合成分布扩大后也开始出现离散答案不稳定。</td>
+        </tr>
+        <tr>
+          <td>A4. Tulu Short QA 10K</td>
+          <td>把 synthetic short QA 迁移到真实 Tulu 短答分布。</td>
+          <td>已完成：10K 英文单轮短答；80 epochs；8GPU HOPE；FLAN v2 占比 85.5%。</td>
+          <td>clean decode 0.9974；t=0.1 correct/zero/shuffled 为 0.5548/0.0096/0.0077；trajectory random16 t=0 约 0.80-0.83。</td>
+          <td>controlled denoise 明显弱于 synthetic，说明真实短答不是“更短就更容易”；模板化任务、离散标签和长 prompt 是主要风险。</td>
+        </tr>
+        <tr>
+          <td>A5. Tulu Mixed Length 10K</td>
+          <td>观察真实分布中长度上升后的局部 denoise 和全局 sampling 差异。</td>
+          <td>已完成：1-16/17-64/65-128 三档答案；160 epochs；32GPU HOPE。</td>
+          <td>controlled denoise t=0.5 correct 为 0.8435，优于 Short；但 t_start=0 trajectory exact 只有 2/16。</td>
+          <td>长答案语义漂移和 token error accumulation 明显，不能只用 token exact 判断是否“完全不会”。需要加语义评估和分段诊断。</td>
+        </tr>
+        <tr>
+          <td>A6. Recipe ablation</td>
+          <td>定位真实 Tulu 失败到底来自 timestep、loss 配比、数据 source 还是采样器。</td>
+          <td>建议先在 Tulu Short/Mixed 10K 上改 <code>decoder_prob</code>、timestep 分布、source mix、sampler steps；每次训练后跑同一套 probe。</td>
+          <td>controlled denoise t=0.1/t=0.3 correct 提升，同时 zero/shuffled 仍低；t_start=0 exact 和语义正确率同步提高。</td>
+          <td>如果只调 sampler 而 denoise 不变，大概率只能修表面；如果只提高 CE，可能更会 decode 但不更会从噪声走到 target。</td>
         </tr>
         <tr>
           <td>B. 38b_solar 子集继续预训练</td>
@@ -552,12 +842,14 @@
     <ol>
       <li>已完成：32GPU Tulu3 SFT、CleanNet decode sanity、Controlled denoise sanity、Sampling trajectory sanity。</li>
       <li>新增固定实验记录：每次训练后把 probe 脚本、prompt、结果 JSON/JSONL 和分析写入 <code>eval_probes/</code> 与本 HTML。</li>
-      <li>下一步先做短答案 flow overfit，验证 t_start=0 是否能被训练打通。</li>
-      <li>加入 EOS / target length 控制实验，确认长尾乱码和过长输出是否下降。</li>
-      <li>写数据审计脚本，对 `38b_solar` 和 `experiment_1997` 抽样输出 HTML/CSV 报告。</li>
+      <li>已完成：128 条短答案 flow overfit，t_start=0 全量 probe token acc = 0.9922。</li>
+      <li>已完成：Synthetic Short QA 10K、Tulu3 Short QA 10K、Tulu3 Mixed Length 10K 三组 ablation 训练和快速 probe。</li>
+      <li>下一步先做诊断增强：按 source、长度、答案类型、是否 FLAN 模板任务拆分 controlled denoise 和 trajectory 指标。</li>
+      <li>继续做 EOS / target length 控制和语义评估，确认长尾乱码、过长输出和语义漂移是否下降。</li>
+      <li>写数据审计脚本，对 <code>38b_solar</code> 和 <code>experiment_1997</code> 抽样输出 HTML/CSV 报告。</li>
       <li>实现 JSONL `{"input": ...}` 到 T5 Arrow 的离线转换工具，支持分片、去重、长度过滤和 max_length=1024 packing。</li>
-      <li>在 text-only flow sanity 通过后，扩大到 50B 到 100B token positions 的 text pretrain，产出 stronger text checkpoint。</li>
-      <li>重新跑 Tulu3 SFT，然后接多模态 Stage 1 / Stage 2。</li>
+      <li>在 Tulu Short/Mixed 的 high-noise 指标被 recipe 修起来后，扩大到 50B 到 100B token positions 的 text pretrain，产出 stronger text checkpoint。</li>
+      <li>重新跑 Tulu3 SFT，再接多模态 Stage 1 / Stage 2。</li>
       <li>并行开一个小规模 encoder pilot，但不要阻塞当前 T5-small 主线。</li>
     </ol>
   </section>
@@ -568,7 +860,13 @@
         ↓
 已完成：clean decode / controlled denoise / trajectory probe
         ↓
-短答案 flow overfit + EOS / length control
+已完成：128 条短答案 flow overfit，t_start=0 token acc 0.9922
+        ↓
+已完成：Synthetic 10K / Tulu Short 10K / Tulu Mixed 10K ablation
+        ↓
+当前下一步：source / length / answer-type 诊断统计
+        ↓
+Recipe ablation：timestep 分布、decoder_prob、source mix、sampler
         ↓
 数据审计：38b_solar / experiment_1997
         ↓
@@ -595,6 +893,14 @@ Tulu3 SFT 2 到 4 epochs
       <li>当前 32GPU SFT submit：<code class="path">submit/submit_elf_l_tulu3_sft_32gpu.hope</code></li>
       <li>3D mask 修复文件：<code class="path">src/modules/t5_encoder.py</code></li>
       <li>SFT 诊断结果：<code class="path">eval_probes/</code></li>
+      <li>短答案 overfit checkpoint：<code class="path">/tmp/elf-pro-cache/short_qa_overfit_ELF-L_t5_1024_from_sft5402/checkpoint_3200</code></li>
+      <li>短答案 overfit probe 结果：<code class="path">/tmp/elf-pro-cache/short_qa_overfit_ELF-L_t5_1024_from_sft5402/probes/</code></li>
+      <li>Synthetic 10K checkpoint：<code class="path">/tmp/elf-pro-cache/short_qa_10k_ELF-L_t5_1024_from_sft5402_run3/checkpoint_3120</code></li>
+      <li>Synthetic 10K probe：<code class="path">/tmp/elf-pro-cache/short_qa_10k_ELF-L_t5_1024_from_sft5402_run3/probes_run3_quick/</code></li>
+      <li>Tulu3 Short QA 10K checkpoint：<code class="path">outputs/tulu3_short_answer_clean_en_10k_ELF-L_hope_8gpu_from_sft5402/checkpoint_3120</code></li>
+      <li>Tulu3 Short QA 10K probe：<code class="path">outputs/tulu3_short_answer_clean_en_10k_ELF-L_hope_8gpu_from_sft5402/probes_quick/</code></li>
+      <li>Tulu3 Mixed Length 10K checkpoint：<code class="path">outputs/tulu3_mixed_length_clean_en_10k_ELF-L_hope_32gpu_from_sft5402/checkpoint_3040</code></li>
+      <li>Tulu3 Mixed Length 10K probe：<code class="path">outputs/tulu3_mixed_length_clean_en_10k_ELF-L_hope_32gpu_from_sft5402/probes_quick/</code></li>
     </ul>
   </section>
 </main>

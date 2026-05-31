@@ -1,0 +1,93 @@
+# Tiny text-only short-QA overfit probe for diagnosing high-noise conditional flow.
+# Intended to run directly on the Shanghai dev server with 2x H100 80G.
+#
+# The launcher overrides data_path / tokenizer paths / output_dir so this config
+# stays readable while remaining usable from the server checkout.
+
+data_modality: text
+train_stage: text
+data_path: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/data/short_qa_overfit/t5_1024_eos"
+eval_data_path: null
+max_length: 1024
+max_input_length: 96
+pad_token: "pad"
+
+encoder_model_name: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/models/t5-small"
+tokenizer_name: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/models/t5-small"
+latent_mean: 0.0
+latent_std: 0.2
+
+model: ELF-L
+bottleneck_dim: 128
+num_time_tokens: 4
+num_self_cond_cfg_tokens: 4
+num_model_mode_tokens: 4
+attn_dropout: 0.0
+proj_dropout: 0.0
+
+# Start from the completed Tulu3 SFT checkpoint. Raw params were better than EMA
+# in the previous diagnostics, so this overfit starts from params.
+init_checkpoint: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/outputs/elf_l-tulu3-sft-t5-1024-hope-32gpu/checkpoint_5402"
+init_checkpoint_use_ema: false
+init_checkpoint_strict: false
+
+# Bias denoiser training toward the high-noise region; the point of this run is
+# to see whether t_start=0 can be made to overfit on a tiny conditional dataset.
+denoiser_p_mean: -2.0
+denoiser_p_std: 1.0
+denoiser_noise_scale: 2.0
+t_eps: 0.05
+time_schedule: "logit_normal"
+
+# Keep some CE pressure, but spend most examples on the flow/L2 branch because
+# clean decode already passed in the previous SFT diagnostics.
+decoder_prob: 0.25
+decoder_noise_scale: 5.0
+decoder_p_mean: 0.8
+decoder_p_std: 0.8
+
+label_drop_prob: 0.0
+self_cond_prob: 0.5
+self_cond_cfg_min: 0.5
+self_cond_cfg_max: 5.0
+
+epochs: 200
+global_batch_size: 8
+grad_accum_steps: 1
+lr: 0.00005
+min_lr: 0.0
+lr_schedule: "constant"
+weight_decay: 0.0
+warmup_epochs: null
+warmup_steps: 25
+optimizer: adamw
+adam_b1: 0.9
+adam_b2: 0.95
+
+use_bf16: true
+use_compile: false
+gradient_checkpointing: true
+num_workers: 0
+
+ema_decay1: 0.9999
+
+sampling_configs_path: null
+num_samples: 0
+online_eval: false
+eval_ppl_batch_size: 16
+
+log_freq: 10
+save_freq: 50
+eval_freq: 0
+max_checkpoints_to_keep: 5
+
+output_dir: "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/outputs/short_qa_overfit_ELF-L_t5_1024_from_sft5402"
+hf_repo_id: null
+resume: null
+
+use_wandb: false
+wandb_project: elf-pro
+wandb_entity: null
+wandb_run_name: short_qa_overfit_ELF-L_t5_1024_from_sft5402
+
+seed: 42

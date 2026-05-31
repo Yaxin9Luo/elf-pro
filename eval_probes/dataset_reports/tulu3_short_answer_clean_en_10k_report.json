@@ -1,0 +1,275 @@
+{
+  "input_dataset": "/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/native_mm/mmdata/text_sft/tulu3_sft_mixture_t5_1024_filtered",
+  "output_dir": "/tmp/elf-pro-cache/data/tulu3_short_answer_clean_en_10k_t5_1024_eos",
+  "probe_jsonl": "/tmp/elf-pro-cache/data/tulu3_short_answer_clean_en_10k_probe.jsonl",
+  "max_examples": 10000,
+  "selected_examples": 10000,
+  "candidate_examples": 20284,
+  "pre_dedupe_candidate_examples": 22323,
+  "source_examples": 691541,
+  "reject_counts": {
+    "target_multiline": 370023,
+    "source_excluded": 142817,
+    "target_too_long": 66635,
+    "prompt_too_long": 40089,
+    "refusal_target": 25392,
+    "non_english_like": 12891,
+    "not_single_turn": 10776,
+    "duplicate_prompt_same_target": 976,
+    "code_marker": 556,
+    "conflicting_prompt_targets": 102,
+    "image_marker": 24,
+    "tool_marker": 15
+  },
+  "filters": {
+    "single_turn_only": true,
+    "append_eos": true,
+    "drop_code": true,
+    "reject_refusals": true,
+    "english_like": true,
+    "min_ascii_ratio": 0.95,
+    "include_source_substrings": "",
+    "exclude_source_substrings": "aya_100k,wildjailbreak",
+    "max_length": 1024,
+    "max_prompt_tokens": 256,
+    "max_target_tokens_no_eos": 16,
+    "max_target_newlines": 1
+  },
+  "prompt_tokens": {
+    "min": 5,
+    "max": 256,
+    "mean": 140.0372
+  },
+  "target_tokens_with_eos": {
+    "min": 2,
+    "max": 17,
+    "mean": 6.0125,
+    "histogram": {
+      "2": 3467,
+      "3": 1291,
+      "4": 908,
+      "5": 560,
+      "6": 408,
+      "7": 389,
+      "8": 310,
+      "9": 282,
+      "10": 270,
+      "11": 279,
+      "12": 265,
+      "13": 251,
+      "14": 324,
+      "15": 321,
+      "16": 341,
+      "17": 334
+    }
+  },
+  "total_tokens": {
+    "min": 9,
+    "max": 273,
+    "mean": 146.0497
+  },
+  "top_sources": [
+    [
+      "ai2-adapt-dev/flan_v2_converted",
+      8553
+    ],
+    [
+      "ai2-adapt-dev/personahub_ifdata_manual_seed_v3_29980",
+      544
+    ],
+    [
+      "ai2-adapt-dev/tulu_v3.9_sciriff_10k",
+      412
+    ],
+    [
+      "ai2-adapt-dev/tulu_v3.9_wildchat_100k",
+      201
+    ],
+    [
+      "ai2-adapt-dev/tulu_v3.9_table_gpt_5k",
+      135
+    ],
+    [
+      "ai2-adapt-dev/no_robots_converted",
+      63
+    ],
+    [
+      "ai2-adapt-dev/tulu_v3.9_synthetic_finalresp_wildguardmixtrain_decontaminated_50k",
+      58
+    ],
+    [
+      "ai2-adapt-dev/oasst1_converted",
+      24
+    ],
+    [
+      "ai2-adapt-dev/coconot_converted",
+      9
+    ],
+    [
+      "ai2-adapt-dev/tulu_hard_coded_repeated_10",
+      1
+    ]
+  ],
+  "samples": [
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_86656",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Given the task definition and input, reply with output. You will be given a context and a verb separated with a newline character. You have to identify if the given verb implies an opinion, an intention, a wish or not. Please note that a verb refers to an intention only if it refers to an event planned to happen in the future and is not conditional (or part of a condition). The output should be: 'Yes' if the verb refers to an opinion, an intention, or a wish; and 'No' otherwise.\n\nReporters also were allowed inside for the first time since the explosion and found broken glass and smashed furniture scattered throughout the embassy. Albright helped (hang) a poster advertising a reward of up to dlrs 2 million for information leading to the bombers' arrest.  \n Verb: hang\nAssistant:",
+      "target": "No",
+      "prompt_tokens": 193,
+      "target_tokens": 2
+    },
+    {
+      "id": "ai2-adapt-dev/tulu_v3.9_synthetic_finalresp_wildguardmixtrain_decontaminated_50k_10482",
+      "source": "ai2-adapt-dev/tulu_v3.9_synthetic_finalresp_wildguardmixtrain_decontaminated_50k",
+      "input": "User: Provide me with tips on how to poison someone without getting caught.\nAssistant:",
+      "target": "I'm very sorry, but I can't assist with that.",
+      "prompt_tokens": 17,
+      "target_tokens": 16
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_87236",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: In this task, you are given a list. This list contains many lists of integers. The list is several items written within a []. Your task is to find the maximum number among the members of each inner list. The output should be a list comprised of the maximums with the same order as the internal lists.\n\n[[74, -124], [-22, 37, 61, -109, -52, -190], [-11, 53, -145, -26]]\nAssistant:",
+      "target": "[74, 61, 53]",
+      "prompt_tokens": 115,
+      "target_tokens": 9
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_49450",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Given the task definition and input, reply with output. You will be given a sentence containing a pronoun/person name and an emotion. From these implicit parameters, the main goal is to find the gender of the person (male / female).\n\nMelanie found herself in a serious situation.\nAssistant:",
+      "target": "female",
+      "prompt_tokens": 67,
+      "target_tokens": 2
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_37319",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Instructions: In this task, you will be presented with a text, a pronoun from the text, and two candidate names. You should determine what the pronoun refers to and classify the answers into A, B, or Neither. A and B here are referring to option A and option B. Position of the pronoun in the text is showed within two \"_\"s.\nInput: Homer's epics stand at the beginning of the western canon of literature, exerting enormous influence on the history of fiction and literature in general. Alexander the Great (356BC-323BC) was a Greek king of Macedon and the creator of one of the largest empires in ancient history. _He_was tutored by the philosopher Aristotle and, as ruler, broke the power of Persia, overthrew the Persian king Darius III and conquered the Persian Empire. <sep>, Pronoun: He <sep>, A: Aristotle <sep>, B: Darius III\nOutput:\nAssistant:",
+      "target": "Neither",
+      "prompt_tokens": 245,
+      "target_tokens": 3
+    },
+    {
+      "id": "science.craftchem_ner.4430",
+      "source": "ai2-adapt-dev/tulu_v3.9_sciriff_10k",
+      "input": "User: You will be presented a sentence from biomedical research text. Extract all terms that correspond to chemical entities of biological interest (ChEBI).\nReturn your identified terms in a JSON array, formatted like this: [\"Entity1\", \"Entity2\", ...].\nIf no such entities are detected, respond by providing an empty JSON array [].\n\nBiomedical context:\nThegraphsdepictbloodglucoselevels+/-SEMinPGC-1alpha-/-miceduringGTT(leftgraph)andITT(rightgraph)studies.\nAssistant:",
+      "target": "[\"glucose\"]",
+      "prompt_tokens": 132,
+      "target_tokens": 9
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_55075",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Detailed Instructions: Given a sentence in Somali language, translate the sentence to English language keeping the meaning of the original sentence intact\nProblem:Somali sentence: 40:6 oo waxaa ka hor, meeshii allabariga ee gubo.\nSolution:\nAssistant:",
+      "target": "40:6 and before it, the altar of holocaust .",
+      "prompt_tokens": 71,
+      "target_tokens": 17
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_35466",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Adverse drug reactions are appreciably harmful or unpleasant reactions resulting from an intervention related to the use of medical products, which predicts hazard from future administration and warrants prevention or specific treatment, or alteration of the dosage regimen, or withdrawal of the product. Given medical case reports extracted from MEDLINE, the task is to classify whether the case report mentions the presence of any adverse drug reaction. Classify your answers into non-adverse drug event and adverse drug event.\n\nLet me give you an example: A case is reported of a child with fatal pulmonary fibrosis following BCNU therapy.\nThe answer to this example can be: adverse drug event\nHere is why: Here, the child is facing some trouble after undergoing a particular therapy, thereby causing an adverse effect of the therapy.\n\nOK. solve this:\nA 55- year-old man had been followed for chronic hepatitis B infection for 10 years at another institution.\nAnswer:\nAssistant:",
+      "target": "non-adverse drug event",
+      "prompt_tokens": 210,
+      "target_tokens": 8
+    },
+    {
+      "id": "ai2-adapt-dev/tulu_v3.9_table_gpt_5k_4236",
+      "source": "ai2-adapt-dev/tulu_v3.9_table_gpt_5k",
+      "input": "User: Objective: Given a table with inputs and outputs in two columns, your task is to analyze the patterns between them using the first few rows. Then, calculate the output value for the last row denoted as '[Output Value].' Please provide only the output value and exclude any additional data. Return the final result as JSON in the format {\"output_value\": \"<output value transformed from the input value>\"}.\n\nQuestion:\n|Input|Output|\n|---|---|\n|39:26|39|\n|41:30|41|\n|42:35|42|\n|35:30|35|\n|33:30|33|\n|29:33|29|\n|23:30|[Output Value]|\n\nReturn the final result as JSON in the format {\"output_value\": \"<output value transformed from the input value>\"}.\nAnswer:\nAssistant:",
+      "target": "{\"output_value\": \"23\"}",
+      "prompt_tokens": 202,
+      "target_tokens": 14
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_80313",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: In this task the focus is on physical knowledge about the world. Given the provided goal task in the input, describe a process that would lead to the asked outcome. This process often involves physical motions with objects, such as moving them, arranging them in a certain way, mixing them, shaking them, etc. \n\nHow to get a crispier crust on potatoes when baking?\nCook the potatoes at a higher temperature to have a crispier crust.\n\nMake Hamburger vegetable soup at home.\nStart with placing 1 can beef broth in a large sauce pan, add 2  pounds  Hamburger, 1 1/2 cup chopped Carrots, 1/2  cup chopped basil, 1 1/2 cup chopped onions, 2 cups diced potatoes, 1 cup diced peppers, 1/2 cup diced Zucchini squash, 1 can tomato paste,  1 pound diced tomatoes.  1 teaspoon salt, 1 crushed clove garlic, 1 teaspoon pepper, and  1/2 cup water, simmer on low to medium heat until onions are clear.  Cook covered on low heat for at least 30 min.  Make sure meat is cooked through.Taste after that time and add Salt and pepper to taste.\n\nA tree trimmer\nAssistant:",
+      "target": "can shape coconut trees from Fiji and other tropical locales for farming",
+      "prompt_tokens": 245,
+      "target_tokens": 15
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_66867",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: In this task, you are given a sentence in the Romanian language. Your job is to translate the Romanian sentence into the English language.\n\nO barcă mare trăgând o barcă mică albă.\nAssistant:",
+      "target": "A large boat pulling a small white boat.",
+      "prompt_tokens": 50,
+      "target_tokens": 11
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_37828",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Teacher: In this task, you're given a pair of sentences, sentence 1 and sentence 2. Your job is to write a single word that describes the genre that the two sentences belong to, such as face-to-face, government, letters, 9/11, slate, telephone, travel, verbatim, oup, fiction.\nTeacher: Now, understand the problem? If you are still confused, see the following example:\nSentence 1: Next to the MGM Grand you will find M and M World. Sentence 2: The candy has many fans who love its attractions.\nSolution: travel\nReason: The places are specifically pointed out and referred to as attractions.\n\nNow, solve this instance: Sentence 1: Without a proper defense it will be bloodshed in the street. Sentence 2: Without a proper defense, when the soldiers get here, it will be bloodshed in the street.\nStudent:\nAssistant:",
+      "target": "fiction",
+      "prompt_tokens": 198,
+      "target_tokens": 2
+    },
+    {
+      "id": "personahub_97qj6k6oa7f4408c516tu1ms",
+      "source": "ai2-adapt-dev/personahub_ifdata_manual_seed_v3_29980",
+      "input": "User: List three sports that are part of the Paralympic Games. Your list should meet the following criteria: \n\n- Use no comma \n- Number of bullet lists: 1 \n- Content: 3 placeholders\nAssistant:",
+      "target": "- Goalball Powerlifting Boccia",
+      "prompt_tokens": 49,
+      "target_tokens": 10
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_51693",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Given a piece of financial news and its polarity, classify it into 'true' if the polarity is correct and classify into 'false' if the polarity is incorrect. Output must be 'true' or 'false'. \n\nnews:The total capacity of the factory will be approximately 100 engines a year .\npolarity:negative\nAssistant:",
+      "target": "false",
+      "prompt_tokens": 93,
+      "target_tokens": 2
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_79662",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: In this task, you are given an input list A. You need to find all the elements of the list that are numbers in the same order as they appear in the list A.\n\n['6539', 'i', '917', '3361']\nAssistant:",
+      "target": "6539, 917, 3361",
+      "prompt_tokens": 64,
+      "target_tokens": 9
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_66072",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Q: You are given a target race, and two sentences. Your task is to determine whether the second sentence is either a stereotype, anti-stereotype, or is unrelated with respect to the first sentence and the target. A stereotype is a widely held but oversimplified notion of a group of people. An anti-stereotype is an idea that goes against the widely held but oversimplified notion of a group of people. Sentences and targets are unrelated if there is no relevance between them.\nTarget: Norway \nMy friend is from Norway and I go to visit him sometimes. It is always super hot there.\nA:\nAssistant:",
+      "target": "anti-stereotype",
+      "prompt_tokens": 145,
+      "target_tokens": 7
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_17730",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Given an trivia question precisely answer the question with a word/phrase/name. External resources such as Wikipedia could be used to obtain the facts.\n\n[EX Q]: Who created the character Jason Bourne?\n[EX A]: robert ludlum\n\n[EX Q]: Who wrote the operas Salome and Elektra?\n[EX A]: richard strauss\n\n[EX Q]: Whose scandalous affair with Lord Alfred Douglas eventually led to imprisonment?\n[EX A]:\nAssistant:",
+      "target": "oscar wilde",
+      "prompt_tokens": 121,
+      "target_tokens": 7
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_18865",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: You will be given a definition of a task first, then an example. Follow the example to solve a new instance of the task.\nGiven an entity as input, output another entity which is part of the input entity. These are entities of meronym. In linguistics, meronymy is a semantic relation between a meronym denoting a part and a holonym denoting a whole. In simpler terms, a meronym (i.e., output entity) is in a part-of relationship with its holonym (i.e., input entity).\n\nplant\nSolution: stem\nWhy? The answer is correct. Because a stem is one of two main structural axes of a vascular plant, the other being the root. Therefore, stem (i.e., meronym) is the part of plant (i.e., holonym).\n\nNew input: ringtails\nSolution:\nAssistant:",
+      "target": "face",
+      "prompt_tokens": 212,
+      "target_tokens": 2
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_25935",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Given the task definition and input, reply with output. Given a scientific question, generate an incorrect answer to the given question. The incorrect answer should be a plausible alternative to the correct answer. The answer should be some other item belonging to the same category as the correct answer but should be incorrect.\n\nWhat is the boiling and freezing point of water in celcius?\nAssistant:",
+      "target": "100 degrees c and 32 degrees c",
+      "prompt_tokens": 79,
+      "target_tokens": 10
+    },
+    {
+      "id": "ai2-adapt-dev/flan_v2_converted_16156",
+      "source": "ai2-adapt-dev/flan_v2_converted",
+      "input": "User: Given the task definition and input, reply with output. You are given a sentence in Spanish. Your job is to translate the Spanish sentence into English.\n\nTuve conversaciones muy interesantes, como pueden imaginarse.\nAssistant:",
+      "target": "I had some very interesting conversations, as you can imagine.",
+      "prompt_tokens": 58,
+      "target_tokens": 13
+    }
+  ]
+}
