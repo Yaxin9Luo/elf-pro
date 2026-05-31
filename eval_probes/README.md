@@ -21,6 +21,19 @@ used for the text-only instruction-following diagnostics.
   `scripts/analyze_cfm_ablation_diagnostics.py`.
 - `sft_eval_harness_config.json`: fixed experiment and A/B/C gate
   configuration for the CFM SFT eval harness.
+- `run_ar_instruction_baseline.py`: task-level autoregressive LM baseline for
+  the same prompt/target probe JSONL files. It reports generation exact/prefix
+  match, target containment, token F1, and target continuation NLL by the same
+  A/B/C gates.
+
+Example AR baseline:
+
+```bash
+python3 eval_probes/run_ar_instruction_baseline.py \
+  --model gpt2-large \
+  --prompts eval_probes/probe_inputs/tulu3_short_answer_clean_en_10k_probe_valid_random256_seed12345.jsonl \
+  --batch_size 4
+```
 
 The corresponding analysis summary is in
 `docs/elf_multimodal_scaling_plan.html`.
