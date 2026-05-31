@@ -596,6 +596,100 @@
   </section>
 
   <section>
+    <h2>PMean=-3 Decoder Probability Sweep（2026-05-31）</h2>
+    <p>
+      在第一轮 10K ablation 后，进一步固定高噪声 denoiser 配置
+      <code>denoiser_p_mean=-3.0</code>，只扫描 decoder CE 分支概率。
+      <code>decoder_prob=0.25</code> 使用上一轮 <code>pmean=-3</code> checkpoint 作为 anchor；
+      新增训练 <code>decoder_prob=0.35</code> 和 <code>decoder_prob=0.50</code> 两个 8GPU HOPE run。
+      三个 run 都从 full Tulu3 SFT <code>checkpoint_5402</code> raw params 初始化，训练到
+      <code>checkpoint_3120</code>，再用同一套 Tulu3 Short QA 10K probe 评估。
+    </p>
+    <p>
+      固定报告入口：
+      <code class="path">eval_probes/diagnostics_tulu_short_pmean_m3_dp_sweep/sft_eval_harness_report.md</code>；
+      对应配置为
+      <code class="path">eval_probes/sft_eval_harness_config_tulu_short_pmean_m3_dp_sweep.json</code>。
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>实验</th>
+          <th>clean</th>
+          <th>t0.1 correct</th>
+          <th>t0.1 zero / shuffled</th>
+          <th>t0.3 correct</th>
+          <th>t0.5 correct</th>
+          <th>t_start=0 uniform</th>
+          <th>t_start=0 logit-tail</th>
+          <th>判断</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>baseline</td>
+          <td>0.997</td>
+          <td>0.531</td>
+          <td>0.008 / 0.007</td>
+          <td>0.537</td>
+          <td>0.561</td>
+          <td>0.799，10/16 exact</td>
+          <td>0.825，11/16 exact</td>
+          <td>原始 Tulu Short 10K recipe；condition gap 有效，但 high-noise correct 偏低。</td>
+        </tr>
+        <tr>
+          <td><code>pmean=-3, dp=0.25</code></td>
+          <td>0.999</td>
+          <td>0.632</td>
+          <td>0.026 / 0.033</td>
+          <td>0.664</td>
+          <td>0.684</td>
+          <td>0.890，11/16 exact</td>
+          <td>0.808，9/16 exact</td>
+          <td>当前最稳的 trajectory anchor；证明加大高噪声监督是正收益。</td>
+        </tr>
+        <tr>
+          <td><code>pmean=-3, dp=0.35</code></td>
+          <td>0.971</td>
+          <td>0.518</td>
+          <td>0.003 / 0.001</td>
+          <td>0.505</td>
+          <td>0.490</td>
+          <td>0.654，7/16 exact</td>
+          <td>0.592，6/16 exact</td>
+          <td>整体退化，clean decode 和 trajectory 都变差；不作为后续默认设置。</td>
+        </tr>
+        <tr>
+          <td><code>pmean=-3, dp=0.50</code></td>
+          <td>0.993</td>
+          <td>0.667</td>
+          <td>0.008 / 0.004</td>
+          <td>0.653</td>
+          <td>0.691</td>
+          <td>0.762，8/16 exact</td>
+          <td>0.772，8/16 exact</td>
+          <td>controlled high-noise denoise 最强，但 pure-noise trajectory 不如 dp=0.25 anchor。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <strong>阶段结论：</strong>
+      这轮实验把 recipe 边界基本定清楚了：<code>decoder_prob=0.35</code> 可以排除；
+      <code>decoder_prob=0.50</code> 最能提升 high-noise 语义方向，说明加强 decoder CE 监督确实能帮助模型在强噪声区预测到更接近 target 的语义空间；
+      但它没有同步提升完整 <code>t_start=0</code> trajectory，说明“看见正确语义方向”和“多步积分稳定到正确 token”仍然是两个问题。
+    </div>
+
+    <div class="callout warn">
+      <strong>下一阶段固定设置：</strong>
+      Token-Level Semantic Target / Semantic Supervision 实验先固定
+      <code>denoiser_p_mean=-3.0</code>、<code>decoder_prob=0.50</code>，因为下一步目标是显式加强 early denoising 的语义方向。
+      同时保留 <code>pmean=-3, decoder_prob=0.25</code> 作为 recipe control anchor，用来判断新算法是否只是牺牲 trajectory 稳定性换取单步 denoise 指标。
+    </div>
+  </section>
+
+  <section>
     <h2>细粒度诊断闭环（2026-05-31）</h2>
     <p>
       为了避免下一轮继续盲训，已经把当前 probe 结果整理成一个可重复运行的只读诊断闭环。
@@ -748,8 +842,9 @@
     <h3>阶段 1：做真实分布的 recipe ablation</h3>
     <ol>
       <li>主数据先用 Tulu Short 10K / Mixed 10K，不再直接用 full Tulu3 做盲训。</li>
-      <li>优先试高噪声区加权：调整 timestep 分布、增加 t=0/0.1 附近的 denoise 监督，或加入 trajectory consistency 类辅助目标。</li>
-      <li>对比 <code>decoder_prob=0.25</code>、<code>0.5</code> 和更低 CE 比例，确认 CE 是帮助 decoder 还是挤占 denoiser 的高噪声学习。</li>
+      <li>已完成第一轮 recipe ablation：<code>pmean=-3</code> 明确优于原始高噪声配置；<code>pmean=-3, decoder_prob=0.50</code> 在 controlled high-noise denoise 上最好。</li>
+      <li>下一步进入算法 ablation：固定 <code>denoiser_p_mean=-3.0</code>、<code>decoder_prob=0.50</code>，加入 Token-Level Semantic Target / Semantic Supervision，直接监督 early denoising 走向正确 token 语义空间。</li>
+      <li>保留 <code>pmean=-3, decoder_prob=0.25</code> 作为 trajectory-stable control，防止新 loss 只提升单步 denoise 但损坏完整采样。</li>
       <li>把 FLAN/Natural Instructions、open-ended chat、math/label、拒答/安全类样本拆开训练小模型，确认哪类 source 最容易让 vector field 漂移。</li>
       <li>采样侧对比 uniform/logit-tail、32/64/128 steps、ODE/二阶 solver；但只有当 controlled denoise 提升后，采样优化才可能成为主收益。</li>
     </ol>
@@ -912,7 +1007,8 @@
       <li>新增固定实验记录：每次训练后把 probe 脚本、prompt、结果 JSON/JSONL 和分析写入 <code>eval_probes/</code> 与本 HTML。</li>
       <li>已完成：128 条短答案 flow overfit，t_start=0 全量 probe token acc = 0.9922。</li>
       <li>已完成：Synthetic Short QA 10K、Tulu3 Short QA 10K、Tulu3 Mixed Length 10K 三组 ablation 训练和快速 probe。</li>
-      <li>下一步先做诊断增强：按 source、长度、答案类型、是否 FLAN 模板任务拆分 controlled denoise 和 trajectory 指标。</li>
+      <li>已完成：固定 <code>denoiser_p_mean=-3.0</code> 后扫描 <code>decoder_prob=0.25/0.35/0.50</code>；结论是后续算法实验固定 <code>decoder_prob=0.50</code>，保留 <code>0.25</code> 作为 control。</li>
+      <li>下一步：实现 Token-Level Semantic Target / Semantic Supervision，并用同一套 harness 对比新 loss 是否同时改善 high-noise denoise 和 pure-noise trajectory。</li>
       <li>继续做 EOS / target length 控制和语义评估，确认长尾乱码、过长输出和语义漂移是否下降。</li>
       <li>写数据审计脚本，对 <code>38b_solar</code> 和 <code>experiment_1997</code> 抽样输出 HTML/CSV 报告。</li>
       <li>实现 JSONL `{"input": ...}` 到 T5 Arrow 的离线转换工具，支持分片、去重、长度过滤和 max_length=1024 packing。</li>
@@ -932,9 +1028,11 @@
         ↓
 已完成：Synthetic 10K / Tulu Short 10K / Tulu Mixed 10K ablation
         ↓
-当前下一步：source / length / answer-type 诊断统计
+已完成：pmean=-3 + decoder_prob sweep，固定 dp=0.50 进入算法实验
         ↓
-Recipe ablation：timestep 分布、decoder_prob、source mix、sampler
+当前下一步：Token-Level Semantic Target / Semantic Supervision
+        ↓
+Recipe ablation：source mix、sampler、semantic / structure metrics
         ↓
 数据审计：38b_solar / experiment_1997
         ↓

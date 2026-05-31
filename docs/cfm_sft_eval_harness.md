@@ -31,6 +31,43 @@ The harness config is:
 eval_probes/sft_eval_harness_config.json
 ```
 
+## Fixed Ablation Reports
+
+### Tulu Short PMean=-3 Decoder-Probability Sweep
+
+This report fixes `denoiser_p_mean=-3.0` and compares the Tulu3 Short QA 10K
+baseline, the `decoder_prob=0.25` anchor, and the new `decoder_prob=0.35/0.50`
+checkpoints:
+
+```bash
+python3 scripts/analyze_cfm_ablation_diagnostics.py \
+  --config eval_probes/sft_eval_harness_config_tulu_short_pmean_m3_dp_sweep.json \
+  --output-dir eval_probes/diagnostics_tulu_short_pmean_m3_dp_sweep \
+  --min-n 5
+```
+
+Outputs:
+
+- `eval_probes/diagnostics_tulu_short_pmean_m3_dp_sweep/sft_eval_harness_report.md`
+- `eval_probes/diagnostics_tulu_short_pmean_m3_dp_sweep/sft_eval_harness_report.json`
+
+Summary:
+
+| experiment | clean | t0.1 correct | t0 uniform | exact | t0 logit-tail | exact |
+|---|---:|---:|---:|---:|---:|---:|
+| baseline | 0.997 | 0.531 | 0.799 | 10/16 | 0.825 | 11/16 |
+| pmean=-3, dp=0.25 | 0.999 | 0.632 | 0.890 | 11/16 | 0.808 | 9/16 |
+| pmean=-3, dp=0.35 | 0.971 | 0.518 | 0.654 | 7/16 | 0.592 | 6/16 |
+| pmean=-3, dp=0.50 | 0.993 | 0.667 | 0.762 | 8/16 | 0.772 | 8/16 |
+
+Interpretation:
+
+`decoder_prob=0.35` regresses both clean decode and trajectory. `decoder_prob=0.50`
+gives the strongest controlled high-noise denoise, but the `decoder_prob=0.25`
+anchor keeps the strongest pure-noise trajectory. For the Token-Level Semantic
+Target experiment, use `denoiser_p_mean=-3.0` and `decoder_prob=0.50` as the
+main setting, while keeping `decoder_prob=0.25` as the trajectory-stable control.
+
 ## Gates
 
 ### A: Discrete Short Answer
