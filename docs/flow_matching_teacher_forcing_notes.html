@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Flow Matching 语言模型的 Teacher Forcing、Trajectory Gap 与修正路线</title>
+  <title>Flow Matching 语言模型的 Teacher Forcing、x/v Prediction 与 Trajectory Gap</title>
   <style>
     :root {
       --bg: #f6f7fb;
@@ -62,7 +62,7 @@
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 14px;
       margin: 18px 0 8px;
     }
@@ -158,10 +158,11 @@
 <body>
 <main>
   <header>
-    <h1>Flow Matching 语言模型的 Teacher Forcing、Trajectory Gap 与修正路线</h1>
+    <h1>Flow Matching 语言模型的 Teacher Forcing、x/v Prediction 与 Trajectory Gap</h1>
     <p class="subtitle">
       2026-05-31 讨论整理。本文把 AR Teacher Forcing、ELF/CFM 的连续 latent 训练方式、
-      instruction SFT 失败模式、conditioned pretrain 与可落地修正方案放到同一张图里。
+      x-prediction / v-prediction 参数化、instruction SFT 失败模式、conditioned pretrain
+      与可落地修正方案放到同一张图里。
     </p>
   </header>
 
@@ -171,6 +172,8 @@
       ELF 当前的核心问题不是“DLM decoder 读不出 target latent”，也不是“loss 没下降”。
       更准确地说，是 <strong>Flow Matching 在真实 bridge state 上学到的局部 vector field，
       没有稳定转化成从纯噪声出发、按 prompt 进入正确 answer basin 的 self-rollout 能力</strong>。
+      代码层面上，ELF 网络的直接输出已经是 <code>x_pred</code>，即当前 noisy latent 对应的 clean
+      data latent endpoint 估计；<code>v_pred</code> 是后续为了 flow loss 和 ODE/SDE 更新再换算出来的量。
     </div>
 
     <div class="grid">
@@ -185,6 +188,10 @@
       <div class="card">
         <span class="metric">ELF-SFT</span>
         <p>失败集中在高噪声 conditional routing，而不是 clean decode 或低噪声 repair。</p>
+      </div>
+      <div class="card">
+        <span class="metric">x-pred</span>
+        <p>网络预测 clean latent endpoint；采样时再转换成 velocity 做积分。</p>
       </div>
     </div>
   </section>
@@ -223,16 +230,25 @@ The   cat sat</pre>
     <h2>Flow Matching 里的“类 Teacher Forcing”</h2>
     <p>
       Flow Matching 训练时也有一种连续空间里的 teacher-forced state。给定真实 target latent <code>x0</code>
-      和随机噪声 <code>eps</code>，训练输入是：
+      和随机噪声 <code>eps</code>，训练输入来自真实答案桥：
     </p>
 
     <pre>z_t = t * x0 + (1 - t) * eps
-target = x0
+direct network output = x_pred_theta(z_t, t)
+v_pred = (x_pred_theta - z_t) / (1 - t)
 v_target = (x0 - z_t) / (1 - t)</pre>
 
     <p>
       这意味着模型在每个 noise level 看到的是“真实答案桥”上的中间状态。它学的是：
       在这条真实桥附近，应该往哪个方向走。
+    </p>
+
+    <p>
+      这里要区分两个概念：<strong>网络直接输出什么</strong>，和 <strong>loss / sampler 最后在哪个空间工作</strong>。
+      标准 Flow Matching 常直接输出 velocity。ELF 则采用 <code>x</code>-prediction：
+      backbone 输出 <code>x_pred</code>，再通过解析公式换成 <code>v_pred</code> 去算 flow loss 和更新轨迹。
+      因此它不是“每一步预测下一步 latent”，而是在每个 <code>z_t</code> 上预测同一个终点：
+      当前样本对应的 clean data latent。
     </p>
 
     <table>
@@ -267,9 +283,123 @@ v_target = (x0 - z_t) / (1 - t)</pre>
   </section>
 
   <section>
+    <h2>x-prediction 和 v-prediction 的具体差别</h2>
+    <p>
+      在线性 rectified flow 路径里，<code>x0</code>、<code>eps</code>、<code>z_t</code>、<code>v</code>
+      可以互相换算。给定 <code>z_t</code> 和 <code>t</code>，只要模型预测得足够准，
+      直接预测 <code>v</code> 再换成 <code>x</code>，和直接预测 <code>x</code> 再换成 <code>v</code>
+      都是合法 generator。
+    </p>
+
+    <pre>v = (x0 - z_t) / (1 - t)
+x0 = z_t + (1 - t) * v</pre>
+
+    <p>
+      所以问题不是“velocity 不能 decode”。真正的问题是：<strong>数学最优解等价，不代表网络训练动态、
+      误差形态、容量需求和 decoder 接口等价</strong>。
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>维度</th>
+          <th>x-prediction</th>
+          <th>v-prediction</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>网络直接输出</td>
+          <td><code>x_pred</code>：当前 noisy latent 对应的 clean endpoint 估计。</td>
+          <td><code>v_pred</code>：从当前 state 指向后续轨迹的速度/方向。</td>
+        </tr>
+        <tr>
+          <td>和 decoder 的关系</td>
+          <td>DLM head 看到的是“像 clean T5 latent 的对象”，接口自然。</td>
+          <td>必须先做 <code>x_pred = z_t + (1 - t) * v_pred</code>，再交给 DLM；raw velocity 本身不适合 decode。</td>
+        </tr>
+        <tr>
+          <td>目标语义</td>
+          <td>所有 timestep 都回归同一个 clean data latent，监督语义稳定。</td>
+          <td>高噪声时是全局 transport 方向，低噪声时是局部修正方向，同一个输出空间承担不同语义。</td>
+        </tr>
+        <tr>
+          <td>误差缩放</td>
+          <td>若用 v-loss 训练，<code>x</code> 误差会被 <code>1 / (1 - t)</code> 重新加权。</td>
+          <td>若直接用 v-loss，采样更新最直接，但转换到 token decode 时误差变成 <code>(1 - t) * v_error</code>。</td>
+        </tr>
+        <tr>
+          <td>语言任务风险</td>
+          <td>更容易把共享 backbone 和 DLM decode 绑定到 clean latent manifold。</td>
+          <td>模型容量可能花在表示 off-manifold 的 noised quantity；对共享 decode head 不友好。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <strong>ELF 当前采用的折中是：</strong>网络输出 <code>x_pred</code>，训练和采样仍通过
+      <code>v_pred = (x_pred - z_t) / (1 - t)</code> 回到 velocity field。
+      这保留了 Flow Matching 的 ODE/SDE 生成方式，同时让模型显式输出落在 clean latent 语义空间。
+    </div>
+
+    <h3>为什么何恺明他们强调 x-prediction</h3>
+    <p>
+      Li &amp; He 的 <a href="https://arxiv.org/abs/2511.13720">Back to Basics: Let Denoising Generative Models Denoise</a>
+      核心论点是：自然数据通常位于高维观察空间中的低维 manifold 上，而 noise / velocity 这类 noised quantity
+      不在这个 clean data manifold 上。让网络直接预测 clean data，可以让有限容量模型优先学习低维结构，
+      而不是保存和重构高维噪声细节。
+    </p>
+    <p>
+      论文里的关键实验也不是单纯说“换一个 loss 权重就行”。在 ImageNet 256、JiT-B/16 设置下，
+      每个 patch 是 768 维，已经接近 Transformer hidden size；这时只有 <code>x</code>-prediction
+      在三种 loss space 下都能正常工作，<code>eps</code>-prediction 和 <code>v</code>-prediction
+      会出现灾难性失败。作为对照，低分辨率 JiT-B/4 的 patch 只有 48 维，三种 prediction space
+      差距就小很多。这个现象支持他们的判断：问题不只是 loss weighting，而是高维 noised quantity
+      对网络容量和信息保留提出了更硬的要求。
+    </p>
+    <p>
+      该论文还明确区分 prediction space、loss space 和 generator space：
+      网络可以直接输出 <code>x</code>、<code>eps</code> 或 <code>v</code>，loss 也可以定义在不同空间；
+      推理时则总可以把输出变换到 <code>v</code> 空间再解 ODE。也就是说，
+      <code>x</code>-prediction 不是放弃 vector field，而是把“网络直接要学的对象”改成 clean data endpoint。
+    </p>
+
+    <pre># JiT / ELF 风格的核心步骤
+z_t = t * x0 + (1 - t) * eps
+x_pred = net(z_t, t)
+v_pred = (x_pred - z_t) / (1 - t)
+z_next = z_t + h * v_pred</pre>
+
+    <p>
+      这和本代码库是一致的：<a href="../src/modules/model.py">src/modules/model.py</a> 的
+      <code>final_layer</code> 返回 backbone 的 clean latent prediction；
+      <a href="../src/utils/sampling_utils.py">src/utils/sampling_utils.py</a> 的
+      <code>net_out_to_v_x</code> 再把它换成 <code>v_pred</code>。
+      <a href="../src/train_step.py">src/train_step.py</a> 训练 denoiser 分支时，也是在这个转换后的
+      <code>v_pred</code> 上和 <code>v_target</code> 做 L2。
+    </p>
+
+    <h3>这对 ELF 语言建模意味着什么</h3>
+    <p>
+      图像里的 clean endpoint 是像素或图像 latent；ELF 里的 clean endpoint 是 frozen T5 encoder 产生的上下文化
+      token latent。ELF 选择 <code>x</code>-prediction 的直接收益，是让同一个共享 trunk 同时服务两件事：
+      一边在连续 latent 空间里 denoise，一边在 decoder mode 下把 latent 投到 vocab logits。
+      如果直接预测 <code>v</code>，也能通过公式换回 <code>x</code>，但 raw output 本身就不再是 decoder
+      应该消费的对象。
+    </p>
+
+    <div class="callout warn">
+      这也解释了为什么“clean decode 很好”仍然不等价于“flow 生成很好”。
+      x-prediction 让每一步都有一个可 decode 的 endpoint 估计，但如果高噪声处的 endpoint 选错了 answer basin，
+      后续 ODE 只是沿着错误语义继续精修。
+    </div>
+  </section>
+
+  <section>
     <h2>为什么语言比图像更容易暴露这个问题</h2>
     <p>
-      图像 pixel/latent space 的局部几何相对平滑。vector field 的小误差通常仍会把样本推向一个相近图像区域，
+      图像 pixel/latent space 的局部几何相对平滑。即使用 <code>x</code>-prediction，采样时仍会转换成
+      vector field 做 rollout；在图像里，vector field 的小误差通常仍会把样本推向一个相近图像区域，
       后续步骤还有机会修正。
     </p>
     <p>
@@ -350,6 +480,13 @@ z_0 noise -> x_pred ~= target clean latent -> DLM decode</pre>
       因为网络输出就是 <code>x_pred</code>。真正问题是 <code>x_pred(t=0, prompt)</code>
       是否足够可靠。
     </div>
+
+    <p>
+      如果模型直接输出的是 <code>v_pred</code>，一步 decode 仍然可以做，但必须先转换：
+      <code>x_pred = z_t + (1 - t) * v_pred</code>；在 <code>t=0</code> 时就是
+      <code>x_pred = z_0 + v_pred</code>。ELF 当前采用 <code>x</code>-prediction，所以 direct decode
+      probe 更直接：它检查的正是模型在最高噪声处给出的 clean endpoint 是否已经可读。
+    </p>
   </section>
 
   <section>
@@ -477,6 +614,13 @@ target:
         </tr>
         <tr>
           <td><span class="tag warn">P1</span></td>
+          <td>x/v accounting probes</td>
+          <td>区分 endpoint 预测错，还是 rollout 积分把正确 endpoint 走坏。</td>
+          <td>同时记录 <code>x_pred</code> direct decode、转换后的 <code>v_pred</code> step 误差、最终 trajectory decode。</td>
+          <td>只是诊断；如果 DLM 对 rough latent 不鲁棒，需要和下一项一起看。</td>
+        </tr>
+        <tr>
+          <td><span class="tag warn">P1</span></td>
           <td>DLM robustness probe</td>
           <td>确认 DLM 是否能评价 noisy / rough latent。</td>
           <td>扫 <code>x0 + sigma * noise</code> 的 decode token acc；必要时先 finetune DLM head。</td>
@@ -508,6 +652,11 @@ target:
         如果 direct decode 已经优于多步，说明 rollout 本身在伤害生成。
       </li>
       <li>
+        给 probe 增加 <code>x_pred</code> / <code>v_pred</code> accounting：
+        对同一批 prompt 固定噪声，记录高噪声 <code>x_pred</code> decode、单步/多步更新后的 decode、
+        以及 <code>v_pred</code> L2，确认错误来自 endpoint 选择还是积分累积。
+      </li>
+      <li>
         对 Tulu Short 10K / Mixed 10K 做 high-noise weighted ablation：
         <code>denoiser_p_mean</code>、低 <code>t</code> oversampling、decoder_prob、EOS/length 控制一起记录。
       </li>
@@ -537,6 +686,9 @@ target:
       <li><a href="elf_pro_research_plan.html">elf-pro 研究路线</a></li>
       <li><a href="https://arxiv.org/abs/2210.02747">Flow Matching for Generative Modeling</a></li>
       <li><a href="https://arxiv.org/abs/2209.03003">Rectified Flow</a></li>
+      <li><a href="https://arxiv.org/abs/2605.10938">ELF: Embedded Language Flows</a></li>
+      <li><a href="https://arxiv.org/abs/2511.13720">Back to Basics: Let Denoising Generative Models Denoise</a></li>
+      <li><a href="https://arxiv.org/abs/2601.21419">Revisiting Diffusion Model Predictions Through Dimensionality</a></li>
       <li><a href="https://arxiv.org/abs/2303.01469">Consistency Models</a></li>
       <li><a href="https://openreview.net/forum?id=OlzB6LnXcS">One Step Diffusion via Shortcut Models</a></li>
       <li><a href="https://arxiv.org/abs/2505.13447">Mean Flows for One-step Generative Modeling</a></li>
