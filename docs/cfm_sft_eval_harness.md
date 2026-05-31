@@ -125,3 +125,37 @@ checkpoint is not instruction-following-ready until:
 - A/B/C gates do not regress,
 - pure-noise trajectory improves, and
 - long-answer semantic/structure checks are acceptable.
+
+## Gate Status Semantics
+
+`gate_status` is computed per-bucket from the active threshold set:
+
+- `pass` — every required metric is present and meets its threshold.
+- `fail` — at least one required metric is below its threshold.
+- `incomplete` — at least one required metric is missing entirely. This
+  status is new; previously a missing metric was treated as a non-failure
+  and could mask data gaps as `pass`.
+
+### Per-gate thresholds
+
+`gate_thresholds.per_gate` in `eval_probes/sft_eval_harness_config.json` lets
+a gate override individual thresholds and skip metrics that are not
+meaningful for it. Today `C_long_answer` skips `t01_correct_min` and
+`trajectory_t0_uniform_min`, because long answers should not be judged by
+token-exact accuracy. These are placeholders until semantic similarity and
+structure / key-info metrics replace them; until then the C gate intentionally
+reports `pass` from `clean_decode_min` and `t01_condition_gap_min` only.
+
+## Data Coverage Section
+
+The report now contains a `Metadata & Field Coverage` table for any
+experiment that ships a `metadata` jsonl. Two columns matter:
+
+- `match rate` — fraction of CFM examples joined to metadata via
+  `(input.strip(), target.strip())`. Unmatched rows fall back to
+  `source=unknown` and are excluded from `source_group` / `source` slices.
+  A drop here means downstream slice mixes are biased.
+- `missing fields` — counts of probe-artifact JSON keys that were absent.
+  The harness skips those samples from the running mean instead of
+  coercing them to `0.0`, so a non-zero count means the underlying probe
+  run is incomplete.

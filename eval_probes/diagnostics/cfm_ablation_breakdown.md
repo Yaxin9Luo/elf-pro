@@ -12,9 +12,23 @@ Slice metrics are sample-level macro means over probe examples, so they can diff
 | Tulu3 Short QA 10K | 256 | 0.997 | 0.531 | 0.008 | 0.007 | 0.537 | 0.561 | 0.799 | 10/16 | 0.825 | 11/16 |
 | Tulu3 Mixed Length 10K | 256 | 0.996 | 0.612 | 0.002 | 0.006 | 0.730 | 0.838 | 0.662 | 2/16 | 0.599 | 2/16 |
 
+## Metadata & Field Coverage
+
+Metadata join uses `(input.strip(), target.strip())`. Rows that fail to match fall back to `source=unknown` and are not included in source-group / source slices, so a low match rate silently biases the breakdown. Missing-field counts cover JSON keys read by the harness; non-zero values mean the underlying probe artifact is incomplete and the corresponding metric was skipped (not coerced to 0).
+
+| experiment | cfm rows | missing meta | match rate | missing fields |
+|---|---:|---:|---:|---|
+| Tulu3 Short QA 10K | 256 | 0 | 1.000 | - |
+| Tulu3 Mixed Length 10K | 256 | 0 | 1.000 | - |
+
+
 ## Curriculum Gate Summary
 
 Gate status uses configurable thresholds from `eval_probes/sft_eval_harness_config.json`. Current thresholds are intentionally aspirational and are meant to flag bottlenecks, not to claim model quality.
+Status `incomplete` means the bucket has at least one required metric missing (no longer silently treated as pass).
+
+Per-gate threshold overrides:
+- `C_long_answer` skips metrics ['t01_correct_min', 'trajectory_t0_uniform_min'] — Long answers should not be judged by token-exact accuracy. token_acc / trajectory thresholds are intentionally relaxed; promote to semantic / structure metrics in a future revision.
 
 | experiment | gate | n | status | clean | t0.1 correct | t0.1 gap | t0.3 correct | t0.5 correct | t_start=0 uniform | exact |
 |---|---|---:|---|---:|---:|---:|---:|---:|---:|---:|
@@ -22,10 +36,10 @@ Gate status uses configurable thresholds from `eval_probes/sft_eval_harness_conf
 | Synthetic 10K | A_discrete_short | 256 | fail | 0.992 | 0.764 | 0.757 | 0.753 | 0.857 | 0.688 | 10/16 |
 | Tulu3 Short QA 10K | A_discrete_short | 155 | fail | 1.000 | 0.532 | 0.525 | 0.532 | 0.560 | 0.812 | 9/12 |
 | Tulu3 Short QA 10K | B_natural_short | 96 | fail | 0.993 | 0.532 | 0.521 | 0.548 | 0.566 | 0.757 | 1/4 |
-| Tulu3 Short QA 10K | C_long_answer | 5 | fail | 1.000 | 0.479 | 0.466 | 0.507 | 0.527 | - | - |
+| Tulu3 Short QA 10K | C_long_answer | 5 | pass | 1.000 | 0.479 | 0.466 | 0.507 | 0.527 | - | - |
 | Tulu3 Mixed Length 10K | A_discrete_short | 45 | fail | 1.000 | 0.668 | 0.664 | 0.773 | 0.856 | 1.000 | 1/1 |
 | Tulu3 Mixed Length 10K | B_natural_short | 69 | fail | 0.995 | 0.608 | 0.602 | 0.705 | 0.818 | 0.636 | 0/9 |
-| Tulu3 Mixed Length 10K | C_long_answer | 142 | fail | 0.996 | 0.595 | 0.589 | 0.728 | 0.841 | 0.645 | 1/6 |
+| Tulu3 Mixed Length 10K | C_long_answer | 142 | pass | 0.996 | 0.595 | 0.589 | 0.728 | 0.841 | 0.645 | 1/6 |
 
 ## Fine-Grained Slices
 

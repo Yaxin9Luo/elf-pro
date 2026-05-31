@@ -61,14 +61,27 @@
     "clean_decode_min": 0.98,
     "t01_correct_min": 0.8,
     "t01_condition_gap_min": 0.5,
-    "trajectory_t0_uniform_min": 0.8
+    "trajectory_t0_uniform_min": 0.8,
+    "per_gate": {
+      "C_long_answer": {
+        "_comment": "Long answers should not be judged by token-exact accuracy. token_acc / trajectory thresholds are intentionally relaxed; promote to semantic / structure metrics in a future revision.",
+        "clean_decode_min": 0.95,
+        "t01_correct_min": 0.4,
+        "t01_condition_gap_min": 0.3,
+        "trajectory_t0_uniform_min": 0.4,
+        "skip_metrics": [
+          "t01_correct_min",
+          "trajectory_t0_uniform_min"
+        ]
+      }
+    }
   },
   "experiments": {
     "synthetic_128": {
       "label": "Synthetic 128",
       "paths": {
-        "cfm": "/Users/yaxinluo/.omnara/worktrees/elf-pro/vanilla-shabby/eval_probes/short_qa_overfit_128/cfm_sanity_short_qa_overfit_params.json",
-        "trajectory": "/Users/yaxinluo/.omnara/worktrees/elf-pro/vanilla-shabby/eval_probes/short_qa_overfit_128/sampling_high_noise_all128_params.json"
+        "cfm": "/Users/yaxinluo/Desktop/Projects/elf-pro/eval_probes/short_qa_overfit_128/cfm_sanity_short_qa_overfit_params.json",
+        "trajectory": "/Users/yaxinluo/Desktop/Projects/elf-pro/eval_probes/short_qa_overfit_128/sampling_high_noise_all128_params.json"
       },
       "overview": {
         "n": 128,
@@ -283,8 +296,12 @@
       },
       "metadata_matches": {
         "metadata_rows": 0,
-        "missing_cfm_examples": 0
+        "cfm_examples": 128,
+        "missing_cfm_examples": 0,
+        "match_rate": null,
+        "expected_metadata": false
       },
+      "missing_fields": {},
       "groups": {
         "curriculum_gate": {
           "A_discrete_short": {
@@ -2791,8 +2808,8 @@
     "synthetic_10k": {
       "label": "Synthetic 10K",
       "paths": {
-        "cfm": "/Users/yaxinluo/.omnara/worktrees/elf-pro/vanilla-shabby/eval_probes/short_qa_10k/cfm_sanity_random256_seed12345_params.json",
-        "trajectory": "/Users/yaxinluo/.omnara/worktrees/elf-pro/vanilla-shabby/eval_probes/short_qa_10k/sampling_trajectory_random16_seed12345_params.json"
+        "cfm": "/Users/yaxinluo/Desktop/Projects/elf-pro/eval_probes/short_qa_10k/cfm_sanity_random256_seed12345_params.json",
+        "trajectory": "/Users/yaxinluo/Desktop/Projects/elf-pro/eval_probes/short_qa_10k/sampling_trajectory_random16_seed12345_params.json"
       },
       "overview": {
         "n": 256,
@@ -3077,8 +3094,12 @@
       },
       "metadata_matches": {
         "metadata_rows": 0,
-        "missing_cfm_examples": 0
+        "cfm_examples": 256,
+        "missing_cfm_examples": 0,
+        "match_rate": null,
+        "expected_metadata": false
       },
+      "missing_fields": {},
       "groups": {
         "curriculum_gate": {
           "A_discrete_short": {
@@ -6199,9 +6220,9 @@
     "tulu_short_10k": {
       "label": "Tulu3 Short QA 10K",
       "paths": {
-        "cfm": "/Users/yaxinluo/.omnara/worktrees/elf-pro/vanilla-shabby/eval_probes/tulu3_short_answer_clean_en_10k/cfm_sanity_random256_seed12345_params.json",
-        "trajectory": "/Users/yaxinluo/.omnara/worktrees/elf-pro/vanilla-shabby/eval_probes/tulu3_short_answer_clean_en_10k/sampling_trajectory_random16_seed12345_params.json",
-        "metadata": "/Users/yaxinluo/.omnara/worktrees/elf-pro/vanilla-shabby/eval_probes/dataset_metadata/tulu3_short_answer_clean_en_10k_train_metadata.jsonl"
+        "cfm": "/Users/yaxinluo/Desktop/Projects/elf-pro/eval_probes/tulu3_short_answer_clean_en_10k/cfm_sanity_random256_seed12345_params.json",
+        "trajectory": "/Users/yaxinluo/Desktop/Projects/elf-pro/eval_probes/tulu3_short_answer_clean_en_10k/sampling_trajectory_random16_seed12345_params.json",
+        "metadata": "/Users/yaxinluo/Desktop/Projects/elf-pro/eval_probes/dataset_metadata/tulu3_short_answer_clean_en_10k_train_metadata.jsonl"
       },
       "overview": {
         "n": 256,
@@ -6486,8 +6507,12 @@
       },
       "metadata_matches": {
         "metadata_rows": 10000,
-        "missing_cfm_examples": 0
+        "cfm_examples": 256,
+        "missing_cfm_examples": 0,
+        "match_rate": 1.0,
+        "expected_metadata": true
       },
+      "missing_fields": {},
       "groups": {
         "curriculum_gate": {
           "A_discrete_short": {
@@ -15965,9 +15990,9 @@
     "tulu_mixed_10k": {
       "label": "Tulu3 Mixed Length 10K",
       "paths": {
-        "cfm": "/Users/yaxinluo/.omnara/worktrees/elf-pro/vanilla-shabby/eval_probes/tulu3_mixed_length_clean_en_10k/cfm_sanity_random256_seed12345_params.json",
-        "trajectory": "/Users/yaxinluo/.omnara/worktrees/elf-pro/vanilla-shabby/eval_probes/tulu3_mixed_length_clean_en_10k/sampling_trajectory_random16_seed12345_params.json",
-        "metadata": "/Users/yaxinluo/.omnara/worktrees/elf-pro/vanilla-shabby/eval_probes/dataset_metadata/tulu3_mixed_length_clean_en_10k_train_metadata.jsonl"
+        "cfm": "/Users/yaxinluo/Desktop/Projects/elf-pro/eval_probes/tulu3_mixed_length_clean_en_10k/cfm_sanity_random256_seed12345_params.json",
+        "trajectory": "/Users/yaxinluo/Desktop/Projects/elf-pro/eval_probes/tulu3_mixed_length_clean_en_10k/sampling_trajectory_random16_seed12345_params.json",
+        "metadata": "/Users/yaxinluo/Desktop/Projects/elf-pro/eval_probes/dataset_metadata/tulu3_mixed_length_clean_en_10k_train_metadata.jsonl"
       },
       "overview": {
         "n": 256,
@@ -16252,8 +16277,12 @@
       },
       "metadata_matches": {
         "metadata_rows": 10000,
-        "missing_cfm_examples": 0
+        "cfm_examples": 256,
+        "missing_cfm_examples": 0,
+        "match_rate": 1.0,
+        "expected_metadata": true
       },
+      "missing_fields": {},
       "groups": {
         "curriculum_gate": {
           "A_discrete_short": {

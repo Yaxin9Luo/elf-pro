@@ -65,6 +65,16 @@
     "clean_decode_min": 0.98,
     "t01_correct_min": 0.8,
     "t01_condition_gap_min": 0.5,
-    "trajectory_t0_uniform_min": 0.8
+    "trajectory_t0_uniform_min": 0.8,
+    "per_gate": {
+      "C_long_answer": {
+        "_comment": "Long answers should not be judged by token-exact accuracy. token_acc / trajectory thresholds are intentionally relaxed; promote to semantic / structure metrics in a future revision.",
+        "clean_decode_min": 0.95,
+        "t01_correct_min": 0.4,
+        "t01_condition_gap_min": 0.3,
+        "trajectory_t0_uniform_min": 0.4,
+        "skip_metrics": ["t01_correct_min", "trajectory_t0_uniform_min"]
+      }
+    }
   }
 }

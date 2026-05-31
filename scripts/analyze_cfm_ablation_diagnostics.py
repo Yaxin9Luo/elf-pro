@@ -76,6 +76,20 @@ DEFAULT_GATE_THRESHOLDS = {
     "t01_correct_min": 0.8,
     "t01_condition_gap_min": 0.5,
     "trajectory_t0_uniform_min": 0.8,
+    "per_gate": {
+        "C_long_answer": {
+            "_comment": (
+                "Long answers should not be judged by token-exact accuracy. "
+                "token_acc / trajectory thresholds are intentionally relaxed; "
+                "promote to semantic / structure metrics in a future revision."
+            ),
+            "clean_decode_min": 0.95,
+            "t01_correct_min": 0.4,
+            "t01_condition_gap_min": 0.3,
+            "trajectory_t0_uniform_min": 0.4,
+            "skip_metrics": ["t01_correct_min", "trajectory_t0_uniform_min"],
+        }
+    },
 }
 
 
@@ -325,6 +339,23 @@ def make_empty_group_tree() -> dict[str, dict[str, BucketStat]]:
     }
 
 
+def _safe_float(value: Any) -> float | None:
+    """Coerce numeric JSON fields to float, returning None for missing/non-numeric.
+
+    The aggregate code previously coerced missing fields to 0.0, which then
+    entered the running mean as a real zero observation and silently pulled
+    metrics down. Returning None lets MeanStat.add skip the sample instead.
+    """
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def aggregate_experiment(name: str, cfg: dict[str, Any], gates: dict[str, Any]) -> dict[str, Any]:
     cfm = load_json(cfg["cfm"])
     trajectory = load_json(cfg["trajectory"]) if cfg.get("trajectory") and cfg["trajectory"].exists() else None
@@ -332,11 +363,14 @@ def aggregate_experiment(name: str, cfg: dict[str, Any], gates: dict[str, Any]) 
     groups = make_empty_group_tree()
     overview = BucketStat()
     missing_metadata = 0
+    cfm_examples_total = 0
+    missing_field_counts: dict[str, int] = defaultdict(int)
     worst_denoise: list[dict[str, Any]] = []
     worst_trajectory: list[dict[str, Any]] = []
 
     feature_by_key: dict[tuple[str, str], dict[str, str]] = {}
     for ex in cfm.get("examples", []):
+        cfm_examples_total += 1
         key = text_key(ex.get("input", ""), ex.get("expected", ""))
         meta = metadata.get(key)
         if metadata and not meta:
@@ -345,19 +379,29 @@ def aggregate_experiment(name: str, cfg: dict[str, Any], gates: dict[str, Any]) 
         features["curriculum_gate"] = assign_gate(features, gates)
         feature_by_key[key] = features
         overview.n += 1
-        overview.clean.add(float(ex.get("clean_decode", {}).get("token_acc", 0.0)))
+        clean_token_acc = _safe_float(ex.get("clean_decode", {}).get("token_acc"))
+        if clean_token_acc is None:
+            missing_field_counts["clean_decode.token_acc"] += 1
+        overview.clean.add(clean_token_acc)
         for tree_name, group_key in features.items():
             if tree_name not in groups:
                 continue
             bucket = groups[tree_name][group_key]
             bucket.n += 1
-            bucket.clean.add(float(ex.get("clean_decode", {}).get("token_acc", 0.0)))
+            bucket.clean.add(clean_token_acc)
         for row in ex.get("denoise", []):
-            t = float(row["t"])
-            variant = row["variant"]
+            t = _safe_float(row.get("t"))
+            if t is None:
+                missing_field_counts["denoise.t"] += 1
+                continue
+            variant = row.get("variant", "unknown")
             metric_key = f"t={t:.1f}:{variant}"
-            acc = float(row.get("token_acc_batch", 0.0))
-            x_mse = float(row.get("x_mse", 0.0))
+            acc = _safe_float(row.get("token_acc_batch"))
+            x_mse = _safe_float(row.get("x_mse"))
+            if acc is None:
+                missing_field_counts["denoise.token_acc_batch"] += 1
+            if x_mse is None:
+                missing_field_counts["denoise.x_mse"] += 1
             overview.denoise[metric_key].add(acc)
             overview.denoise_mse[metric_key].add(x_mse)
             for tree_name, group_key in features.items():
@@ -365,11 +409,11 @@ def aggregate_experiment(name: str, cfg: dict[str, Any], gates: dict[str, Any]) 
                     continue
                 groups[tree_name][group_key].denoise[metric_key].add(acc)
                 groups[tree_name][group_key].denoise_mse[metric_key].add(x_mse)
-            if variant == "correct" and t in {0.1, 0.3}:
+            if variant == "correct" and any(abs(t - target) < 1e-6 for target in (0.1, 0.3)):
                 worst_denoise.append({
                     "metric": metric_key,
-                    "token_acc": acc,
-                    "x_mse": x_mse,
+                    "token_acc": acc if acc is not None else float("nan"),
+                    "x_mse": x_mse if x_mse is not None else float("nan"),
                     "input": ex.get("input", "")[:240],
                     "expected": ex.get("expected", ""),
                     "clean_generated": ex.get("clean_decode", {}).get("generated", ""),
@@ -383,28 +427,38 @@ def aggregate_experiment(name: str, cfg: dict[str, Any], gates: dict[str, Any]) 
             features = feature_by_key.get(key) or example_features(ex, meta, name)
             features.setdefault("curriculum_gate", assign_gate(features, gates))
             for run in ex.get("runs", []):
-                t_start = float(run.get("t_start", 0.0))
+                t_start = _safe_float(run.get("t_start"))
+                if t_start is None:
+                    missing_field_counts["trajectory.t_start"] += 1
+                    continue
                 schedule = run.get("schedule", "unknown")
                 metric_key = f"t_start={t_start:.2f}:{schedule}"
-                acc = float(run.get("final_token_acc", 0.0))
+                acc = _safe_float(run.get("final_token_acc"))
+                if acc is None:
+                    missing_field_counts["trajectory.final_token_acc"] += 1
                 overview.trajectory[metric_key].add(acc)
-                if acc >= 0.999:
+                if acc is not None and acc >= 0.999:
                     overview.trajectory_exact[metric_key] += 1
                 for tree_name, group_key in features.items():
                     if tree_name not in groups:
                         continue
                     groups[tree_name][group_key].trajectory[metric_key].add(acc)
-                    if acc >= 0.999:
+                    if acc is not None and acc >= 0.999:
                         groups[tree_name][group_key].trajectory_exact[metric_key] += 1
-                if t_start == 0.0:
+                if abs(t_start) < 1e-6:
                     worst_trajectory.append({
                         "metric": metric_key,
-                        "token_acc": acc,
+                        "token_acc": acc if acc is not None else float("nan"),
                         "generated": run.get("final_generated", ""),
                         "input": ex.get("input", "")[:240],
                         "expected": ex.get("expected", ""),
                         **features,
                     })
+
+    metadata_match_rate: float | None = None
+    if metadata and cfm_examples_total > 0:
+        matched = cfm_examples_total - missing_metadata
+        metadata_match_rate = matched / cfm_examples_total
 
     return {
         "label": cfg["label"],
@@ -412,14 +466,27 @@ def aggregate_experiment(name: str, cfg: dict[str, Any], gates: dict[str, Any]) 
         "overview": overview.as_dict(),
         "metadata_matches": {
             "metadata_rows": len(metadata),
+            "cfm_examples": cfm_examples_total,
             "missing_cfm_examples": missing_metadata,
+            "match_rate": metadata_match_rate,
+            "expected_metadata": metadata is not None and len(metadata) > 0,
         },
+        "missing_fields": dict(missing_field_counts),
         "groups": {
             tree_name: {k: stat.as_dict() for k, stat in sorted(tree.items())}
             for tree_name, tree in groups.items()
         },
-        "worst_denoise": sorted(worst_denoise, key=lambda x: (x["token_acc"], x["x_mse"]))[:12],
-        "worst_trajectory": sorted(worst_trajectory, key=lambda x: x["token_acc"])[:12],
+        "worst_denoise": sorted(
+            worst_denoise,
+            key=lambda x: (
+                x["token_acc"] if not math.isnan(x["token_acc"]) else float("inf"),
+                x["x_mse"] if not math.isnan(x["x_mse"]) else float("inf"),
+            ),
+        )[:12],
+        "worst_trajectory": sorted(
+            worst_trajectory,
+            key=lambda x: x["token_acc"] if not math.isnan(x["token_acc"]) else float("inf"),
+        )[:12],
     }
 
 
@@ -450,23 +517,75 @@ def condition_gap(stat: dict[str, Any], t: str = "0.1") -> float | None:
     return correct - max(zero, shuffled)
 
 
-def gate_status(stat: dict[str, Any], thresholds: dict[str, float]) -> str:
-    checks = {
-        "clean": stat.get("clean_decode", {}).get("mean"),
-        "t01": mean_at(stat, "denoise_token_acc", "t=0.1:correct"),
-        "gap": condition_gap(stat, "0.1"),
+def resolve_gate_thresholds(
+    thresholds: dict[str, Any], gate_name: str | None
+) -> tuple[dict[str, float], set[str]]:
+    """Merge global thresholds with optional per-gate overrides.
+
+    Returns the active threshold dict plus the set of metric keys that should
+    be skipped entirely for this gate (so they neither fail nor pass it).
+    Per-gate overrides live under ``thresholds["per_gate"][gate_name]`` to
+    let C-long-answer use looser bars without polluting A/B and to let us
+    explicitly skip metrics that are not meaningful at long horizons.
+    """
+    base_keys = (
+        "clean_decode_min",
+        "t01_correct_min",
+        "t01_condition_gap_min",
+        "trajectory_t0_uniform_min",
+    )
+    active = {key: thresholds.get(key) for key in base_keys}
+    skip: set[str] = set()
+    per_gate = thresholds.get("per_gate", {}) if isinstance(thresholds, dict) else {}
+    override = per_gate.get(gate_name) if isinstance(per_gate, dict) else None
+    if isinstance(override, dict):
+        for key in base_keys:
+            if key in override:
+                active[key] = override[key]
+        for key in override.get("skip_metrics", []) or []:
+            skip.add(key)
+    return active, skip
+
+
+def gate_status(
+    stat: dict[str, Any], thresholds: dict[str, Any], gate_name: str | None = None
+) -> str:
+    """Decide pass/fail/incomplete for a single bucket.
+
+    Each metric votes independently. A metric that is missing for this bucket
+    counts as "missing" rather than silently passing — previously a None
+    metric was treated as a non-failure, so a bucket with only a non-None
+    trajectory could be reported as "pass" even with no clean / t0.1 / gap.
+    Per-gate ``skip_metrics`` opt a metric out: it neither fails nor blocks
+    the pass status (used for long answers where token-exact is not the
+    right signal).
+    """
+    active, skip = resolve_gate_thresholds(thresholds, gate_name)
+    metrics = {
+        "clean_decode_min": stat.get("clean_decode", {}).get("mean"),
+        "t01_correct_min": mean_at(stat, "denoise_token_acc", "t=0.1:correct"),
+        "t01_condition_gap_min": condition_gap(stat, "0.1"),
+        "trajectory_t0_uniform_min": mean_at(
+            stat, "trajectory_token_acc", "t_start=0.00:uniform"
+        ),
     }
-    trajectory = mean_at(stat, "trajectory_token_acc", "t_start=0.00:uniform")
-    failed = [
-        checks["clean"] is not None and checks["clean"] < thresholds["clean_decode_min"],
-        checks["t01"] is not None and checks["t01"] < thresholds["t01_correct_min"],
-        checks["gap"] is not None and checks["gap"] < thresholds["t01_condition_gap_min"],
-        trajectory is not None and trajectory < thresholds["trajectory_t0_uniform_min"],
-    ]
-    if any(failed):
+    fail_any = False
+    missing_any = False
+    for key, value in metrics.items():
+        if key in skip:
+            continue
+        threshold = active.get(key)
+        if threshold is None:
+            continue
+        if value is None:
+            missing_any = True
+            continue
+        if value < threshold:
+            fail_any = True
+    if fail_any:
         return "fail"
-    if trajectory is None:
-        return "missing_trajectory"
+    if missing_any:
+        return "incomplete"
     return "pass"
 
 
@@ -514,15 +633,36 @@ def render_group_table(exp: dict[str, Any], group_name: str, min_n: int) -> list
     return lines
 
 
-def render_gate_summary(results: dict[str, Any], thresholds: dict[str, float], min_n: int) -> list[str]:
+def render_gate_summary(results: dict[str, Any], thresholds: dict[str, Any], min_n: int) -> list[str]:
+    per_gate = thresholds.get("per_gate", {}) if isinstance(thresholds, dict) else {}
+    note_lines = []
+    if per_gate:
+        note_lines.append("Per-gate threshold overrides:")
+        for name, override in per_gate.items():
+            if not isinstance(override, dict):
+                continue
+            comment = override.get("_comment")
+            skip = override.get("skip_metrics") or []
+            note = f"- `{name}`"
+            if skip:
+                note += f" skips metrics {sorted(skip)}"
+            if comment:
+                note += f" — {comment}"
+            note_lines.append(note)
     lines = [
         "## Curriculum Gate Summary",
         "",
         "Gate status uses configurable thresholds from `eval_probes/sft_eval_harness_config.json`. Current thresholds are intentionally aspirational and are meant to flag bottlenecks, not to claim model quality.",
+        "Status `incomplete` means the bucket has at least one required metric missing (no longer silently treated as pass).",
         "",
+    ]
+    if note_lines:
+        lines.extend(note_lines)
+        lines.append("")
+    lines.extend([
         "| experiment | gate | n | status | clean | t0.1 correct | t0.1 gap | t0.3 correct | t0.5 correct | t_start=0 uniform | exact |",
         "|---|---|---:|---|---:|---:|---:|---:|---:|---:|---:|",
-    ]
+    ])
     for exp in results["experiments"].values():
         gates = exp["groups"].get("curriculum_gate", {})
         for gate_name, stat in sorted(gates.items()):
@@ -534,7 +674,7 @@ def render_gate_summary(results: dict[str, Any], thresholds: dict[str, float], m
                     exp["label"],
                     gate_name,
                     str(stat["n"]),
-                    gate_status(stat, thresholds),
+                    gate_status(stat, thresholds, gate_name),
                     fmt(stat["clean_decode"]["mean"]),
                     fmt(mean_at(stat, "denoise_token_acc", "t=0.1:correct")),
                     fmt(condition_gap(stat, "0.1")),
@@ -548,7 +688,47 @@ def render_gate_summary(results: dict[str, Any], thresholds: dict[str, float], m
     return lines
 
 
-def render_markdown(results: dict[str, Any], min_n: int, thresholds: dict[str, float]) -> str:
+def render_metadata_coverage(results: dict[str, Any]) -> list[str]:
+    rows = []
+    for exp in results["experiments"].values():
+        info = exp.get("metadata_matches", {}) or {}
+        if not info.get("expected_metadata"):
+            continue
+        n = info.get("cfm_examples", 0)
+        missing = info.get("missing_cfm_examples", 0)
+        match_rate = info.get("match_rate")
+        missing_fields = exp.get("missing_fields", {}) or {}
+        flagged_fields = ", ".join(
+            f"{k}={v}" for k, v in sorted(missing_fields.items()) if v
+        ) or "-"
+        rows.append((exp["label"], n, missing, match_rate, flagged_fields))
+    if not rows:
+        return []
+    lines = [
+        "## Metadata & Field Coverage",
+        "",
+        "Metadata join uses `(input.strip(), target.strip())`. Rows that fail to match fall back to `source=unknown` and are not included in source-group / source slices, so a low match rate silently biases the breakdown. Missing-field counts cover JSON keys read by the harness; non-zero values mean the underlying probe artifact is incomplete and the corresponding metric was skipped (not coerced to 0).",
+        "",
+        "| experiment | cfm rows | missing meta | match rate | missing fields |",
+        "|---|---:|---:|---:|---|",
+    ]
+    for label, n, missing, match_rate, flagged in rows:
+        lines.append(
+            "| "
+            + " | ".join([
+                label,
+                str(n),
+                str(missing),
+                fmt(match_rate),
+                flagged,
+            ])
+            + " |"
+        )
+    lines.append("")
+    return lines
+
+
+def render_markdown(results: dict[str, Any], min_n: int, thresholds: dict[str, Any]) -> str:
     lines = [
         "# CFM SFT Eval Harness Report",
         "",
@@ -581,6 +761,10 @@ def render_markdown(results: dict[str, Any], min_n: int, thresholds: dict[str, f
             + " |"
         )
 
+    coverage_lines = render_metadata_coverage(results)
+    if coverage_lines:
+        lines += [""] + coverage_lines
+
     lines += [""] + render_gate_summary(results, thresholds=thresholds, min_n=min_n)
     lines += [
         "",
@@ -589,7 +773,11 @@ def render_markdown(results: dict[str, Any], min_n: int, thresholds: dict[str, f
         "Tables are sorted by low-noise-to-high-noise bottleneck metric `t=0.1:correct` ascending. Small groups below the `min_n` threshold are omitted.",
         "",
     ]
-    for exp_key in ("synthetic_10k", "tulu_short_10k", "tulu_mixed_10k"):
+    detail_keys = [
+        k for k in ("synthetic_10k", "tulu_short_10k", "tulu_mixed_10k")
+        if k in results["experiments"]
+    ]
+    for exp_key in detail_keys:
         exp = results["experiments"][exp_key]
         for group in ("curriculum_gate", "source_group", "prompt_type", "answer_type", "prompt_len_bucket", "target_len_bucket"):
             lines.extend(render_group_table(exp, group, min_n=min_n))
@@ -599,7 +787,7 @@ def render_markdown(results: dict[str, Any], min_n: int, thresholds: dict[str, f
         "## Worst t0.1 / t0.3 Controlled Denoise Examples",
         "",
     ]
-    for exp_key in ("synthetic_10k", "tulu_short_10k", "tulu_mixed_10k"):
+    for exp_key in detail_keys:
         exp = results["experiments"][exp_key]
         lines.append(f"### {exp['label']}")
         lines.append("")
@@ -626,7 +814,7 @@ def render_markdown(results: dict[str, Any], min_n: int, thresholds: dict[str, f
         "## Worst Pure-Noise Trajectory Examples",
         "",
     ]
-    for exp_key in ("synthetic_10k", "tulu_short_10k", "tulu_mixed_10k"):
+    for exp_key in detail_keys:
         exp = results["experiments"][exp_key]
         lines.append(f"### {exp['label']}")
         lines.append("")
