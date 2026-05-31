@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>elf-pro 研究路线 — NFE↓ 主菜 / Context↑ / PPL↑</title>
+<title>elf-pro 研究路线 — 实验后修订：先修 Conditional Flow，再谈 NFE</title>
 <style>
   :root {
     --fg: #1a1a1a;
@@ -63,6 +63,7 @@
   .callout.green  { border-color: var(--accent2); background: #ecf5e8; }
   .callout.blue   { border-color: var(--accent3); background: #e6eef5; }
   .callout.red    { border-color: var(--warn);    background: #f8e8e6; }
+  .callout.gray   { border-color: var(--muted);   background: #f2f2ee; }
   .headline {
     background: var(--headline-bg);
     border: 2px solid var(--accent);
@@ -116,30 +117,180 @@
 <div class="wrap">
 
 <h1>elf-pro 研究路线</h1>
-<p class="subtitle">2026-05-22 · 与 <code>elf_code_review.html</code> 配套；后者是改进点全集（P/S/L issue），本文是 paper-track 的取舍与排序。</p>
+<p class="subtitle">
+2026-05-22 初版；2026-05-31 根据 CFM SFT / short-QA / Tulu 10K / VQA probe 结果修订。
+与 <code>elf_code_review.html</code>、<code>elf_multimodal_scaling_plan.html</code>、
+<code>cfm_sft_eval_harness.md</code> 和 <code>flow_matching_teacher_forcing_notes.html</code> 配套阅读。
+</p>
 
 <div class="headline">
-  <strong>Paper main claim（决定）：</strong>
-  以 <strong>1-8 NFE 达到或超越 ELF 32-NFE 的生成质量</strong>，其中"NFE"指生成整段 max_length 序列所需的总 forward 次数（不是 per-token）。Context 扩展和 PPL 改进作为支撑性贡献，目的是为 distillation 提供更强的 teacher 并让故事完整。
+  <strong>2026-05-31 修订后的主判断：</strong>
+  旧路线把 <strong>NFE↓</strong> 当作 paper 主菜，是实验前的合理假设；但最新实验说明，当前瓶颈不是采样步数太多，
+  而是 <strong>prompt-conditioned high-noise trajectory 没有稳定进入正确 answer basin</strong>。
+  因此新的主线应先解决 <strong>conditional flow training</strong>，再把 NFE 蒸馏作为第二阶段加速方向。
+</div>
+
+<div class="callout red">
+<strong>路线调整：</strong>
+本文后半部分保留原 NFE / context / PPL 方案，作为 Phase 2 以后可复用的技术储备。
+当前优先级已经改为：
+<strong>诊断闭环 → high-noise conditional flow 修复 → prefix continuation pretrain → instruction SFT → token-aware / shortcut 加速</strong>。
 </div>
 
 <div class="toc">
   <strong>目录</strong>
   <ol>
-    <li><a href="#nfe-clarify">一、先把 "NFE" 这个词的语义钉死</a></li>
-    <li><a href="#three-axes">二、三条研究主轴：speed / scale / perf</a></li>
-    <li><a href="#coupling">三、三轴的耦合关系（关键）</a></li>
-    <li><a href="#main-nfe">四、主菜：NFE 到个位数 — 技术全景</a></li>
-    <li><a href="#side-context">五、支撑：context window 扩展</a></li>
-    <li><a href="#supp-ppl">六、支撑：PPL 性能提升</a></li>
-    <li><a href="#roadmap">七、路线图（Phase 1/2/3）</a></li>
-    <li><a href="#risks">八、风险与回避</a></li>
-    <li><a href="#nfe-deep">九、NFE 加速方向细化（ELF-only 的四个原创点）</a></li>
+    <li><a href="#post-exp-revision">零、实验后修订：旧路线为什么需要降级</a></li>
+    <li><a href="#new-mainline">零点五、修订后的研究主线</a></li>
+    <li><a href="#nfe-clarify">一、历史方案：NFE 语义澄清</a></li>
+    <li><a href="#three-axes">二、历史方案：speed / scale / perf 三轴</a></li>
+    <li><a href="#coupling">三、历史方案：三轴耦合关系</a></li>
+    <li><a href="#main-nfe">四、Phase 4 技术储备：NFE 到个位数</a></li>
+    <li><a href="#side-context">五、后续支撑：context window 扩展</a></li>
+    <li><a href="#supp-ppl">六、后续支撑：PPL 性能提升</a></li>
+    <li><a href="#roadmap">七、历史路线图（已被零点五节取代）</a></li>
+    <li><a href="#risks">八、历史风险表（保留参考）</a></li>
+    <li><a href="#nfe-deep">九、Phase 4 方向池：NFE 加速想法</a></li>
   </ol>
 </div>
 
 <!-- ==================================================================== -->
-<h2 id="nfe-clarify">一、先把 "NFE" 这个词的语义钉死</h2>
+<h2 id="post-exp-revision">零、实验后修订：旧路线为什么需要降级</h2>
+
+<p>
+旧路线是在大规模实验之前制定的。当时的假设是：ELF 已经能作为语言 latent flow 稳定生成文本，
+因此最有价值的研究主菜是把 32/64 NFE 压到 1-8 NFE，同时用 PPL 和 context 扩展做支撑。
+</p>
+
+<p>
+现在已经有了更直接的诊断结果。它们改变了问题定义：
+</p>
+
+<table>
+  <tr><th>实验观察</th><th>含义</th><th>对旧路线的影响</th></tr>
+  <tr>
+    <td>Clean decode 接近满分</td>
+    <td>DLM head 能从真实 target latent 解回 token，decoder 不是当前主瓶颈。</td>
+    <td>继续只强化 decoder 或只看 CE loss 意义有限。</td>
+  </tr>
+  <tr>
+    <td>Controlled denoise 在低/中噪声可用</td>
+    <td>模型在真实 bridge 附近能利用 prompt 修 target，不是完全忽略 condition。</td>
+    <td>低噪声 repair 不能代表 full generation 成功。</td>
+  </tr>
+  <tr>
+    <td>Full Tulu3 SFT 从纯噪声采样失败</td>
+    <td>模型会生成英文，但经常不按 prompt 回答；崩点在 high-noise semantic routing。</td>
+    <td>直接做 NFE 蒸馏可能只是在蒸馏一个不可靠 trajectory。</td>
+  </tr>
+  <tr>
+    <td>Short-QA 128 能从 <code>t=0</code> 训通</td>
+    <td>当前 CFM 代码路径并非理论上无法做 conditional generation。</td>
+    <td>问题更像数据分布、loss 配比、高噪声监督和 condition binding，而不是范式直接失败。</td>
+  </tr>
+  <tr>
+    <td>Tulu Short/Mixed 10K 暴露离散答案漂移和语义盆地偏移</td>
+    <td>真实 SFT 分布下，长 prompt、离散答案、模板任务、开放回答混杂会让 vector field 学到“合理答案流形”，而不是当前 prompt 的 target latent。</td>
+    <td>当前主问题应定义为 CFM instruction tuning 的可靠性，而不是采样器加速。</td>
+  </tr>
+  <tr>
+    <td>Stage-2 VQA probe 不可用</td>
+    <td>多模态模型能生成文本，但没有稳定按图/按问题回答。</td>
+    <td>多模态 Stage 1/2 不应继续盲目扩大，必须先修 text-only conditional flow。</td>
+  </tr>
+</table>
+
+<div class="callout blue">
+<strong>新的核心问题：</strong>
+连续 latent flow 语言模型能否通过合适的训练目标和数据阶段，稳定学会
+<code>condition + pure noise → prompt-specific target latent</code>？
+如果这个问题没解决，NFE↓、多模态理解和长 context 都会建立在不可靠的生成轨迹上。
+</div>
+
+<!-- ==================================================================== -->
+<h2 id="new-mainline">零点五、修订后的研究主线</h2>
+
+<p>
+修订后的 paper / 项目路线不再从“如何更快采样”开始，而是从“如何让 CFM 在语言 instruction 场景中可靠 conditional generation”开始。
+旧的 NFE 方向仍然重要，但它应该跟在可靠 trajectory 之后。
+</p>
+
+<div class="grid-3">
+  <div class="card main">
+    <span class="tag tag-main">主线 1</span>
+    <h4>CFM SFT 诊断与可靠性</h4>
+    <p>固定 clean decode、controlled denoise、<code>t_start=0</code> trajectory、zero/shuffled gap、A/B/C gate。</p>
+    <p><strong>目标：</strong> 不再让 loss 或 clean decode 误导训练判断。</p>
+  </div>
+  <div class="card main">
+    <span class="tag tag-main">主线 2</span>
+    <h4>High-noise conditional flow</h4>
+    <p>在 <code>t=0~0.3</code> 强化 condition routing：timestep 分布、loss weight、token-aware endpoint loss、trajectory consistency。</p>
+    <p><strong>目标：</strong> 从纯噪声能按 prompt 进入正确 answer basin。</p>
+  </div>
+  <div class="card main">
+    <span class="tag tag-main">主线 3</span>
+    <h4>Conditioned pretrain</h4>
+    <p>在 SFT 前加入 prefix continuation pretrain，让模型先大规模学习 <code>prefix + noise → continuation</code>。</p>
+    <p><strong>目标：</strong> 缩小 unconditioned OWT pretrain 到 instruction SFT 的能力断层。</p>
+  </div>
+</div>
+
+<table>
+  <tr><th>新 Phase</th><th>任务</th><th>数据</th><th>成功信号</th></tr>
+  <tr>
+    <td>Phase 0 · 固定诊断闭环</td>
+    <td>把 CFM SFT eval harness 当作所有实验 gate。</td>
+    <td>Tulu Short 10K / Tulu Mixed 10K / synthetic short QA / VQA probe。</td>
+    <td>每个 checkpoint 都能按 slice 输出 clean、high-noise gap、trajectory、exact/semantic 指标。</td>
+  </tr>
+  <tr>
+    <td>Phase 1 · 修 text-only conditional flow</td>
+    <td>Recipe ablation：high-noise reweight、decoder_prob、EOS/length、source mix、token-aware loss。</td>
+    <td>先 Tulu Short/Mixed 10K，不直接 full Tulu3 盲训。</td>
+    <td><code>t=0.1 correct</code> 提升，zero/shuffled 仍低；<code>t_start=0</code> trajectory 同步改善。</td>
+  </tr>
+  <tr>
+    <td>Phase 2 · Prefix continuation pretrain</td>
+    <td>从 raw text 构造 prefix/continuation 条件生成任务，使用和 SFT 一致或兼容的 CFM loss。</td>
+    <td>OWT / 38b_solar / experiment_1997 过滤子集。</td>
+    <td>模型在非 instruction 数据上学会 condition controls generation，再迁移到 Tulu SFT。</td>
+  </tr>
+  <tr>
+    <td>Phase 3 · Instruction SFT 重训</td>
+    <td>用 Phase 1/2 选出的 loss 和 checkpoint 重新 SFT。</td>
+    <td>Full Tulu3 filtered + carefully balanced source mix。</td>
+    <td>短答案、自然短答、长答案 gate 都不靠 clean decode 虚高；生成按 prompt 回答。</td>
+  </tr>
+  <tr>
+    <td>Phase 4 · NFE / shortcut 加速</td>
+    <td>Token-CE distillation、stride-conditioned shortcut、MeanFlow/consistency 类目标。</td>
+    <td>以可靠 text-only checkpoint 作为 teacher。</td>
+    <td>在 NFE 1/4/8/32 上画质量-成本 Pareto curve。</td>
+  </tr>
+  <tr>
+    <td>Phase 5 · 多模态回归</td>
+    <td>SigLIP2 projector warmup + multimodal instruction finetune。</td>
+    <td>LLaVA / VQA / image-text 数据。</td>
+    <td>shuffled-image control 低于真实图像；回答不只是语言 prior。</td>
+  </tr>
+</table>
+
+<div class="callout green">
+<strong>修订后的 paper framing：</strong>
+从 “token-aware accelerated flow matching for language” 调整为
+“reliable conditional flow matching for language instruction tuning”，
+NFE 加速作为在可靠 conditional trajectory 上进一步成立的第二贡献。
+</div>
+
+<div class="callout gray">
+<strong>下面的一、二、三、四、五、六、七、八、九节保留原始 NFE/PPL/context 规划。</strong>
+这些内容仍有研究价值，但需要理解为实验前路线和 Phase 4+ 技术储备；
+不再是当前立即执行的主线。
+</div>
+
+<!-- ==================================================================== -->
+<h2 id="nfe-clarify">一、历史方案保留：先把 "NFE" 这个词的语义钉死</h2>
 
 <div class="callout blue">
 <strong>NFE = Number of Function Evaluations，整段序列共享。</strong>
@@ -160,7 +311,7 @@ ELF 报的 32 NFEs 不是 "一个 token 32 步"，而是 "整个 max_length=1024
 </ol>
 
 <!-- ==================================================================== -->
-<h2 id="three-axes">二、三条研究主轴：speed / scale / perf</h2>
+<h2 id="three-axes">二、历史方案：三条研究主轴 speed / scale / perf</h2>
 
 <div class="grid-3">
   <div class="card main">
@@ -184,7 +335,7 @@ ELF 报的 32 NFEs 不是 "一个 token 32 步"，而是 "整个 max_length=1024
 </div>
 
 <!-- ==================================================================== -->
-<h2 id="coupling">三、三轴的耦合关系（关键）</h2>
+<h2 id="coupling">三、历史方案：三轴的耦合关系</h2>
 
 <svg class="pipe-svg" viewBox="0 0 1000 280" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system" font-size="13">
   <defs>
@@ -239,7 +390,7 @@ ELF 报的 32 NFEs 不是 "一个 token 32 步"，而是 "整个 max_length=1024
 </div>
 
 <!-- ==================================================================== -->
-<h2 id="main-nfe">四、主菜：NFE 到个位数 — 技术全景</h2>
+<h2 id="main-nfe">四、Phase 4 技术储备：NFE 到个位数</h2>
 
 <h3>4.1 ELF 的天然蒸馏起点</h3>
 
@@ -324,7 +475,7 @@ v_target_guided = v_target + (1 − 1/sc_w) · (v_cond − v_uncond)
 </table>
 
 <!-- ==================================================================== -->
-<h2 id="side-context">五、支撑：context window 扩展（1K → 4K+）</h2>
+<h2 id="side-context">五、后续支撑：context window 扩展（1K → 4K+）</h2>
 
 <h3>5.1 当前状态</h3>
 
@@ -369,7 +520,7 @@ v_target_guided = v_target + (1 − 1/sc_w) · (v_cond − v_uncond)
 </ol>
 
 <!-- ==================================================================== -->
-<h2 id="supp-ppl">六、支撑：PPL 性能提升</h2>
+<h2 id="supp-ppl">六、后续支撑：PPL 性能提升</h2>
 
 <p>这一轴是 <strong>同参数同数据下卷指标</strong>，目的是给 Phase 2 NFE 蒸馏提供更强的 teacher。所有改动都在你确认过的"绿区"内（<code>train_step.py</code> + 周边）。</p>
 
@@ -423,7 +574,7 @@ v_target_guided = v_target + (1 − 1/sc_w) · (v_cond − v_uncond)
 </div>
 
 <!-- ==================================================================== -->
-<h2 id="roadmap">七、路线图（Phase 1/2/3）</h2>
+<h2 id="roadmap">七、历史路线图（已被零点五节取代）</h2>
 
 <h3>7.1 Phase 0 — baseline 复现（先决条件，并行处理中）</h3>
 
@@ -481,7 +632,7 @@ v_target_guided = v_target + (1 − 1/sc_w) · (v_cond − v_uncond)
 </table>
 
 <!-- ==================================================================== -->
-<h2 id="risks">八、风险与回避</h2>
+<h2 id="risks">八、历史风险表（保留参考）</h2>
 
 <table>
 <tr><th>风险</th><th>缓解</th></tr>
@@ -508,7 +659,7 @@ v_target_guided = v_target + (1 − 1/sc_w) · (v_cond − v_uncond)
 </table>
 
 <!-- ==================================================================== -->
-<h2 id="nfe-deep">九、NFE 加速方向细化 — ELF-only 的四个原创点</h2>
+<h2 id="nfe-deep">九、Phase 4 方向池：NFE 加速的 ELF-only 想法</h2>
 
 <p>§四给的 M1-M5 是 diffusion 加速文献的通用 menu。本节把它们落到 ELF 上，<strong>给四条只有 ELF 这种"连续 latent denoiser + 离散 DLM head + 共享 trunk"架构才能写出来的方向</strong>。每条都给出训练目标、落点文件、最小可行实验。</p>
 
@@ -845,13 +996,27 @@ for t_anchor in [0.2, 0.5, 0.8]:
 </table>
 
 <div class="callout green">
-<strong>整体结论：</strong> 把 §九的四个方向作为 elf-pro paper 的 §3-§4 主体内容（Phase 2 的具体实现），ELF-only 的 contribution 数量是 5 个，paper 的"newness"密度足够支撑顶会。建议 paper 提纲围绕 "<strong>token-aware accelerated flow matching for language</strong>" 来组织 — 这个 framing 把四个方向收敛成一条故事线。
+<strong>历史结论（保留参考）：</strong> §九的四个方向仍然可以作为 Phase 4 的技术池，
+尤其是 Token-CE Distillation、DLM trajectory critic 和 stride-conditioned shortcut。
+但它们不再应该作为当前 paper 的第一主线；只有当 text-only conditional flow 的
+<code>t_start=0</code> trajectory 和 high-noise condition gap 被修起来后，
+这些加速方法才有可靠 teacher 和可靠评价基础。
+</div>
+
+<div class="callout blue">
+<strong>当前结论：</strong>
+elf-pro 的近期研究问题应改为 <strong>reliable conditional flow matching for language instruction tuning</strong>。
+优先把 CFM SFT 训练成“从纯噪声按 prompt 到达正确 target latent”的模型；
+NFE↓、shortcut、MeanFlow 和多模态 instruction tuning 都应排在这条可靠性主线之后。
 </div>
 
 <hr>
 
 <p style="color: var(--muted); font-size: 12px;">
-本文与 <code>elf_code_review.html</code> 对照阅读：后者是改进点全集（P/S/L issue list 和原始改进建议），本文是基于用户决策（paper 主菜 = NFE↓、绿区 = train_step、算力 = 32+ GPU）做的取舍与排序。下一步：等 Phase 0 baseline 复现完成（dataset crash 修复中），即开始 §九方向 D 9.5.1（DLM 鲁棒性 probe，~1 天）作为后续 §九方向 A/B/C 的可行性验证。
+本文与 <code>elf_multimodal_scaling_plan.html</code>、<code>cfm_sft_eval_harness.md</code>、
+<code>flow_matching_teacher_forcing_notes.html</code> 和 <code>elf_code_review.html</code> 对照阅读。
+2026-05-31 后，执行优先级以本文零点五节为准：先修 text-only CFM SFT 的 high-noise conditional flow，
+再回到 NFE 加速和多模态训练。
 </p>
 
 </div>
