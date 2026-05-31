@@ -81,6 +81,13 @@ class Config:
     decoder_p_mean: float = 0.8  # Mean for logit-normal noise schedule in decoder objective
     decoder_p_std: float = 0.8  # Std for logit-normal noise schedule in decoder objective
 
+    # Optional token-level semantic supervision on denoiser predictions.
+    # When enabled, denoiser x_pred from high-noise rows is decoded in decoder
+    # mode and receives an auxiliary CE loss against target tokens.
+    semantic_ce_weight: float = 0.0
+    semantic_ce_t_min: float = 0.0
+    semantic_ce_t_max: float = 0.3
+
     # Conditioning / CFG
     label_drop_prob: float = 0.0
     self_cond_prob: float = 0.5

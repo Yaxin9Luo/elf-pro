@@ -193,6 +193,12 @@ def run_training(config, *, force_cpu: bool = False):
     log_for_0(f"PyTorch device: {device}, world_size={world}")
     log_for_0(f"BF16 autocast: {bool(getattr(config, 'use_bf16', True)) and device.type == 'cuda'}")
     log_for_0(f"Gradient checkpointing: {bool(getattr(config, 'gradient_checkpointing', True))}")
+    if float(getattr(config, "semantic_ce_weight", 0.0) or 0.0) > 0:
+        log_for_0(
+            "Semantic CE: "
+            f"weight={config.semantic_ce_weight}, "
+            f"t_range=[{config.semantic_ce_t_min}, {config.semantic_ce_t_max}]"
+        )
     log_for_0("=" * 60)
 
     hope_metric_hook = HopeMetricHook(
@@ -519,17 +525,27 @@ def run_training(config, *, force_cpu: bool = False):
             epoch_pbar.update(1)
 
             if global_step % config.log_freq == 0:
-                stacked = torch.stack([
+                semantic_ce_enabled = float(getattr(config, "semantic_ce_weight", 0.0) or 0.0) > 0
+                stack_items = [
                     torch.stack([m["loss"] for m in train_metrics]).mean(),
                     torch.stack([m["l2_loss"] for m in train_metrics]).mean(),
                     torch.stack([m["ce_loss"] for m in train_metrics]).mean(),
-                ])
+                ]
+                if semantic_ce_enabled:
+                    stack_items.extend([
+                        torch.stack([m["semantic_ce_loss"] for m in train_metrics]).mean(),
+                        torch.stack([m["semantic_ce_active_frac"] for m in train_metrics]).mean(),
+                    ])
+                stacked = torch.stack(stack_items)
                 # Average each metric across DDP ranks before logging — done
                 # once per log_freq so we never sync on every train step.
                 if dist.is_available() and dist.is_initialized():
                     dist.all_reduce(stacked, op=dist.ReduceOp.SUM)
                     stacked = stacked / dist.get_world_size()
-                avg_loss, avg_l2, avg_ce = (float(x) for x in stacked.tolist())
+                stacked_vals = [float(x) for x in stacked.tolist()]
+                avg_loss, avg_l2, avg_ce = stacked_vals[:3]
+                avg_semantic_ce = stacked_vals[3] if semantic_ce_enabled else 0.0
+                avg_semantic_active = stacked_vals[4] if semantic_ce_enabled else 0.0
                 now = time.time()
                 steps_per_sec = (global_step - last_log_step) / max(now - last_log_time, 1e-8)
                 current_lr = state.optimizer.param_groups[0]["lr"]
@@ -540,18 +556,30 @@ def run_training(config, *, force_cpu: bool = False):
                     "sps": f"{steps_per_sec:.1f}", "lr": f"{current_lr:.2e}",
                     "toks": f"{tokens_seen/1e9:.3f}B",
                 }
+                if semantic_ce_enabled:
+                    postfix_dict["sem_ce"] = f"{avg_semantic_ce:.4f}"
+                    postfix_dict["sem_act"] = f"{avg_semantic_active:.3f}"
                 log_for_0(postfix_dict)
                 epoch_pbar.set_postfix(**postfix_dict)
 
                 if rank == 0:
                     current_epoch_progress = epoch + (step_in_epoch + 1) / steps_per_epoch
-                    tqdm.write(
+                    log_msg = (
                         f"INFO - engine - Step {global_step}: loss={avg_loss:.4f}, "
                         f"l2={avg_l2:.4f}, ce={avg_ce:.4f}, "
-                        f"lr={current_lr:.2e}, steps/sec={steps_per_sec:.2f}, "
-                        f"tokens={tokens_seen/1e9:.3f}B (non-pad {non_pad_tokens_seen/1e9:.3f}B)"
                     )
-                    hope_metric_hook.log_scalars({
+                    if semantic_ce_enabled:
+                        log_msg += (
+                            f"sem_ce={avg_semantic_ce:.4f}, "
+                            f"sem_act={avg_semantic_active:.3f}, "
+                        )
+                    log_msg += (
+                        f"lr={current_lr:.2e}, steps/sec={steps_per_sec:.2f}, "
+                        f"tokens={tokens_seen/1e9:.3f}B "
+                        f"(non-pad {non_pad_tokens_seen/1e9:.3f}B)"
+                    )
+                    tqdm.write(log_msg)
+                    train_scalars = {
                         "train/loss": avg_loss,
                         "train/l2_loss": avg_l2,
                         "train/ce_loss": avg_ce,
@@ -561,10 +589,14 @@ def run_training(config, *, force_cpu: bool = False):
                         "train/tokens_per_sec": tokens_per_step * steps_per_sec,
                         "train/tokens_seen_B": tokens_seen / 1e9,
                         "train/non_pad_tokens_seen_B": non_pad_tokens_seen / 1e9,
-                    }, global_step)
+                    }
+                    if semantic_ce_enabled:
+                        train_scalars["train/semantic_ce_loss"] = avg_semantic_ce
+                        train_scalars["train/semantic_ce_active_frac"] = avg_semantic_active
+                    hope_metric_hook.log_scalars(train_scalars, global_step)
                     if config.use_wandb and wandb is not None:
                         try:
-                            wandb.log({
+                            wandb_scalars = {
                                 "train_loss": avg_loss, "train_l2_loss": avg_l2,
                                 "train_ce_loss": avg_ce, "lr": current_lr,
                                 "epoch": current_epoch_progress, "step": global_step,
@@ -574,7 +606,11 @@ def run_training(config, *, force_cpu: bool = False):
                                 "non_pad_tokens_seen": non_pad_tokens_seen,
                                 "non_pad_tokens_seen_B": non_pad_tokens_seen / 1e9,
                                 "tokens_per_sec": tokens_per_step * steps_per_sec,
-                            }, step=global_step)
+                            }
+                            if semantic_ce_enabled:
+                                wandb_scalars["train_semantic_ce_loss"] = avg_semantic_ce
+                                wandb_scalars["train_semantic_ce_active_frac"] = avg_semantic_active
+                            wandb.log(wandb_scalars, step=global_step)
                         except Exception:
                             pass
 

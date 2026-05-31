@@ -45,6 +45,9 @@ def train_step(
     latent_mean, latent_std = config.latent_mean, config.latent_std
     decoder_prob = config.decoder_prob
     decoder_noise_scale = config.decoder_noise_scale
+    semantic_ce_weight = float(getattr(config, "semantic_ce_weight", 0.0) or 0.0)
+    semantic_ce_t_min = float(getattr(config, "semantic_ce_t_min", 0.0))
+    semantic_ce_t_max = float(getattr(config, "semantic_ce_t_max", 0.3))
 
     gen = state.dropout_generator
 
@@ -253,7 +256,7 @@ def train_step(
     # L2 per-token (used on denoiser-mode rows). v_pred is extracted with
     # (denoiser_z, t) — meaningful only for denoiser rows; decoder rows are
     # masked out below.
-    v_pred, _ = net_out_to_v_x(net_out, denoiser_z, denoiser_t, t_eps)
+    v_pred, x_pred = net_out_to_v_x(net_out, denoiser_z, denoiser_t, t_eps)
     v_final_target = get_v_target(
         denoiser_z, denoiser_t, base_v_target=v_target, x_tokens=x0,
         shared_net_out_uncond=shared_net_out_uncond,
@@ -270,11 +273,54 @@ def train_step(
     total_sum = (ce_per_token * ce_mask).sum() + (l2_per_token * l2_mask).sum()
     loss = total_sum / torch.clamp(loss_mask_f.sum(), min=1.0)
 
+    semantic_ce_loss_val = loss.new_zeros(())
+    semantic_active_frac = loss.new_zeros(())
+    if semantic_ce_weight > 0:
+        high_noise_mask = (
+            (denoiser_t >= semantic_ce_t_min)
+            & (denoiser_t <= semantic_ce_t_max)
+        ).to(dtype=loss_mask_f.dtype).view(-1, 1)
+        semantic_mask = loss_mask_f * (1.0 - decoder_mask_B1) * high_noise_mask
+
+        # Decode the denoiser's predicted clean latent, not the original noisy
+        # decoder branch input. Keep condition tokens clean, matching sampling.
+        semantic_x_pred = restore_cond(x_pred, x0, cond_seq_mask)
+        if config.self_cond_prob > 0:
+            semantic_decoder_input = torch.cat(
+                [semantic_x_pred, torch.zeros_like(semantic_x_pred)], dim=-1,
+            )
+        else:
+            semantic_decoder_input = semantic_x_pred
+
+        semantic_decoder_active = torch.ones_like(denoiser_t)
+        semantic_decoder_t = torch.ones_like(denoiser_t)
+        with torch.amp.autocast('cuda', dtype=torch.bfloat16, enabled=use_bf16):
+            _, semantic_decoder_logits = model(
+                semantic_decoder_input, semantic_decoder_t,
+                deterministic=False,
+                self_cond_cfg_scale=self_cond_cfg_scale,
+                decoder_step_active=semantic_decoder_active,
+            )
+        semantic_log_probs = F.log_softmax(semantic_decoder_logits.to(torch.float32), dim=-1)
+        semantic_ce_per_token = -semantic_log_probs.gather(
+            -1, decoder_targets.unsqueeze(-1),
+        ).squeeze(-1)
+        semantic_den = semantic_mask.sum()
+        semantic_ce_loss_val = (
+            (semantic_ce_per_token * semantic_mask).sum()
+            / torch.clamp(semantic_den, min=1.0)
+        )
+        semantic_active_frac = (
+            semantic_den / torch.clamp(loss_mask_f.sum(), min=1.0)
+        ).detach()
+        loss = loss + semantic_ce_weight * semantic_ce_loss_val
+
     # Per-branch metrics: mean per-token within each branch.
     ce_loss_val = ((ce_per_token * ce_mask).sum()
                    / torch.clamp(ce_mask.sum(), min=1.0)).detach()
     l2_loss_val = ((l2_per_token * l2_mask).sum()
                    / torch.clamp(l2_mask.sum(), min=1.0)).detach()
+    semantic_ce_loss_metric = semantic_ce_loss_val.detach()
 
     accum_steps = max(config.grad_accum_steps, 1)
     state.step += 1
@@ -296,5 +342,7 @@ def train_step(
         "loss": loss.detach(),
         "l2_loss": l2_loss_val,
         "ce_loss": ce_loss_val,
+        "semantic_ce_loss": semantic_ce_loss_metric,
+        "semantic_ce_active_frac": semantic_active_frac,
     }
     return state, metrics
