@@ -48,3 +48,63 @@ The corresponding analysis summary is in
 `docs/elf_multimodal_scaling_plan.html`.
 
 The full harness runbook is in `docs/cfm_sft_eval_harness.md`.
+
+## Standard Instruction Benchmarks
+
+`prepare_standard_benchmarks.py` converts common LLM benchmarks into a
+generation-style JSONL format that a CFM model can answer without AR
+log-likelihoods:
+
+```bash
+python3 eval_probes/prepare_standard_benchmarks.py \
+  --output_dir eval_probes/standard_benchmarks/data
+```
+
+The default suite currently attempts IFEval, GSM8K, BoolQ, ARC-Challenge,
+OpenBookQA, HellaSwag, PIQA, Winogrande, TruthfulQA-MC1, and MMLU-Pro.
+Datasets that cannot be downloaded are recorded in `manifest.json` and do not
+block the rest unless `--fail_fast` is passed.
+
+Run a CFM checkpoint on prepared files:
+
+```bash
+CONFIG=src/configs/training_configs/train_tulu3_sft_english_semantic_ce_pmean_m3_dp050_w050_t030_ELF-L_hope_32gpu_20ep.yml \
+CHECKPOINT=/path/to/checkpoint_N \
+IFEVAL_GOOGLE_DIR=third_party/google_ifeval_current \
+MAX_EXAMPLES=16 \
+bash scripts/run_cfm_standard_benchmarks.sh
+```
+
+Use the sharded runner to split each benchmark across multiple local GPUs:
+
+```bash
+CONFIG=src/configs/training_configs/train_tulu3_sft_english_semantic_ce_pmean_m3_dp050_w050_t030_ELF-L_hope_32gpu_20ep.yml \
+CHECKPOINT=/path/to/checkpoint_N \
+CUDA_DEVICES=0,1 \
+IFEVAL_GOOGLE_DIR=third_party/google_ifeval_current \
+bash scripts/run_cfm_standard_benchmarks_sharded.sh
+```
+
+If `IFEVAL_GOOGLE_DIR` is set, the script also runs Google's official IFEval
+scorer and writes `aggregate_summary.{json,md}`. To score IFEval manually:
+
+```bash
+python3 eval_probes/score_ifeval_official.py \
+  --benchmark_jsonl eval_probes/standard_benchmarks/data/ifeval.jsonl \
+  --generations_jsonl eval_probes/standard_benchmarks/results/<run>/ifeval.jsonl \
+  --google_research_dir third_party/google_ifeval_current \
+  --output_dir eval_probes/standard_benchmarks/results/<run>/ifeval_official
+```
+
+To watch a training directory and evaluate the newest checkpoint when it appears:
+
+```bash
+CONFIG=src/configs/training_configs/train_tulu3_sft_english_semantic_ce_pmean_m3_dp050_w050_t030_ELF-L_hope_32gpu_20ep.yml \
+CKPT_GLOB=/path/to/output/checkpoint_* \
+RESULT_ROOT=eval_probes/standard_benchmarks/results/sft_20ep_latest \
+RUNNER_SCRIPT=scripts/run_cfm_standard_benchmarks_sharded.sh \
+CUDA_DEVICES=0,1 \
+IFEVAL_GOOGLE_DIR=third_party/google_ifeval_current \
+MAX_RUNS=1 \
+bash scripts/watch_cfm_checkpoint_benchmarks.sh
+```
