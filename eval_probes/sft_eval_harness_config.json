@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "description": "Fixed evaluation harness for Continuous Flow Matching SFT instruction diagnostics.",
+  "experiments": {
+    "synthetic_128": {
+      "label": "Synthetic 128",
+      "cfm": "eval_probes/short_qa_overfit_128/cfm_sanity_short_qa_overfit_params.json",
+      "trajectory": "eval_probes/short_qa_overfit_128/sampling_high_noise_all128_params.json",
+      "metadata": null
+    },
+    "synthetic_10k": {
+      "label": "Synthetic 10K",
+      "cfm": "eval_probes/short_qa_10k/cfm_sanity_random256_seed12345_params.json",
+      "trajectory": "eval_probes/short_qa_10k/sampling_trajectory_random16_seed12345_params.json",
+      "metadata": null
+    },
+    "tulu_short_10k": {
+      "label": "Tulu3 Short QA 10K",
+      "cfm": "eval_probes/tulu3_short_answer_clean_en_10k/cfm_sanity_random256_seed12345_params.json",
+      "trajectory": "eval_probes/tulu3_short_answer_clean_en_10k/sampling_trajectory_random16_seed12345_params.json",
+      "metadata": "eval_probes/dataset_metadata/tulu3_short_answer_clean_en_10k_train_metadata.jsonl"
+    },
+    "tulu_mixed_10k": {
+      "label": "Tulu3 Mixed Length 10K",
+      "cfm": "eval_probes/tulu3_mixed_length_clean_en_10k/cfm_sanity_random256_seed12345_params.json",
+      "trajectory": "eval_probes/tulu3_mixed_length_clean_en_10k/sampling_trajectory_random16_seed12345_params.json",
+      "metadata": "eval_probes/dataset_metadata/tulu3_mixed_length_clean_en_10k_train_metadata.jsonl"
+    }
+  },
+  "gates": {
+    "A_discrete_short": {
+      "label": "A: discrete short answer",
+      "description": "yes/no, number, label, symbol, and short structured outputs; checks whether high-noise flow can recover a unique target.",
+      "rules": [
+        {
+          "answer_type": ["yes_no", "number", "single_word_or_symbol", "structured_json_or_list"],
+          "target_len_bucket": ["<=2", "3-8", "9-16"]
+        }
+      ]
+    },
+    "B_natural_short": {
+      "label": "B: natural short answer",
+      "description": "short phrases, one-sentence answers, short refusals, and natural-language short responses.",
+      "rules": [
+        {
+          "answer_type": ["short_phrase", "sentence", "refusal"],
+          "target_len_bucket": ["3-8", "9-16", "17-64"]
+        }
+      ]
+    },
+    "C_long_answer": {
+      "label": "C: long answer",
+      "description": "multi-line, long-form, and long target responses; checks long-horizon sampling drift.",
+      "rules": [
+        {
+          "answer_type": ["multi_line", "long_form"]
+        },
+        {
+          "target_len_bucket": ["17-64", ">64"]
+        }
+      ]
+    }
+  },
+  "gate_thresholds": {
+    "clean_decode_min": 0.98,
+    "t01_correct_min": 0.8,
+    "t01_condition_gap_min": 0.5,
+    "trajectory_t0_uniform_min": 0.8
+  }
+}

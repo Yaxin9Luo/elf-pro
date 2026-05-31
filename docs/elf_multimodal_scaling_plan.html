@@ -596,6 +596,74 @@
   </section>
 
   <section>
+    <h2>细粒度诊断闭环（2026-05-31）</h2>
+    <p>
+      为了避免下一轮继续盲训，已经把当前 probe 结果整理成一个可重复运行的只读诊断闭环。
+      脚本为 <code class="path">scripts/analyze_cfm_ablation_diagnostics.py</code>，
+      配置为 <code class="path">eval_probes/sft_eval_harness_config.json</code>，
+      输出为 <code class="path">eval_probes/diagnostics/sft_eval_harness_report.md</code> 和
+      <code class="path">eval_probes/diagnostics/sft_eval_harness_report.json</code>。
+      详细 runbook 见 <code class="path">docs/cfm_sft_eval_harness.md</code>。
+      分桶指标使用 sample-level macro mean，因此会和原始 JSON 里的 token-weighted summary 有轻微差异。
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>切片</th>
+          <th>关键统计</th>
+          <th>结论</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Synthetic 10K：数字 / 算术</td>
+          <td>number answer 的 t=0.1 correct 为 0.733，t_start=0 uniform exact 为 3/8；yes/no 为 0.819 和 7/8。</td>
+          <td>从 128 扩到 10K 后，最先裂的是离散数值答案；模型会落到“常见附近答案”，不是不会 decode。</td>
+        </tr>
+        <tr>
+          <td>Tulu Short：source</td>
+          <td>probe 256 条中 FLAN v2 占 221 条，t=0.1 correct 为 0.531；personahub 为 0.494；sciriff 为 0.606。</td>
+          <td>Short QA 的问题不是某一个坏 source 独占，但 FLAN/template 分布占比过大，确实主导了整体指标。</td>
+        </tr>
+        <tr>
+          <td>Tulu Short：答案类型</td>
+          <td>yes/no 的 t=0.1 correct 最低，为 0.477；number 为 0.560；structured JSON/list 为 0.588。</td>
+          <td>真实短答里，越像离散分类标签，越容易在高噪声条件场里丢失目标；“短”不等于“容易”。</td>
+        </tr>
+        <tr>
+          <td>Tulu Short：prompt 长度</td>
+          <td>33-128 和 129-256 prompt buckets 的 t=0.1 correct 分别为 0.527 / 0.532，几乎一样。</td>
+          <td>Short 的主要瓶颈不是 prompt 变长本身，而是模板任务和答案类型的信息密度。</td>
+        </tr>
+        <tr>
+          <td>Tulu Mixed：局部 denoise vs trajectory</td>
+          <td>Mixed t=0.5 correct 为 0.838，强于 Short 的 0.561；但 t_start=0 uniform exact 只有 2/16。</td>
+          <td>长答案模型会局部修复，但从纯噪声多步采样会漂到相似语义盆地；要单独诊断 long-horizon sampling。</td>
+        </tr>
+        <tr>
+          <td>Tulu Mixed：长答案</td>
+          <td>long_form 的 t=0.1 correct 为 0.562，t_start=0 uniform 为 0.384；target &gt;64 为 0.565 和 0.411。</td>
+          <td>长答案不是单步 denoise 完全不会，而是 exact 轨迹随长度快速累积偏差。后续需要语义评估，不只看 token exact。</td>
+        </tr>
+        <tr>
+          <td>Tulu Mixed：短 prompt</td>
+          <td>prompt &lt;=32 的 t=0.1 correct 为 0.528，低于 33-128 / 129-256 的 0.627 / 0.634。</td>
+          <td>短 prompt 配长答案容易 under-condition，模型更依赖 answer prior，下一轮 curriculum 要单独隔离这种样本。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <strong>当前拆分后的判断：</strong>
+      下一轮 recipe 不应该直接扩大到 full Tulu3，也不应该先靠调 sampler 解决。
+      更稳的路线是先分三条 curriculum：离散短答（yes/no、number、label）、自然短回答、长回答。
+      前两条用 high-noise denoise 和 exact trajectory 做硬指标；长回答要新增语义相似度和结构保持指标。
+      如果离散短答都修不好，full instruction following 仍然会在高噪声阶段漂移。
+    </div>
+  </section>
+
+  <section>
     <h2>上海侧数据资产调查</h2>
     <p>
       搜索范围主要是：
