@@ -160,9 +160,9 @@
   <header>
     <h1>Flow Matching 语言模型的 Teacher Forcing、x/v Prediction 与 Trajectory Gap</h1>
     <p class="subtitle">
-      2026-05-31 讨论整理。本文把 AR Teacher Forcing、ELF/CFM 的连续 latent 训练方式、
-      x-prediction / v-prediction 参数化、instruction SFT 失败模式、conditioned pretrain
-      与可落地修正方案放到同一张图里。
+      2026-05-31 讨论整理；2026-06-01 根据 Token-Level Semantic Supervision 实验更新。
+      本文把 AR Teacher Forcing、ELF/CFM 的连续 latent 训练方式、x-prediction / v-prediction
+      参数化、instruction SFT 失败模式、conditioned pretrain 与可落地修正方案放到同一张图里。
     </p>
   </header>
 
@@ -174,6 +174,9 @@
       没有稳定转化成从纯噪声出发、按 prompt 进入正确 answer basin 的 self-rollout 能力</strong>。
       代码层面上，ELF 网络的直接输出已经是 <code>x_pred</code>，即当前 noisy latent 对应的 clean
       data latent endpoint 估计；<code>v_pred</code> 是后续为了 flow loss 和 ODE/SDE 更新再换算出来的量。
+      2026-06-01 的 semantic CE ablation 进一步确认：在高噪声 <code>x_pred</code> 上直接做 token-level
+      endpoint supervision，可以把 Tulu Short 10K 的 <code>t=0.1</code> controlled denoise 从约 0.67
+      拉到约 0.99。
     </div>
 
     <div class="grid">
@@ -449,6 +452,8 @@ z_next = z_t + h * v_pred</pre>
       <li><strong>Full rollout 差：</strong>从纯噪声 <code>t_start=0</code> 起步时，经常生成英文但答非所问。</li>
       <li><strong>采样 schedule 是次要因素：</strong>uniform 和 logit-tail 在高噪声失败模式相近。</li>
       <li><strong>真实 Tulu 分布更难：</strong>synthetic short QA 能训通，Tulu Short/Mixed 暴露离散答案漂移和语义盆地偏移。</li>
+      <li><strong>Semantic CE 已验证有效：</strong>固定 <code>denoiser_p_mean=-3</code> 后，在 <code>t&lt;=0.30</code>
+        的 denoiser branch 上加 <code>CE(DLM(x_pred), target_tokens)</code>，能显著修复高噪声语义方向。</li>
     </ul>
 
     <div class="callout risk">
@@ -606,11 +611,11 @@ target:
           <td>切分策略、长度分布和 EOS 控制会影响结果。</td>
         </tr>
         <tr>
-          <td><span class="tag warn">P1</span></td>
+          <td><span class="tag good">P0</span></td>
           <td>Endpoint / token-aware loss</td>
           <td>latent L2 接近不等于 token 正确。</td>
           <td>在高噪声 <code>x_pred</code> 上加 <code>CE(DLM(x_pred), target_tokens)</code>。</td>
-          <td>DLM 在粗糙 latent 上不稳时，CE 可能噪声大。</td>
+          <td>Short QA 10K 已验证有效；下一步风险主要是 full SFT 的长答案和数据混合。</td>
         </tr>
         <tr>
           <td><span class="tag warn">P1</span></td>
@@ -645,30 +650,142 @@ target:
   </section>
 
   <section>
+    <h2>2026-06-01 Semantic Target Supervision 结果</h2>
+    <p>
+      在前一轮 <code>denoiser_p_mean=-3</code> / <code>decoder_prob</code> sweep 后，新增两组
+      Token-Level Semantic Target Supervision 实验。设置为：
+    </p>
+
+    <pre>denoiser_p_mean = -3.0
+decoder_prob ∈ {0.25, 0.50}
+semantic_ce_weight = 0.50
+semantic_ce_t_min = 0.0
+semantic_ce_t_max = 0.30
+semantic target = CE(DLM(x_pred_high_noise), target_tokens)</pre>
+
+    <p>
+      统一报告由
+      <code>eval_probes/sft_eval_harness_config_tulu_short_semantic_ce_w050_t030.json</code>
+      生成，输出在
+      <code>eval_probes/diagnostics_tulu_short_semantic_ce_w050_t030/sft_eval_harness_report.md</code>。
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>实验</th>
+          <th>clean</th>
+          <th>t=0.1 correct</th>
+          <th>t=0.1 shuffled</th>
+          <th>t=0.3 correct</th>
+          <th>t_start=0 uniform</th>
+          <th>exact</th>
+          <th>t_start=0 logit-tail</th>
+          <th>exact</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>baseline</td>
+          <td>0.997</td>
+          <td>0.531</td>
+          <td>0.007</td>
+          <td>0.537</td>
+          <td>0.799</td>
+          <td>10/16</td>
+          <td>0.825</td>
+          <td>11/16</td>
+        </tr>
+        <tr>
+          <td>pmean=-3, dp=0.25</td>
+          <td>0.999</td>
+          <td>0.632</td>
+          <td>0.033</td>
+          <td>0.664</td>
+          <td>0.890</td>
+          <td>11/16</td>
+          <td>0.808</td>
+          <td>9/16</td>
+        </tr>
+        <tr>
+          <td>pmean=-3, dp=0.50</td>
+          <td>0.993</td>
+          <td>0.667</td>
+          <td>0.004</td>
+          <td>0.653</td>
+          <td>0.762</td>
+          <td>8/16</td>
+          <td>0.772</td>
+          <td>8/16</td>
+        </tr>
+        <tr>
+          <td>semantic CE, dp=0.25</td>
+          <td>1.000</td>
+          <td>0.993</td>
+          <td>0.001</td>
+          <td>0.995</td>
+          <td>0.906</td>
+          <td>13/16</td>
+          <td>0.922</td>
+          <td>14/16</td>
+        </tr>
+        <tr>
+          <td>semantic CE, dp=0.50</td>
+          <td>1.000</td>
+          <td>0.992</td>
+          <td>0.001</td>
+          <td>0.995</td>
+          <td>0.953</td>
+          <td>14/16</td>
+          <td>0.823</td>
+          <td>11/16</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      这组结果说明，问题确实集中在 early high-noise endpoint semantics。
+      单纯提高高噪声采样或 decoder probability 只能把 <code>t=0.1</code> correct 从 0.53 拉到 0.63-0.67；
+      直接对高噪声 <code>x_pred</code> 加 token-level CE 后，controlled denoise 接近饱和，同时
+      zero/shuffled prompt 仍接近 0，说明提升不是 decoder shortcut，而是 prompt-conditioned semantic routing
+      被显式监督到了。
+    </div>
+
+    <div class="callout warn">
+      当前结果来自 Tulu Short QA 10K 和 16 条 trajectory probe，足以决定算法方向，但还不能直接代表 full SFT。
+      下一步应把 <code>denoiser_p_mean=-3</code>、<code>decoder_prob=0.50</code>、
+      <code>semantic_ce_weight=0.50</code>、<code>semantic_ce_t_max=0.30</code> 作为主设置跑全量 SFT；
+      <code>decoder_prob=0.25</code> 保留为 trajectory-stable control。
+    </div>
+  </section>
+
+  <section>
     <h2>建议下一组实验</h2>
     <ol>
       <li>
-        先写一个 <code>t=0 direct x_pred decode</code> probe，和现有 32/64-step trajectory 对比。
-        如果 direct decode 已经优于多步，说明 rollout 本身在伤害生成。
+        直接启动 full Tulu SFT scale-up：主线使用
+        <code>denoiser_p_mean=-3</code>、<code>decoder_prob=0.50</code>、
+        <code>semantic_ce_weight=0.50</code>、<code>semantic_ce_t_max=0.30</code>。
       </li>
       <li>
-        给 probe 增加 <code>x_pred</code> / <code>v_pred</code> accounting：
-        对同一批 prompt 固定噪声，记录高噪声 <code>x_pred</code> decode、单步/多步更新后的 decode、
-        以及 <code>v_pred</code> L2，确认错误来自 endpoint 选择还是积分累积。
+        保留一条 <code>decoder_prob=0.25</code> 的缩小版或中等规模 control，用来判断 full SFT 上
+        trajectory stability 是否仍然受 decoder branch 比例影响。
       </li>
       <li>
-        对 Tulu Short 10K / Mixed 10K 做 high-noise weighted ablation：
-        <code>denoiser_p_mean</code>、低 <code>t</code> oversampling、decoder_prob、EOS/length 控制一起记录。
+        每个关键 checkpoint 固定跑同一套 harness：clean decode、controlled denoise、zero/shuffled gap、
+        <code>t_start=0</code> uniform/logit-tail trajectory，以及按 source / answer type / length 的 slice。
       </li>
       <li>
-        构造 OWT 或大 corpus 的 prefix continuation 数据集，先用当前 T5-small latent 和现有 loader，不换 encoder。
+        如果 full SFT 对长答案或 mixed length 退化，再做 data recipe ablation：
+        short answer vs mixed length、source mix、target length bucket、EOS/length policy。
       </li>
       <li>
-        在 prefix continuation checkpoint 上重新跑 Tulu3 SFT，再看 high-noise condition gap 和
-        <code>t_start=0</code> 是否显著改善。
+        Prefix continuation pretrain 先降为第二阶段增强项。只有当 full SFT 仍然出现 prompt-conditioned
+        routing 不稳时，再用大规模 prefix continuation 去补 conditional transport 的底座。
       </li>
       <li>
-        如果仍不稳，再进入 token-CE distillation / shortcut ELF，而不是直接扩大多模态训练。
+        多模态 Stage 1 / Stage 2 仍然等 text-only full SFT 稳定后再接；否则会把同一个 high-noise
+        semantic routing 问题迁移到图文条件上。
       </li>
     </ol>
 
