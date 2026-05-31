@@ -185,3 +185,76 @@ list — see `src/configs/sampling_configs/*.yml`. Output dir per config is
 - All random ops that need reproducibility take an explicit `torch.Generator`
   threaded through `state.dropout_generator` — don't replace with global
   `torch.rand*`.
+
+## Remote Dev Machine and HOPE Jobs
+
+Use this runbook when an agent needs to inspect the remote training repo or
+submit HOPE jobs from the MacBook.
+
+### SSH and repo paths
+
+From the MacBook, connect with the configured SSH alias:
+
+```bash
+ssh laionface-tokenizer
+```
+
+Use this SH02 3A path as the human-facing entry point for the ELF repo:
+
+```bash
+cd /mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro
+```
+
+Important path detail: on the dev machine this 3A path resolves physically to
+the SH02 `native_mm` mirror. `pwd` may show the 3A path, while `pwd -P` and
+`git rev-parse --show-toplevel` may show:
+
+```bash
+/mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/native_mm/luoyaxin03/projects/elf-pro
+```
+
+Treat these as the same mounted worktree unless a command proves otherwise.
+When syncing or editing files for a HOPE job, make sure the file is present in
+the path used by that job's `worker.script` and by the wrapper script's
+`PROJECT_DIR`.
+
+### HOPE login and submission
+
+Before submitting jobs, log in with the user's DaXiang/MIS identity and confirm
+the login request in DaXiang:
+
+```bash
+hope login <misid>
+```
+
+Submit from the repo's `submit/` directory with `hope run`. Do not use
+`hope submit`; this HOPE CLI does not support that subcommand in this
+environment.
+
+```bash
+cd /mnt/dolphinfs/ssd_pool/docker/user/hadoop-nlp-sh02/3A/multimodal/luoyaxin03/projects/elf-pro/submit
+hope run <target_job>.hope
+```
+
+Example:
+
+```bash
+hope run submit_elf_l_llava_1024_pipeline_8gpu.hope
+```
+
+### Pre-submit path sanity check
+
+Before submitting a new or edited job, inspect the HOPE file and wrapper:
+
+```bash
+grep -n "worker.script" submit/<target_job>.hope
+grep -n "PROJECT_DIR=" submit/run_elf_l_hope.sh submit/run_elf_l_llava_1024_pipeline_hope.sh submit/run_elf_l_llava_instruct_hope.sh
+grep -n "output_dir:" src/configs/training_configs/<target_config>.yml
+```
+
+For multimodal pipeline jobs, the active wrappers are expected to point at the
+3A repo path. Some older text-only wrappers and submit files still contain the
+`native_mm` path; if you edit only the 3A-looking path but the selected wrapper
+`cd`s into `native_mm`, the worker may run stale code or miss the new YAML.
+Resolve that mismatch before submitting by syncing both views or updating the
+selected wrapper/submit file consistently.
