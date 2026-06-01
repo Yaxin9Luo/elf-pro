@@ -30,16 +30,20 @@ for bench_file in "${BENCH_DIR}"/*.jsonl; do
     --device "${DEVICE}"
 
   if [[ "${name}" == "ifeval" && -n "${IFEVAL_GOOGLE_DIR}" ]]; then
-    ifeval_args=()
     if [[ "${MAX_EXAMPLES}" != "0" ]]; then
-      ifeval_args+=(--allow_partial)
+      python3 eval_probes/score_ifeval_official.py \
+        --benchmark_jsonl "${bench_file}" \
+        --generations_jsonl "${OUT_DIR}/${name}.jsonl" \
+        --google_research_dir "${IFEVAL_GOOGLE_DIR}" \
+        --output_dir "${OUT_DIR}/ifeval_official" \
+        --allow_partial
+    else
+      python3 eval_probes/score_ifeval_official.py \
+        --benchmark_jsonl "${bench_file}" \
+        --generations_jsonl "${OUT_DIR}/${name}.jsonl" \
+        --google_research_dir "${IFEVAL_GOOGLE_DIR}" \
+        --output_dir "${OUT_DIR}/ifeval_official"
     fi
-    python3 eval_probes/score_ifeval_official.py \
-      --benchmark_jsonl "${bench_file}" \
-      --generations_jsonl "${OUT_DIR}/${name}.jsonl" \
-      --google_research_dir "${IFEVAL_GOOGLE_DIR}" \
-      --output_dir "${OUT_DIR}/ifeval_official" \
-      "${ifeval_args[@]}"
   fi
 done
 
