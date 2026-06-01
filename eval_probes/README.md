@@ -60,8 +60,9 @@ python3 eval_probes/prepare_standard_benchmarks.py \
   --output_dir eval_probes/standard_benchmarks/data
 ```
 
-The default suite currently attempts IFEval, GSM8K, BoolQ, ARC-Challenge,
-OpenBookQA, HellaSwag, PIQA, Winogrande, TruthfulQA-MC1, and MMLU-Pro.
+The default suite currently attempts IFEval, GSM8K, SVAMP, BoolQ,
+ARC-Challenge, OpenBookQA, HellaSwag, PIQA, Winogrande, TruthfulQA-MC1,
+and MMLU-Pro.
 Datasets that cannot be downloaded are recorded in `manifest.json` and do not
 block the rest unless `--fail_fast` is passed.
 

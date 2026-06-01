@@ -138,6 +138,33 @@ def prepare_gsm8k(load_dataset) -> list[dict[str, Any]]:
     return rows
 
 
+def prepare_svamp(load_dataset) -> list[dict[str, Any]]:
+    ds = load_dataset("ChilleD/SVAMP", split="test")
+    rows = []
+    for idx, item in enumerate(ds):
+        prompt = (
+            "Solve the following arithmetic word problem. "
+            "Give only the final numeric answer.\n\n"
+            f"{item['Body'].strip()} {item['Question'].strip()}"
+        )
+        rows.append({
+            "id": f"svamp:test:{idx}",
+            "benchmark": "svamp",
+            "task": str(item.get("Type", "test")),
+            "input": chat_prompt(prompt),
+            "output": str(item["Answer"]).strip(),
+            "scoring": "numeric",
+            "answer": str(item["Answer"]).strip(),
+            "source_index": idx,
+            "metadata": {
+                "svamp_id": item.get("ID"),
+                "equation": item.get("Equation"),
+                "type": item.get("Type"),
+            },
+        })
+    return rows
+
+
 def prepare_boolq(load_dataset) -> list[dict[str, Any]]:
     ds = load_dataset("google/boolq", split="validation")
     rows = []
@@ -308,6 +335,7 @@ def prepare_mmlu_pro(load_dataset) -> list[dict[str, Any]]:
 PREPARERS: dict[str, Callable[[Any], list[dict[str, Any]]]] = {
     "ifeval": prepare_ifeval,
     "gsm8k": prepare_gsm8k,
+    "svamp": prepare_svamp,
     "boolq": prepare_boolq,
     "arc_challenge": prepare_arc_challenge,
     "openbookqa": prepare_openbookqa,
@@ -324,7 +352,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output_dir", default="eval_probes/standard_benchmarks/data")
     parser.add_argument(
         "--benchmarks",
-        default="ifeval,gsm8k,boolq,arc_challenge,openbookqa,hellaswag,piqa,winogrande,truthfulqa_mc,mmlu_pro",
+        default="ifeval,gsm8k,svamp,boolq,arc_challenge,openbookqa,hellaswag,piqa,winogrande,truthfulqa_mc,mmlu_pro",
     )
     parser.add_argument("--max_examples", type=int, default=0, help="Optional per-benchmark cap for smoke files.")
     parser.add_argument("--seed", type=int, default=42)
