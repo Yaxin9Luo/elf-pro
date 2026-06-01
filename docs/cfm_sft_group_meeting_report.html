@@ -227,13 +227,16 @@
   <header>
     <h1>Continuous Flow Matching 语言模型：从失败诊断到可扩展 SFT</h1>
     <p class="subtitle">
-      这是一份面向组会汇报的压缩版报告。它把当前 docs 中分散的多模态尝试、Full SFT 失败分析、recipe ablation、Semantic Target Supervision 以及最新 pretrained baseline benchmark 串成一条实验故事线。
+      这是一份面向组会汇报的压缩版报告。它把当前 docs 中分散的多模态尝试、Full SFT 失败分析、recipe ablation、Semantic Target Supervision 以及最新 SFT benchmark 对比串成一条实验故事线。
     </p>
     <div class="meta">
       <span class="pill">更新日期：2026-06-01</span>
       <span class="pill">Backbone：ELF-L 652M + frozen T5-small encoder</span>
       <span class="pill">Baseline checkpoint：OWT <code>checkpoint_57051</code></span>
-      <span class="pill">Full SFT 20ep：HOPE run 50764964，截至 2026-06-01 10:33 CST 仍在运行</span>
+      <span class="pill">Naive Full SFT control：<code>checkpoint_5402</code></span>
+      <span class="pill">Full SFT 20ep：HOPE run 50764964，截至 2026-06-01 12:38 CST 仍在运行</span>
+      <span class="pill">Interim eval：<code>checkpoint_16995</code>，约 15 epochs</span>
+      <span class="pill">AR references：GPT-2 Large / GPT-2 Large Alpaca SFT</span>
     </div>
   </header>
 
@@ -246,14 +249,14 @@
         <p class="muted small">OWT pretrained checkpoint 在 full IFEval strict prompt 上只有 38/541。</p>
       </div>
       <div class="tile">
-        <span class="metric red">0.5%</span>
-        <strong>Full SFT 旧版 t=0 trajectory</strong>
-        <p class="muted small">checkpoint_5402 从纯噪声采样几乎失败，uniform token acc 约 0.0049。</p>
+        <span class="metric green">20.6%</span>
+        <strong>SFT IFEval instruction accuracy</strong>
+        <p class="muted small">约 15 epochs 的 checkpoint_16995 达到 172/834，已超过 pretrained baseline。</p>
       </div>
       <div class="tile">
-        <span class="metric green">0.667</span>
-        <strong>pmean=-3, dp=0.50 high-noise</strong>
-        <p class="muted small">只调 recipe 能把 Tulu Short 10K 的 t=0.1 correct 从 0.531 拉到 0.667。</p>
+        <span class="metric green">53.9%</span>
+        <strong>SFT BoolQ quick accuracy</strong>
+        <p class="muted small">objective128 子集从 13.28% 拉到 53.91%，短答案/二分类任务最先显现收益。</p>
       </div>
       <div class="tile">
         <span class="metric green">0.992</span>
@@ -264,7 +267,9 @@
     <div class="callout">
       <strong>主线判断：</strong>
       原始 ELF pretrained checkpoint 可以生成英文，但不具备 instruction following；常规 Full SFT 让 decoder 和低噪声修复变强，却没有把“从纯噪声按 prompt 进入正确语义盆地”的 conditional flow 打通。
-      目前最有价值的贡献不是直接继续多模态 Stage 2，而是先证明 CFM 语言模型可以通过 high-noise recipe 和 token-level semantic supervision 完成可靠的 instruction tuning。
+      旧版 naive Full SFT control 在 IFEval prompt 上从 7.02% 变成 6.47%，基本证明“只把 SFT 数据喂进去”不够。
+      加入 high-noise recipe 和 token-level semantic supervision 后，SFT 已经在 IFEval、BoolQ、SVAMP、Winogrande 等 benchmark 上出现稳定增益。
+      当前问题不再是“CFM 语言模型能不能 SFT”，而是数据覆盖和目标函数如何继续把能力从会回答推到稳定可用。
     </div>
   </section>
 
@@ -571,7 +576,7 @@
       <div class="bar-row"><span>SVAMP</span><div class="track"><div class="bar red" style="width:1.7%"></div></div><span>1.67%</span></div>
       <div class="bar-row"><span>BoolQ</span><div class="track"><div class="bar red" style="width:13.3%"></div></div><span>13.28%</span></div>
       <div class="bar-row"><span>TruthfulQA-MC</span><div class="track"><div class="bar red" style="width:5.5%"></div></div><span>5.47%</span></div>
-      <div class="bar-row"><span>ARC-Challenge</span><div class="track"><div class="bar red" style="width:3.1%"></div></div><span>3.13%</span></div>
+      <div class="bar-row"><span>ARC-Challenge</span><div class="track"><div class="bar red" style="width:3.1%"></div></div><span>3.12%</span></div>
       <div class="bar-row"><span>Winogrande</span><div class="track"><div class="bar red" style="width:2.3%"></div></div><span>2.34%</span></div>
       <div class="bar-row"><span>HellaSwag</span><div class="track"><div class="bar red" style="width:1.6%"></div></div><span>1.56%</span></div>
       <div class="bar-row"><span>OpenBookQA</span><div class="track"><div class="bar red" style="width:0.8%"></div></div><span>0.78%</span></div>
@@ -586,37 +591,108 @@
   </section>
 
   <section>
-    <h2>Benchmark 对比表：Baseline vs 当前 Full SFT</h2>
-    <div class="callout warn">
-      当前 20-epoch Full SFT 任务仍在 HOPE 上运行。服务器 watcher 已经挂起，训练结束后会自动取最新 checkpoint 跑同一套 benchmark。
-      因此本表先给出 baseline 和 older Full SFT 诊断结论，Full SFT 20ep 标准 benchmark 列目前标为 pending。
+    <h2>Benchmark 对比表：CFM Ablation 与 GPT-2 参照</h2>
+    <div class="callout">
+      这版报告把旧的 naive Full SFT checkpoint 也纳入对比：<code>checkpoint_5402</code> 使用全量 SFT 数据，但没有 high-noise recipe、没有 decoder probability ablation 后的设置，也没有 semantic CE。
+      它在 IFEval prompt 上从 pretrained 的 7.02% 变成 6.47%，说明早期失败不是数据量不够，而是训练目标没有显式解决 high-noise semantic routing。
+      当前 <code>checkpoint_16995</code> 约 15 epochs，使用 pmean=-3、decoder_prob=0.50 和 token-level semantic supervision。
+    </div>
+    <div class="chart">
+      <div class="chart-title">
+        <span>CFM trajectory：pretrained -> naive Full SFT -> Semantic CE SFT</span>
+        <span>accuracy %, 同一 y 轴 0-60</span>
+      </div>
+      <svg viewBox="0 0 760 320" role="img" aria-label="CFM SFT ablation line chart">
+        <rect x="0" y="0" width="760" height="320" fill="#fff"/>
+        <g stroke="#e1e5df" stroke-width="1">
+          <line x1="70" y1="260" x2="700" y2="260"/>
+          <line x1="70" y1="187" x2="700" y2="187"/>
+          <line x1="70" y1="113" x2="700" y2="113"/>
+          <line x1="70" y1="40" x2="700" y2="40"/>
+        </g>
+        <line x1="70" y1="260" x2="700" y2="260" stroke="#9aa0a6"/>
+        <line x1="70" y1="40" x2="70" y2="260" stroke="#9aa0a6"/>
+        <text x="38" y="264" font-size="12" fill="#666f7a">0</text>
+        <text x="30" y="191" font-size="12" fill="#666f7a">20</text>
+        <text x="30" y="117" font-size="12" fill="#666f7a">40</text>
+        <text x="30" y="44" font-size="12" fill="#666f7a">60</text>
+        <text x="83" y="292" font-size="12" fill="#3c4043">pretrained</text>
+        <text x="337" y="292" font-size="12" fill="#3c4043">naive SFT</text>
+        <text x="593" y="292" font-size="12" fill="#3c4043">Semantic CE SFT</text>
+
+        <polyline points="120,234 390,236 660,223" fill="none" stroke="#2c66a4" stroke-width="3"/>
+        <polyline points="120,202 390,202 660,184" fill="none" stroke="#7162a8" stroke-width="3"/>
+        <polyline points="120,211 390,186 660,62" fill="none" stroke="#2f7d5c" stroke-width="3"/>
+        <polyline points="120,254 390,248 660,240" fill="none" stroke="#ad7b28" stroke-width="3"/>
+        <polyline points="120,251 390,246 660,229" fill="none" stroke="#b65050" stroke-width="3"/>
+        <g fill="#fff" stroke-width="2">
+          <circle cx="120" cy="234" r="4" stroke="#2c66a4"/><circle cx="390" cy="236" r="4" stroke="#2c66a4"/><circle cx="660" cy="223" r="4" stroke="#2c66a4"/>
+          <circle cx="120" cy="202" r="4" stroke="#7162a8"/><circle cx="390" cy="202" r="4" stroke="#7162a8"/><circle cx="660" cy="184" r="4" stroke="#7162a8"/>
+          <circle cx="120" cy="211" r="4" stroke="#2f7d5c"/><circle cx="390" cy="186" r="4" stroke="#2f7d5c"/><circle cx="660" cy="62" r="4" stroke="#2f7d5c"/>
+          <circle cx="120" cy="254" r="4" stroke="#ad7b28"/><circle cx="390" cy="248" r="4" stroke="#ad7b28"/><circle cx="660" cy="240" r="4" stroke="#ad7b28"/>
+          <circle cx="120" cy="251" r="4" stroke="#b65050"/><circle cx="390" cy="246" r="4" stroke="#b65050"/><circle cx="660" cy="229" r="4" stroke="#b65050"/>
+        </g>
+        <g font-size="12" fill="#3c4043">
+          <rect x="86" y="12" width="12" height="12" fill="#2c66a4"/><text x="104" y="23">IFEval prompt</text>
+          <rect x="210" y="12" width="12" height="12" fill="#7162a8"/><text x="228" y="23">IFEval instruction</text>
+          <rect x="360" y="12" width="12" height="12" fill="#2f7d5c"/><text x="378" y="23">BoolQ</text>
+          <rect x="438" y="12" width="12" height="12" fill="#ad7b28"/><text x="456" y="23">SVAMP</text>
+          <rect x="522" y="12" width="12" height="12" fill="#b65050"/><text x="540" y="23">Winogrande</text>
+        </g>
+      </svg>
+    </div>
+    <div class="chart">
+      <div class="chart-title">
+        <span>GPT-2 外部参照：pretrained vs Alpaca-SFT</span>
+        <span>accuracy %</span>
+      </div>
+      <div class="bar-row"><span>GPT-2 pretrained / IFEval prompt</span><div class="track"><div class="bar blue" style="width:18.5%"></div></div><span>18.48%</span></div>
+      <div class="bar-row"><span>GPT-2 Alpaca-SFT / IFEval prompt</span><div class="track"><div class="bar green" style="width:10.2%"></div></div><span>10.17%</span></div>
+      <div class="bar-row"><span>GPT-2 pretrained / BoolQ</span><div class="track"><div class="bar blue" style="width:63.3%"></div></div><span>63.28%</span></div>
+      <div class="bar-row"><span>GPT-2 Alpaca-SFT / BoolQ</span><div class="track"><div class="bar green" style="width:68.0%"></div></div><span>67.97%</span></div>
+      <div class="bar-row"><span>GPT-2 pretrained / ARC-Challenge</span><div class="track"><div class="bar blue" style="width:9.4%"></div></div><span>9.38%</span></div>
+      <div class="bar-row"><span>GPT-2 Alpaca-SFT / ARC-Challenge</span><div class="track"><div class="bar green" style="width:33.6%"></div></div><span>33.59%</span></div>
+      <div class="bar-row"><span>GPT-2 pretrained / Winogrande</span><div class="track"><div class="bar blue" style="width:14.1%"></div></div><span>14.06%</span></div>
+      <div class="bar-row"><span>GPT-2 Alpaca-SFT / Winogrande</span><div class="track"><div class="bar green" style="width:43.0%"></div></div><span>42.97%</span></div>
     </div>
     <table>
       <thead>
         <tr>
           <th>Benchmark</th>
-          <th>Pretrained OWT baseline</th>
-          <th>Full SFT 20ep + Semantic CE</th>
+          <th>CFM Pretrained</th>
+          <th>CFM Naive Full SFT</th>
+          <th>CFM Semantic CE SFT</th>
+          <th>GPT-2 Large Pretrained</th>
+          <th>GPT-2 Large Alpaca SFT</th>
           <th>备注</th>
         </tr>
       </thead>
       <tbody>
-        <tr><td>IFEval strict prompt</td><td>7.02%</td><td>pending</td><td>full 541 prompts，official scorer。</td></tr>
-        <tr><td>IFEval strict instruction</td><td>15.71%</td><td>pending</td><td>full 834 instructions。</td></tr>
-        <tr><td>SVAMP</td><td>1.67%</td><td>pending</td><td>full 300 test，numeric answer parser；比 GSM8K 更适合作为基础 arithmetic sanity。</td></tr>
-        <tr><td>GSM8K</td><td>0.00%</td><td>pending</td><td>objective128 smoke baseline。</td></tr>
-        <tr><td>BoolQ</td><td>13.28%</td><td>pending</td><td>objective128 smoke baseline。</td></tr>
-        <tr><td>ARC-Challenge</td><td>3.13%</td><td>pending</td><td>objective128 smoke baseline。</td></tr>
-        <tr><td>OpenBookQA</td><td>0.78%</td><td>pending</td><td>objective128 smoke baseline。</td></tr>
-        <tr><td>HellaSwag</td><td>1.56%</td><td>pending</td><td>objective128 smoke baseline。</td></tr>
-        <tr><td>Winogrande</td><td>2.34%</td><td>pending</td><td>objective128 smoke baseline。</td></tr>
-        <tr><td>TruthfulQA-MC</td><td>5.47%</td><td>pending</td><td>objective128 smoke baseline。</td></tr>
-        <tr><td>MMLU-Pro</td><td>0.78%</td><td>pending</td><td>objective128 smoke baseline。</td></tr>
+        <tr><td>IFEval strict prompt</td><td>7.02%</td><td>6.47%</td><td>10.17%</td><td>18.48%</td><td>10.17%</td><td>full 541 prompts；naive SFT 不升反降，Semantic CE 才开始恢复。</td></tr>
+        <tr><td>IFEval strict instruction</td><td>15.71%</td><td>15.95%</td><td>20.62%</td><td>28.78%</td><td>18.94%</td><td>full 834 instructions；当前 CFM SFT 相对 baseline +4.92 pp。</td></tr>
+        <tr><td>SVAMP</td><td>1.67%</td><td>3.33%</td><td>5.33%</td><td>2.33%</td><td>1.67%</td><td>full 300；CFM Semantic CE 在简单算术上高于 GPT-2 参照。</td></tr>
+        <tr><td>BoolQ</td><td>13.28%</td><td>20.31%</td><td>53.91%</td><td>63.28%</td><td>67.97%</td><td>objective128；短答案/Yes-No 是 SFT 最先变强的能力。</td></tr>
+        <tr><td>ARC-Challenge</td><td>3.12%</td><td>4.69%</td><td>3.12%</td><td>9.38%</td><td>33.59%</td><td>objective128；知识多选题仍主要是数据覆盖和格式能力差距。</td></tr>
+        <tr><td>OpenBookQA</td><td>0.78%</td><td>3.91%</td><td>2.34%</td><td>14.84%</td><td>27.34%</td><td>objective128；GPT-2 SFT 明显受益，CFM 仍未稳定。</td></tr>
+        <tr><td>HellaSwag</td><td>1.56%</td><td>7.81%</td><td>5.47%</td><td>1.56%</td><td>20.31%</td><td>objective128；naive SFT 可能学到局部选择格式，但 instruction following 不成立。</td></tr>
+        <tr><td>MMLU-Pro</td><td>0.78%</td><td>1.56%</td><td>3.12%</td><td>5.47%</td><td>7.03%</td><td>objective128；所有 600M 级模型都低，当前不是主结论指标。</td></tr>
+        <tr><td>TruthfulQA-MC</td><td>5.47%</td><td>11.72%</td><td>10.16%</td><td>3.12%</td><td>85.94%</td><td>objective128；GPT-2 SFT 异常高，需结合 parser/选项格式复核，暂作外部参照。</td></tr>
+        <tr><td>Winogrande</td><td>2.34%</td><td>3.91%</td><td>8.59%</td><td>14.06%</td><td>42.97%</td><td>objective128；CFM 有涨势，但 AR SFT 仍领先很多。</td></tr>
+        <tr><td>GSM8K</td><td>0.00%</td><td>1.56%</td><td>0.00%</td><td>2.34%</td><td>2.34%</td><td>objective128；没有 reasoning/post-training 时不应作为核心判断。</td></tr>
       </tbody>
     </table>
+    <div class="callout blue">
+      <strong>Benchmark 结论：</strong>
+      对 CFM 自身而言，旧版 naive Full SFT 基本没有建立 instruction following；当前 Semantic CE SFT 才在 IFEval、BoolQ、SVAMP、Winogrande 上形成一致增益。
+      GPT-2 Large 的 AR baseline 说明同量级 GPT-style LM 在天然 autoregressive 解码和 Alpaca prompt 下，benchmark parser 更容易得到高分；这不是完全公平的建模范式比较，但能作为“600M 级英文 SFT 应该能到什么区域”的外部参考。
+      下一轮 CFM 的重点应是继续补齐 data recipe、格式监督和 high-noise semantic objective，而不是回到纯 naive SFT。
+    </div>
     <p class="small muted">
-      自动评测路径：<code>eval_probes/standard_benchmarks/results/sft_tulu3_english_semce_20ep_final_full_32step/</code>。
-      Watcher log：<code>eval_probes/standard_benchmarks/logs/watch_sft_eval_50764964.log</code>。
+      CFM result paths：<code>eval_probes/standard_benchmarks/results/sft_tulu3_naive_ckpt5402_interim_quick_32step/</code>，
+      <code>eval_probes/standard_benchmarks/results/sft_tulu3_english_semce_ckpt16995_interim_quick_32step/</code>。
+      GPT-2 result paths：<code>eval_probes/standard_benchmarks/results/ar_gpt2_large_pretrained_interim_quick_raw/</code>，
+      <code>eval_probes/standard_benchmarks/results/ar_gpt2_large_alpaca_sft_interim_quick_alpaca/</code>。
+      GPT-2 pretrained 使用 raw prompt，GPT-2 Alpaca-SFT 使用 Alpaca prompt template 和 slow tokenizer。
     </p>
   </section>
 
@@ -658,8 +734,8 @@
         </tr>
         <tr>
           <td>6. 下一步</td>
-          <td>等 full 20ep benchmark 出来，用同一套 standard benchmarks 证明我们的方法真正具备可对话和 QA 能力。</td>
-          <td>Baseline vs Full SFT table。</td>
+          <td>中间 checkpoint 已证明 SFT 策略有效；等 20ep final full benchmark 后，转向 data recipe 和 targeted objective 优化。</td>
+          <td>Benchmark growth line chart + comparison table。</td>
         </tr>
       </tbody>
     </table>
