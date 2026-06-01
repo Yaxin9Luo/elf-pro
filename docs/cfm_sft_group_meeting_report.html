@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CFM Language SFT 组会汇报</title>
+  <style>
+    :root {
+      --bg: #f6f7f4;
+      --ink: #202124;
+      --muted: #666f7a;
+      --line: #d9ded7;
+      --panel: #ffffff;
+      --panel-2: #eef4f1;
+      --green: #2f7d5c;
+      --blue: #2c66a4;
+      --red: #b65050;
+      --amber: #ad7b28;
+      --violet: #7162a8;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      line-height: 1.62;
+    }
+    main {
+      width: min(1180px, calc(100vw - 44px));
+      margin: 0 auto;
+      padding: 42px 0 72px;
+    }
+    header {
+      padding: 34px 0 28px;
+      border-bottom: 2px solid var(--ink);
+    }
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(34px, 5vw, 58px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+    h2 {
+      margin: 54px 0 18px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      font-size: 25px;
+      letter-spacing: 0;
+    }
+    h3 { margin: 28px 0 12px; font-size: 18px; }
+    p { margin: 10px 0; }
+    .subtitle {
+      max-width: 920px;
+      color: var(--muted);
+      font-size: 18px;
+    }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .pill {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 6px 10px;
+      border-radius: 999px;
+      color: #3c4043;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin: 18px 0 24px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 16px 0;
+    }
+    .tile {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .tile strong { display: block; margin-bottom: 6px; }
+    .metric {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 30px;
+      line-height: 1;
+      font-weight: 750;
+    }
+    .metric.green { color: var(--green); }
+    .metric.blue { color: var(--blue); }
+    .metric.red { color: var(--red); }
+    .metric.amber { color: var(--amber); }
+    .muted { color: var(--muted); }
+    .callout {
+      margin: 18px 0;
+      padding: 14px 16px;
+      background: var(--panel-2);
+      border-left: 5px solid var(--green);
+      border-radius: 6px;
+    }
+    .callout.warn { border-left-color: var(--amber); background: #fbf3e5; }
+    .callout.bad { border-left-color: var(--red); background: #f8eaea; }
+    .callout.blue { border-left-color: var(--blue); background: #eaf1f9; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 26px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #eef0ec; font-weight: 700; }
+    tr:last-child td { border-bottom: 0; }
+    code {
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: #eef0ec;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.92em;
+    }
+    .chart {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      margin: 16px 0 26px;
+    }
+    .chart-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    svg { width: 100%; height: auto; display: block; }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 180px 1fr 64px;
+      gap: 10px;
+      align-items: center;
+      margin: 7px 0;
+      font-size: 13px;
+    }
+    .track {
+      height: 14px;
+      background: #e8ebe6;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .bar {
+      height: 100%;
+      border-radius: 999px;
+      background: var(--blue);
+    }
+    .bar.green { background: var(--green); }
+    .bar.red { background: var(--red); }
+    .bar.amber { background: var(--amber); }
+    .bar.violet { background: var(--violet); }
+    .stage-flow {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin: 18px 0 28px;
+    }
+    .stage {
+      min-height: 130px;
+      padding: 14px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      position: relative;
+    }
+    .stage::after {
+      content: ">";
+      position: absolute;
+      right: -10px;
+      top: 44%;
+      color: var(--muted);
+      font-weight: 800;
+    }
+    .stage:last-child::after { display: none; }
+    .stage b { display: block; margin-bottom: 6px; }
+    .tag {
+      display: inline-block;
+      margin-bottom: 8px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      color: #fff;
+      font-size: 12px;
+      background: var(--blue);
+    }
+    .tag.green { background: var(--green); }
+    .tag.red { background: var(--red); }
+    .tag.amber { background: var(--amber); }
+    .tag.violet { background: var(--violet); }
+    .small { font-size: 13px; }
+    @media (max-width: 900px) {
+      .grid, .grid-2, .stage-flow { grid-template-columns: 1fr; }
+      .stage::after { display: none; }
+      .bar-row { grid-template-columns: 1fr; gap: 4px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Continuous Flow Matching 语言模型：从失败诊断到可扩展 SFT</h1>
+    <p class="subtitle">
+      这是一份面向组会汇报的压缩版报告。它把当前 docs 中分散的多模态尝试、Full SFT 失败分析、recipe ablation、Semantic Target Supervision 以及最新 pretrained baseline benchmark 串成一条实验故事线。
+    </p>
+    <div class="meta">
+      <span class="pill">更新日期：2026-06-01</span>
+      <span class="pill">Backbone：ELF-L 652M + frozen T5-small encoder</span>
+      <span class="pill">Baseline checkpoint：OWT <code>checkpoint_57051</code></span>
+      <span class="pill">Full SFT 20ep：HOPE run 50764964，截至 2026-06-01 10:33 CST 仍在运行</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>导师汇报版结论</h2>
+    <div class="grid">
+      <div class="tile">
+        <span class="metric red">7.0%</span>
+        <strong>Pretrained IFEval prompt accuracy</strong>
+        <p class="muted small">OWT pretrained checkpoint 在 full IFEval strict prompt 上只有 38/541。</p>
+      </div>
+      <div class="tile">
+        <span class="metric red">0.5%</span>
+        <strong>Full SFT 旧版 t=0 trajectory</strong>
+        <p class="muted small">checkpoint_5402 从纯噪声采样几乎失败，uniform token acc 约 0.0049。</p>
+      </div>
+      <div class="tile">
+        <span class="metric green">0.667</span>
+        <strong>pmean=-3, dp=0.50 high-noise</strong>
+        <p class="muted small">只调 recipe 能把 Tulu Short 10K 的 t=0.1 correct 从 0.531 拉到 0.667。</p>
+      </div>
+      <div class="tile">
+        <span class="metric green">0.992</span>
+        <strong>Semantic CE high-noise</strong>
+        <p class="muted small">加入 token-level semantic target 后，dp=0.50 的 t=0.1 correct 接近饱和。</p>
+      </div>
+    </div>
+    <div class="callout">
+      <strong>主线判断：</strong>
+      原始 ELF pretrained checkpoint 可以生成英文，但不具备 instruction following；常规 Full SFT 让 decoder 和低噪声修复变强，却没有把“从纯噪声按 prompt 进入正确语义盆地”的 conditional flow 打通。
+      目前最有价值的贡献不是直接继续多模态 Stage 2，而是先证明 CFM 语言模型可以通过 high-noise recipe 和 token-level semantic supervision 完成可靠的 instruction tuning。
+    </div>
+  </section>
+
+  <section>
+    <h2>信息来源 Review</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>文件</th>
+          <th>可用于汇报的内容</th>
+          <th>需要压缩掉的内容</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>elf_multimodal_research_plan.html</code></td>
+          <td>最初多模态 Stage 1/2 方案、SigLIP2 projector 路线、shuffled-image control 的必要性。</td>
+          <td>大量未来 ablation 计划，适合保留为附录，不适合主汇报。</td>
+        </tr>
+        <tr>
+          <td><code>elf_multimodal_scaling_plan.html</code></td>
+          <td>Full Tulu3 SFT 失败诊断、short QA overfit、10K ablation、pmean / decoder_prob sweep 的核心数字。</td>
+          <td>数据资产调查和执行清单过长，应从主报告中移除。</td>
+        </tr>
+        <tr>
+          <td><code>flow_matching_teacher_forcing_notes.html</code></td>
+          <td>为什么 CFM SFT 不等价于 AR teacher forcing，以及 Semantic CE 的算法动机和结果。</td>
+          <td>参数化推导可作为口头解释，不放主视觉页。</td>
+        </tr>
+        <tr>
+          <td><code>elf_pro_research_plan.html</code></td>
+          <td>项目主线从 NFE 加速降级为 reliable conditional flow 的逻辑。</td>
+          <td>NFE 方向池和长期路线太散，组会主线只保留“先修 SFT，再谈多模态/NFE”。</td>
+        </tr>
+        <tr>
+          <td><code>elf_code_review.html</code></td>
+          <td>架构风险：T5-small encoder、decoder branch、bottleneck、采样目标等。</td>
+          <td>完整代码精读不适合作为本次实验汇报主体。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>实验历程回顾</h2>
+    <div class="stage-flow">
+      <div class="stage">
+        <span class="tag">Phase A</span>
+        <b>多模态 Stage 1/2</b>
+        <p class="small">SigLIP2 frozen encoder + projector + ELF latent flow，目标是 image+text 到 text。</p>
+      </div>
+      <div class="stage">
+        <span class="tag red">失败点</span>
+        <b>图文模型不稳定回答</b>
+        <p class="small">能输出文本，但 VQA probe 不可靠，不能证明模型真正用图。</p>
+      </div>
+      <div class="stage">
+        <span class="tag amber">诊断</span>
+        <b>先修 text-only</b>
+        <p class="small">如果语言 flow 本身不能按 prompt 生成，视觉条件只会放大同一问题。</p>
+      </div>
+      <div class="stage">
+        <span class="tag violet">Full SFT</span>
+        <b>Tulu3 SFT 仍失败</b>
+        <p class="small">clean decode 很强，低噪声可修复，但 t=0 pure-noise trajectory 崩。</p>
+      </div>
+      <div class="stage">
+        <span class="tag green">当前路线</span>
+        <b>Semantic CE + full scale</b>
+        <p class="small">固定 pmean=-3、decoder_prob=0.50、semantic_ce_weight=0.50 跑全量 SFT。</p>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="tile">
+        <h3>阶段一与阶段二：多模态失败结论</h3>
+        <p>
+          最初的多模态方案是合理的 minimal baseline：Stage 1 冻结 ELF，只训练 vision projector；Stage 2 解冻 projector + ELF 做图文 instruction。
+          但实验后发现，模型即使能生成文本，也没有稳定按图和问题回答。文档中的结论是 Stage-2 VQA probe 不可用，继续盲目扩大多模态训练会把 text-only conditional flow 的问题迁移到图文条件上。
+        </p>
+      </div>
+      <div class="tile">
+        <h3>阶段三：Full SFT 失败结论</h3>
+        <p>
+          常规 Tulu3 SFT 后，DLM head 可以从真实 target latent 解出正确 token，controlled denoise 在低到中噪声也会利用 prompt。
+          失败发生在高噪声起步：从纯噪声 reverse 时，第一批语义方向已经落到错误 answer basin，后续 ODE 只是在错误方向上积分。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Full SFT 为什么失败：Trajectory Gap</h2>
+    <div class="chart">
+      <div class="chart-title">
+        <span>可视化：从不同 t_start 开始 reverse，Full SFT 只会局部修复，不能从纯噪声生成。</span>
+        <span>y = final token accuracy</span>
+      </div>
+      <svg viewBox="0 0 760 300" role="img" aria-label="Trajectory gap line chart">
+        <rect x="0" y="0" width="760" height="300" fill="#fff"/>
+        <line x1="58" y1="238" x2="720" y2="238" stroke="#9aa0a6" stroke-width="1"/>
+        <line x1="58" y1="34" x2="58" y2="238" stroke="#9aa0a6" stroke-width="1"/>
+        <g stroke="#e1e4df" stroke-width="1">
+          <line x1="58" y1="197" x2="720" y2="197"/>
+          <line x1="58" y1="156" x2="720" y2="156"/>
+          <line x1="58" y1="115" x2="720" y2="115"/>
+          <line x1="58" y1="74" x2="720" y2="74"/>
+        </g>
+        <g fill="#5f6368" font-size="12">
+          <text x="24" y="242">0.0</text>
+          <text x="24" y="201">0.2</text>
+          <text x="24" y="160">0.4</text>
+          <text x="24" y="119">0.6</text>
+          <text x="24" y="78">0.8</text>
+          <text x="24" y="38">1.0</text>
+          <text x="52" y="264">0</text>
+          <text x="156" y="264">0.1</text>
+          <text x="284" y="264">0.3</text>
+          <text x="412" y="264">0.5</text>
+          <text x="540" y="264">0.7</text>
+          <text x="668" y="264">0.95</text>
+        </g>
+        <polyline points="58,237 186,172 314,85 442,68 570,70 698,69" fill="none" stroke="#b65050" stroke-width="3"/>
+        <polyline points="58,36 186,36 314,36 442,36 570,36 698,36" fill="none" stroke="#2f7d5c" stroke-width="3"/>
+        <g fill="#b65050">
+          <circle cx="58" cy="237" r="5"/><circle cx="186" cy="172" r="5"/><circle cx="314" cy="85" r="5"/><circle cx="442" cy="68" r="5"/><circle cx="570" cy="70" r="5"/><circle cx="698" cy="69" r="5"/>
+        </g>
+        <g fill="#2f7d5c">
+          <circle cx="58" cy="36" r="5"/><circle cx="186" cy="36" r="5"/><circle cx="314" cy="36" r="5"/><circle cx="442" cy="36" r="5"/><circle cx="570" cy="36" r="5"/><circle cx="698" cy="36" r="5"/>
+        </g>
+        <g font-size="13">
+          <rect x="456" y="42" width="12" height="12" fill="#b65050"/><text x="474" y="53" fill="#3c4043">Full Tulu3 SFT checkpoint_5402</text>
+          <rect x="456" y="64" width="12" height="12" fill="#2f7d5c"/><text x="474" y="75" fill="#3c4043">Synthetic 128 overfit sanity</text>
+        </g>
+      </svg>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Probe</th>
+          <th>关键结果</th>
+          <th>解释</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Clean decode</td>
+          <td>seen-style train short token acc 99.57%，自造 instruction probe 100%。</td>
+          <td>decoder head 没坏，target latent 可以被还原成 token。</td>
+        </tr>
+        <tr>
+          <td>Controlled denoise</td>
+          <td>t=0.5 correct prompt x_mse 0.084，zero/shuffled 为 0.184/0.188；t=0.3 correct 为 0.153，zero/shuffled 为 0.371/0.403。</td>
+          <td>低/中噪声区会利用 prompt，不是完全忽略条件。</td>
+        </tr>
+        <tr>
+          <td>Pure-noise trajectory</td>
+          <td>t_start=0 uniform token acc 0.0049，logit-tail 0.0000，exact 0/5。</td>
+          <td>失败点是 high-noise semantic routing，而不是最后一步 decode。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>消融一：真实分布比合成分布难在哪里</h2>
+    <div class="chart">
+      <div class="chart-title">
+        <span>t=0.1 controlled denoise 与 t_start=0 trajectory 的分布 gap</span>
+        <span>数值越高越好</span>
+      </div>
+      <svg viewBox="0 0 760 300" role="img" aria-label="Dataset ablation chart">
+        <rect width="760" height="300" fill="#fff"/>
+        <line x1="58" y1="238" x2="720" y2="238" stroke="#9aa0a6"/>
+        <line x1="58" y1="34" x2="58" y2="238" stroke="#9aa0a6"/>
+        <g stroke="#e1e4df">
+          <line x1="58" y1="197" x2="720" y2="197"/><line x1="58" y1="156" x2="720" y2="156"/><line x1="58" y1="115" x2="720" y2="115"/><line x1="58" y1="74" x2="720" y2="74"/>
+        </g>
+        <g fill="#5f6368" font-size="12">
+          <text x="24" y="242">0.0</text><text x="24" y="201">0.2</text><text x="24" y="160">0.4</text><text x="24" y="119">0.6</text><text x="24" y="78">0.8</text><text x="24" y="38">1.0</text>
+          <text x="86" y="265">Syn128</text><text x="238" y="265">Syn10K</text><text x="386" y="265">Tulu Short</text><text x="548" y="265">Tulu Mixed</text>
+        </g>
+        <polyline points="120,35 280,82 440,130 600,113" fill="none" stroke="#2c66a4" stroke-width="3"/>
+        <polyline points="120,36 280,98 440,75 600,103" fill="none" stroke="#ad7b28" stroke-width="3"/>
+        <g fill="#2c66a4"><circle cx="120" cy="35" r="5"/><circle cx="280" cy="82" r="5"/><circle cx="440" cy="130" r="5"/><circle cx="600" cy="113" r="5"/></g>
+        <g fill="#ad7b28"><circle cx="120" cy="36" r="5"/><circle cx="280" cy="98" r="5"/><circle cx="440" cy="75" r="5"/><circle cx="600" cy="103" r="5"/></g>
+        <g font-size="13">
+          <rect x="448" y="42" width="12" height="12" fill="#2c66a4"/><text x="466" y="53">t=0.1 correct</text>
+          <rect x="448" y="64" width="12" height="12" fill="#ad7b28"/><text x="466" y="75">t_start=0 uniform</text>
+        </g>
+      </svg>
+    </div>
+    <div class="callout">
+      Synthetic 128 证明当前 CFM 代码路径不是理论上无法从纯噪声做 conditional generation。
+      但扩到 Synthetic 10K 和真实 Tulu3 后，离散答案、模板任务、长答案和 source mix 会让 high-noise vector field 学到“合理答案流形”，而不是当前 prompt 的唯一 target latent。
+    </div>
+  </section>
+
+  <section>
+    <h2>消融二：确定两个较好的超参</h2>
+    <div class="chart">
+      <div class="chart-title">
+        <span>固定 pmean=-3 后扫描 decoder_prob：dp=0.50 最强 high-noise，dp=0.25 是 trajectory anchor，dp=0.35 排除。</span>
+        <span>Tulu Short QA 10K</span>
+      </div>
+      <div class="bar-row"><span>baseline t=0.1</span><div class="track"><div class="bar red" style="width:53.1%"></div></div><span>0.531</span></div>
+      <div class="bar-row"><span>pmean=-3, dp=0.25</span><div class="track"><div class="bar amber" style="width:63.2%"></div></div><span>0.632</span></div>
+      <div class="bar-row"><span>pmean=-3, dp=0.35</span><div class="track"><div class="bar red" style="width:51.8%"></div></div><span>0.518</span></div>
+      <div class="bar-row"><span>pmean=-3, dp=0.50</span><div class="track"><div class="bar green" style="width:66.7%"></div></div><span>0.667</span></div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>超参</th>
+          <th>为什么保留</th>
+          <th>证据</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>denoiser_p_mean=-3.0</code></td>
+          <td>显著增加高噪声区域训练密度，直接针对 early semantic routing。</td>
+          <td>t=0.1 correct 从 0.531 提升到 0.632，t=0.3 从 0.537 提升到 0.664。</td>
+        </tr>
+        <tr>
+          <td><code>decoder_prob=0.50</code></td>
+          <td>加强 CE 分支，让 decoder-facing token semantics 更早进入 denoiser 的预测空间。</td>
+          <td>controlled high-noise 最强：t=0.1 correct 0.667，t=0.5 correct 0.691。</td>
+        </tr>
+        <tr>
+          <td><code>decoder_prob=0.25</code> control</td>
+          <td>保留为 trajectory-stable anchor，防止新 loss 只提升单步 denoise。</td>
+          <td>pmean=-3, dp=0.25 的 t_start=0 uniform 为 0.890，高于 dp=0.50 的 0.762。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>算法改进：Token-Level Semantic Target Supervision</h2>
+    <div class="grid-2">
+      <div class="tile">
+        <h3>新 Loss 的动机</h3>
+        <p>
+          原始 L2 监督要求 high-noise x_pred 在连续 latent 空间接近 target，但语言最终由 DLM head 离散化。
+          latent 距离小不等于 token argmax 正确。Semantic CE 直接把高噪声 x_pred 交给 DLM head，监督它预测 target tokens。
+        </p>
+        <p><code>CE(DLM(x_pred_high_noise), target_tokens), t in [0, 0.30]</code></p>
+      </div>
+      <div class="tile">
+        <h3>为什么不是 decoder shortcut</h3>
+        <p>
+          结果中 correct prompt 接近饱和，但 zero/shuffled prompt 仍接近 0。
+          这说明收益来自 prompt-conditioned semantic routing，而不是 decoder 靠答案先验偷懒。
+        </p>
+      </div>
+    </div>
+    <div class="chart">
+      <div class="chart-title">
+        <span>Semantic CE 对 high-noise endpoint semantics 的增益</span>
+        <span>Tulu Short QA 10K</span>
+      </div>
+      <div class="bar-row"><span>baseline</span><div class="track"><div class="bar red" style="width:53.1%"></div></div><span>0.531</span></div>
+      <div class="bar-row"><span>pmean=-3, dp=0.25</span><div class="track"><div class="bar amber" style="width:63.2%"></div></div><span>0.632</span></div>
+      <div class="bar-row"><span>pmean=-3, dp=0.50</span><div class="track"><div class="bar amber" style="width:66.7%"></div></div><span>0.667</span></div>
+      <div class="bar-row"><span>semantic CE, dp=0.25</span><div class="track"><div class="bar green" style="width:99.3%"></div></div><span>0.993</span></div>
+      <div class="bar-row"><span>semantic CE, dp=0.50</span><div class="track"><div class="bar green" style="width:99.2%"></div></div><span>0.992</span></div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>实验</th>
+          <th>clean</th>
+          <th>t=0.1 correct</th>
+          <th>t=0.1 shuffled</th>
+          <th>t_start=0 uniform</th>
+          <th>exact</th>
+          <th>结论</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>baseline</td><td>0.997</td><td>0.531</td><td>0.007</td><td>0.799</td><td>10/16</td><td>常规 SFT recipe 不够。</td></tr>
+        <tr><td>pmean=-3, dp=0.50</td><td>0.993</td><td>0.667</td><td>0.004</td><td>0.762</td><td>8/16</td><td>high-noise 有改善，但 trajectory 未同步增强。</td></tr>
+        <tr><td>semantic CE, dp=0.25</td><td>1.000</td><td>0.993</td><td>0.001</td><td>0.906</td><td>13/16</td><td>单步 high-noise 几乎打通，trajectory 也提升。</td></tr>
+        <tr><td>semantic CE, dp=0.50</td><td>1.000</td><td>0.992</td><td>0.001</td><td>0.953</td><td>14/16</td><td>当前 full SFT 主设置。</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Pretrained Baseline Benchmark</h2>
+    <p>
+      为了证明原始 pretrained checkpoint 本身没有 instruction-following 能力，已经建立了 generation-style benchmark runner。
+      因为 CFM 不提供 AR log-likelihood，这里统一让模型生成可解析答案，再按 benchmark-specific parser 或官方 IFEval scorer 打分。
+    </p>
+    <div class="chart">
+      <div class="chart-title">
+        <span>OWT pretrained checkpoint_57051 baseline：objective128 子集与 full IFEval</span>
+        <span>accuracy</span>
+      </div>
+      <div class="bar-row"><span>IFEval strict prompt</span><div class="track"><div class="bar red" style="width:7.0%"></div></div><span>7.02%</span></div>
+      <div class="bar-row"><span>IFEval strict instruction</span><div class="track"><div class="bar red" style="width:15.7%"></div></div><span>15.71%</span></div>
+      <div class="bar-row"><span>BoolQ</span><div class="track"><div class="bar red" style="width:13.3%"></div></div><span>13.28%</span></div>
+      <div class="bar-row"><span>TruthfulQA-MC</span><div class="track"><div class="bar red" style="width:5.5%"></div></div><span>5.47%</span></div>
+      <div class="bar-row"><span>ARC-Challenge</span><div class="track"><div class="bar red" style="width:3.1%"></div></div><span>3.13%</span></div>
+      <div class="bar-row"><span>Winogrande</span><div class="track"><div class="bar red" style="width:2.3%"></div></div><span>2.34%</span></div>
+      <div class="bar-row"><span>HellaSwag</span><div class="track"><div class="bar red" style="width:1.6%"></div></div><span>1.56%</span></div>
+      <div class="bar-row"><span>OpenBookQA</span><div class="track"><div class="bar red" style="width:0.8%"></div></div><span>0.78%</span></div>
+      <div class="bar-row"><span>MMLU-Pro</span><div class="track"><div class="bar red" style="width:0.8%"></div></div><span>0.78%</span></div>
+      <div class="bar-row"><span>GSM8K</span><div class="track"><div class="bar red" style="width:0%"></div></div><span>0.00%</span></div>
+    </div>
+    <div class="callout bad">
+      <strong>Baseline 结论：</strong>
+      pretrained ELF-L 的低分不是单个 benchmark parser 的偶然问题。它在 instruction following、QA、math、commonsense 多个任务上都接近不可用。
+      IFEval 的非零分主要来自少量容易偶然满足的格式/禁词类 instruction，不代表模型真正理解指令。
+    </div>
+  </section>
+
+  <section>
+    <h2>Benchmark 对比表：Baseline vs 当前 Full SFT</h2>
+    <div class="callout warn">
+      当前 20-epoch Full SFT 任务仍在 HOPE 上运行。服务器 watcher 已经挂起，训练结束后会自动取最新 checkpoint 跑同一套 benchmark。
+      因此本表先给出 baseline 和 older Full SFT 诊断结论，Full SFT 20ep 标准 benchmark 列目前标为 pending。
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Benchmark</th>
+          <th>Pretrained OWT baseline</th>
+          <th>Full SFT 20ep + Semantic CE</th>
+          <th>备注</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>IFEval strict prompt</td><td>7.02%</td><td>pending</td><td>full 541 prompts，official scorer。</td></tr>
+        <tr><td>IFEval strict instruction</td><td>15.71%</td><td>pending</td><td>full 834 instructions。</td></tr>
+        <tr><td>GSM8K</td><td>0.00%</td><td>pending</td><td>objective128 smoke baseline。</td></tr>
+        <tr><td>BoolQ</td><td>13.28%</td><td>pending</td><td>objective128 smoke baseline。</td></tr>
+        <tr><td>ARC-Challenge</td><td>3.13%</td><td>pending</td><td>objective128 smoke baseline。</td></tr>
+        <tr><td>OpenBookQA</td><td>0.78%</td><td>pending</td><td>objective128 smoke baseline。</td></tr>
+        <tr><td>HellaSwag</td><td>1.56%</td><td>pending</td><td>objective128 smoke baseline。</td></tr>
+        <tr><td>Winogrande</td><td>2.34%</td><td>pending</td><td>objective128 smoke baseline。</td></tr>
+        <tr><td>TruthfulQA-MC</td><td>5.47%</td><td>pending</td><td>objective128 smoke baseline。</td></tr>
+        <tr><td>MMLU-Pro</td><td>0.78%</td><td>pending</td><td>objective128 smoke baseline。</td></tr>
+      </tbody>
+    </table>
+    <p class="small muted">
+      自动评测路径：<code>eval_probes/standard_benchmarks/results/sft_tulu3_english_semce_20ep_final_full_32step/</code>。
+      Watcher log：<code>eval_probes/standard_benchmarks/logs/watch_sft_eval_50764964.log</code>。
+    </p>
+  </section>
+
+  <section>
+    <h2>汇报时建议怎么讲</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Slide</th>
+          <th>一句话</th>
+          <th>证据图</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1. 问题定义</td>
+          <td>原始 ELF pretrained checkpoint 可以生成文本，但不能做 instruction following。</td>
+          <td>Baseline benchmark bar chart。</td>
+        </tr>
+        <tr>
+          <td>2. 失败定位</td>
+          <td>常规 Full SFT 不是完全没学，decoder 和低噪声修复都可用，真正崩在 high-noise semantic routing。</td>
+          <td>Trajectory gap line chart。</td>
+        </tr>
+        <tr>
+          <td>3. 范式可行性</td>
+          <td>Short QA overfit 可以从纯噪声训通，所以不是 CFM 语言建模范式直接失败。</td>
+          <td>Synthetic 128 vs Full SFT line chart。</td>
+        </tr>
+        <tr>
+          <td>4. Recipe 发现</td>
+          <td>pmean=-3 和 decoder_prob=0.50 是当前最合理的主 recipe，dp=0.25 保留为 control。</td>
+          <td>pmean / decoder_prob ablation bar chart。</td>
+        </tr>
+        <tr>
+          <td>5. 新算法贡献</td>
+          <td>Semantic CE 直接监督 high-noise x_pred 的 token semantics，把 t=0.1 correct 从 0.53/0.67 拉到 0.99。</td>
+          <td>Semantic CE gain bar chart。</td>
+        </tr>
+        <tr>
+          <td>6. 下一步</td>
+          <td>等 full 20ep benchmark 出来，用同一套 standard benchmarks 证明我们的方法真正具备可对话和 QA 能力。</td>
+          <td>Baseline vs Full SFT table。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>
