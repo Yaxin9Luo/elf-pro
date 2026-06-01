@@ -197,7 +197,12 @@ def run_training(config, *, force_cpu: bool = False):
         log_for_0(
             "Semantic CE: "
             f"weight={config.semantic_ce_weight}, "
-            f"t_range=[{config.semantic_ce_t_min}, {config.semantic_ce_t_max}]"
+            f"t_range=[{config.semantic_ce_t_min}, {config.semantic_ce_t_max}], "
+            f"time_schedule={getattr(config, 'semantic_ce_time_schedule_enabled', False)}, "
+            f"schedule_min_weight={getattr(config, 'semantic_ce_schedule_min_weight', 0.25)}, "
+            f"schedule_power={getattr(config, 'semantic_ce_schedule_power', 1.0)}, "
+            f"multi_t={getattr(config, 'semantic_ce_multi_t_enabled', False)}, "
+            f"multi_t_values={getattr(config, 'semantic_ce_multi_t_values', '')}"
         )
     log_for_0("=" * 60)
 
@@ -535,6 +540,10 @@ def run_training(config, *, force_cpu: bool = False):
                     stack_items.extend([
                         torch.stack([m["semantic_ce_loss"] for m in train_metrics]).mean(),
                         torch.stack([m["semantic_ce_active_frac"] for m in train_metrics]).mean(),
+                        torch.stack([
+                            m.get("semantic_ce_weight_mean", torch.zeros_like(m["semantic_ce_loss"]))
+                            for m in train_metrics
+                        ]).mean(),
                     ])
                 stacked = torch.stack(stack_items)
                 # Average each metric across DDP ranks before logging — done
@@ -546,6 +555,7 @@ def run_training(config, *, force_cpu: bool = False):
                 avg_loss, avg_l2, avg_ce = stacked_vals[:3]
                 avg_semantic_ce = stacked_vals[3] if semantic_ce_enabled else 0.0
                 avg_semantic_active = stacked_vals[4] if semantic_ce_enabled else 0.0
+                avg_semantic_weight = stacked_vals[5] if semantic_ce_enabled else 0.0
                 now = time.time()
                 steps_per_sec = (global_step - last_log_step) / max(now - last_log_time, 1e-8)
                 current_lr = state.optimizer.param_groups[0]["lr"]
@@ -559,6 +569,7 @@ def run_training(config, *, force_cpu: bool = False):
                 if semantic_ce_enabled:
                     postfix_dict["sem_ce"] = f"{avg_semantic_ce:.4f}"
                     postfix_dict["sem_act"] = f"{avg_semantic_active:.3f}"
+                    postfix_dict["sem_w"] = f"{avg_semantic_weight:.3f}"
                 log_for_0(postfix_dict)
                 epoch_pbar.set_postfix(**postfix_dict)
 
@@ -572,6 +583,7 @@ def run_training(config, *, force_cpu: bool = False):
                         log_msg += (
                             f"sem_ce={avg_semantic_ce:.4f}, "
                             f"sem_act={avg_semantic_active:.3f}, "
+                            f"sem_w={avg_semantic_weight:.3f}, "
                         )
                     log_msg += (
                         f"lr={current_lr:.2e}, steps/sec={steps_per_sec:.2f}, "
@@ -593,6 +605,7 @@ def run_training(config, *, force_cpu: bool = False):
                     if semantic_ce_enabled:
                         train_scalars["train/semantic_ce_loss"] = avg_semantic_ce
                         train_scalars["train/semantic_ce_active_frac"] = avg_semantic_active
+                        train_scalars["train/semantic_ce_weight_mean"] = avg_semantic_weight
                     hope_metric_hook.log_scalars(train_scalars, global_step)
                     if config.use_wandb and wandb is not None:
                         try:
@@ -610,6 +623,7 @@ def run_training(config, *, force_cpu: bool = False):
                             if semantic_ce_enabled:
                                 wandb_scalars["train_semantic_ce_loss"] = avg_semantic_ce
                                 wandb_scalars["train_semantic_ce_active_frac"] = avg_semantic_active
+                                wandb_scalars["train_semantic_ce_weight_mean"] = avg_semantic_weight
                             wandb.log(wandb_scalars, step=global_step)
                         except Exception:
                             pass

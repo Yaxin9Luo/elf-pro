@@ -29,6 +29,35 @@ def _trainable_params(model: nn.Module):
     return [p for p in model.parameters() if p.requires_grad]
 
 
+def _parse_float_list(value) -> list[float]:
+    if value is None:
+        return []
+    if isinstance(value, (list, tuple)):
+        return [float(item) for item in value]
+    text = str(value).strip()
+    if not text:
+        return []
+    return [float(item.strip()) for item in text.split(",") if item.strip()]
+
+
+def _semantic_ce_time_weight(
+    t: torch.Tensor,
+    *,
+    t_min: float,
+    t_max: float,
+    enabled: bool,
+    min_weight: float,
+    power: float,
+) -> torch.Tensor:
+    if not enabled:
+        return torch.ones_like(t)
+    span = max(float(t_max) - float(t_min), 1e-8)
+    rel = ((t - float(t_min)) / span).clamp(0.0, 1.0)
+    high_noise = (1.0 - rel).clamp(0.0, 1.0).pow(max(float(power), 1e-8))
+    min_weight_t = torch.as_tensor(float(min_weight), dtype=t.dtype, device=t.device)
+    return min_weight_t + (1.0 - min_weight_t) * high_noise
+
+
 def train_step(
     state: TrainState,
     encoder: nn.Module,
@@ -48,6 +77,24 @@ def train_step(
     semantic_ce_weight = float(getattr(config, "semantic_ce_weight", 0.0) or 0.0)
     semantic_ce_t_min = float(getattr(config, "semantic_ce_t_min", 0.0))
     semantic_ce_t_max = float(getattr(config, "semantic_ce_t_max", 0.3))
+    semantic_ce_time_schedule_enabled = bool(getattr(config, "semantic_ce_time_schedule_enabled", False))
+    semantic_ce_schedule_min_weight = float(getattr(config, "semantic_ce_schedule_min_weight", 0.25))
+    semantic_ce_schedule_power = float(getattr(config, "semantic_ce_schedule_power", 1.0))
+    semantic_ce_multi_t_enabled = bool(getattr(config, "semantic_ce_multi_t_enabled", False))
+    semantic_ce_multi_t_values = []
+    if semantic_ce_weight > 0 and semantic_ce_time_schedule_enabled:
+        if not 0.0 <= semantic_ce_schedule_min_weight <= 1.0:
+            raise ValueError(
+                "semantic_ce_schedule_min_weight must be in [0, 1], "
+                f"got {semantic_ce_schedule_min_weight}"
+            )
+        if semantic_ce_schedule_power <= 0:
+            raise ValueError(f"semantic_ce_schedule_power must be > 0, got {semantic_ce_schedule_power}")
+    if semantic_ce_weight > 0 and semantic_ce_multi_t_enabled:
+        semantic_ce_multi_t_values = _parse_float_list(getattr(config, "semantic_ce_multi_t_values", ""))
+        invalid_ts = [val for val in semantic_ce_multi_t_values if val < 0.0 or val > 1.0]
+        if invalid_ts:
+            raise ValueError(f"semantic_ce_multi_t_values must be in [0, 1], got {invalid_ts}")
 
     gen = state.dropout_generator
 
@@ -275,43 +322,120 @@ def train_step(
 
     semantic_ce_loss_val = loss.new_zeros(())
     semantic_active_frac = loss.new_zeros(())
+    semantic_weight_mean = loss.new_zeros(())
     if semantic_ce_weight > 0:
-        high_noise_mask = (
+        semantic_sum = loss.new_zeros(())
+        semantic_unweighted_den = loss.new_zeros(())
+        semantic_weighted_den = loss.new_zeros(())
+        semantic_unique_mask = torch.zeros_like(loss_mask_f)
+        semantic_decoder_active = torch.ones_like(denoiser_t)
+        semantic_decoder_t = torch.ones_like(denoiser_t)
+
+        def add_semantic_ce_from_x_pred(x_pred_for_ce, semantic_t, base_mask):
+            nonlocal semantic_sum, semantic_unweighted_den, semantic_weighted_den, semantic_unique_mask
+            time_weight = _semantic_ce_time_weight(
+                semantic_t.to(dtype=loss_mask_f.dtype),
+                t_min=semantic_ce_t_min,
+                t_max=semantic_ce_t_max,
+                enabled=semantic_ce_time_schedule_enabled,
+                min_weight=semantic_ce_schedule_min_weight,
+                power=semantic_ce_schedule_power,
+            ).view(-1, 1)
+            weighted_mask = base_mask * time_weight
+            semantic_unique_mask = torch.maximum(
+                semantic_unique_mask,
+                (base_mask > 0).to(loss_mask_f.dtype),
+            )
+
+            # Decode the denoiser's predicted clean latent, not the original
+            # noisy decoder branch input. Keep condition tokens clean, matching
+            # sampling.
+            semantic_x_pred = restore_cond(x_pred_for_ce, x0, cond_seq_mask)
+            if config.self_cond_prob > 0:
+                semantic_decoder_input = torch.cat(
+                    [semantic_x_pred, torch.zeros_like(semantic_x_pred)], dim=-1,
+                )
+            else:
+                semantic_decoder_input = semantic_x_pred
+
+            with torch.amp.autocast('cuda', dtype=torch.bfloat16, enabled=use_bf16):
+                _, semantic_decoder_logits = model(
+                    semantic_decoder_input, semantic_decoder_t,
+                    deterministic=False,
+                    self_cond_cfg_scale=self_cond_cfg_scale,
+                    decoder_step_active=semantic_decoder_active,
+                )
+            semantic_log_probs = F.log_softmax(semantic_decoder_logits.to(torch.float32), dim=-1)
+            semantic_ce_per_token = -semantic_log_probs.gather(
+                -1, decoder_targets.unsqueeze(-1),
+            ).squeeze(-1)
+            semantic_sum = semantic_sum + (semantic_ce_per_token * weighted_mask).sum()
+            semantic_unweighted_den = semantic_unweighted_den + base_mask.sum()
+            semantic_weighted_den = semantic_weighted_den + weighted_mask.sum()
+
+        current_high_noise_mask = (
             (denoiser_t >= semantic_ce_t_min)
             & (denoiser_t <= semantic_ce_t_max)
         ).to(dtype=loss_mask_f.dtype).view(-1, 1)
-        semantic_mask = loss_mask_f * (1.0 - decoder_mask_B1) * high_noise_mask
+        current_semantic_mask = loss_mask_f * (1.0 - decoder_mask_B1) * current_high_noise_mask
+        add_semantic_ce_from_x_pred(x_pred, denoiser_t, current_semantic_mask)
 
-        # Decode the denoiser's predicted clean latent, not the original noisy
-        # decoder branch input. Keep condition tokens clean, matching sampling.
-        semantic_x_pred = restore_cond(x_pred, x0, cond_seq_mask)
-        if config.self_cond_prob > 0:
-            semantic_decoder_input = torch.cat(
-                [semantic_x_pred, torch.zeros_like(semantic_x_pred)], dim=-1,
-            )
-        else:
-            semantic_decoder_input = semantic_x_pred
+        if semantic_ce_multi_t_enabled and semantic_ce_multi_t_values:
+            semantic_denoiser_active = torch.zeros_like(denoiser_t)
 
-        semantic_decoder_active = torch.ones_like(denoiser_t)
-        semantic_decoder_t = torch.ones_like(denoiser_t)
-        with torch.amp.autocast('cuda', dtype=torch.bfloat16, enabled=use_bf16):
-            _, semantic_decoder_logits = model(
-                semantic_decoder_input, semantic_decoder_t,
-                deterministic=False,
-                self_cond_cfg_scale=self_cond_cfg_scale,
-                decoder_step_active=semantic_decoder_active,
-            )
-        semantic_log_probs = F.log_softmax(semantic_decoder_logits.to(torch.float32), dim=-1)
-        semantic_ce_per_token = -semantic_log_probs.gather(
-            -1, decoder_targets.unsqueeze(-1),
-        ).squeeze(-1)
-        semantic_den = semantic_mask.sum()
-        semantic_ce_loss_val = (
-            (semantic_ce_per_token * semantic_mask).sum()
-            / torch.clamp(semantic_den, min=1.0)
-        )
+            def predict_clean_at_semantic_t(semantic_t):
+                semantic_z = add_noise(x0, noise, semantic_t, config, cond_seq_mask=cond_seq_mask)
+                if config.label_drop_prob > 0:
+                    semantic_z = torch.where(
+                        drop.unsqueeze(-1) & (cond_seq_mask > 0),
+                        torch.zeros_like(semantic_z),
+                        semantic_z,
+                    )
+
+                if self_cond_prob > 0 or config.num_self_cond_cfg_tokens > 0:
+                    semantic_shared_uncond = compute_shared_uncond(semantic_z, semantic_t, x0)
+                else:
+                    semantic_shared_uncond = None
+
+                if config.self_cond_prob > 0:
+                    _, semantic_x_pred_init = net_out_to_v_x(
+                        semantic_shared_uncond, semantic_z, semantic_t, t_eps,
+                    )
+                    semantic_x_pred_init = restore_cond(semantic_x_pred_init, x0, cond_seq_mask)
+                    semantic_x_pred_cond = semantic_x_pred_init * use_self_cond_mask.to(dtype)
+                    semantic_x_pred_cond = restore_cond(semantic_x_pred_cond, x0, cond_seq_mask)
+                    semantic_model_input = torch.cat([semantic_z, semantic_x_pred_cond], dim=-1)
+                else:
+                    semantic_model_input = semantic_z
+
+                with torch.amp.autocast('cuda', dtype=torch.bfloat16, enabled=use_bf16):
+                    semantic_net_out, _ = model(
+                        semantic_model_input, semantic_t,
+                        deterministic=False,
+                        self_cond_cfg_scale=self_cond_cfg_scale,
+                        decoder_step_active=semantic_denoiser_active,
+                    )
+                _, semantic_x_pred = net_out_to_v_x(semantic_net_out, semantic_z, semantic_t, t_eps)
+                return semantic_x_pred
+
+            for semantic_t_value in semantic_ce_multi_t_values:
+                semantic_t = torch.full_like(denoiser_t, float(semantic_t_value))
+                if semantic_t_value < semantic_ce_t_min or semantic_t_value > semantic_ce_t_max:
+                    continue
+                semantic_mask = loss_mask_f
+                semantic_x_pred = predict_clean_at_semantic_t(semantic_t)
+                add_semantic_ce_from_x_pred(
+                    semantic_x_pred,
+                    semantic_t,
+                    semantic_mask,
+                )
+
+        semantic_ce_loss_val = semantic_sum / torch.clamp(semantic_unweighted_den, min=1.0)
         semantic_active_frac = (
-            semantic_den / torch.clamp(loss_mask_f.sum(), min=1.0)
+            semantic_unique_mask.sum() / torch.clamp(loss_mask_f.sum(), min=1.0)
+        ).detach()
+        semantic_weight_mean = (
+            semantic_weighted_den / torch.clamp(semantic_unweighted_den, min=1.0)
         ).detach()
         loss = loss + semantic_ce_weight * semantic_ce_loss_val
 
@@ -344,5 +468,6 @@ def train_step(
         "ce_loss": ce_loss_val,
         "semantic_ce_loss": semantic_ce_loss_metric,
         "semantic_ce_active_frac": semantic_active_frac,
+        "semantic_ce_weight_mean": semantic_weight_mean,
     }
     return state, metrics

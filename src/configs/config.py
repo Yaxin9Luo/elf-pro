@@ -87,6 +87,11 @@ class Config:
     semantic_ce_weight: float = 0.0
     semantic_ce_t_min: float = 0.0
     semantic_ce_t_max: float = 0.3
+    semantic_ce_time_schedule_enabled: bool = False
+    semantic_ce_schedule_min_weight: float = 0.25
+    semantic_ce_schedule_power: float = 1.0
+    semantic_ce_multi_t_enabled: bool = False
+    semantic_ce_multi_t_values: str = ""  # Comma-separated timesteps, e.g. "0.05,0.15,0.30".
 
     # Conditioning / CFG
     label_drop_prob: float = 0.0
