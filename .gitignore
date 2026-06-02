@@ -30,6 +30,26 @@ data/
 outputs/
 wandb/
 
+# Experiment / evaluation runtime artifacts
+logs/
+third_party/
+eval_probes/logs/
+eval_probes/ar_baselines/
+eval_probes/standard_benchmarks/data*/
+eval_probes/standard_benchmarks/logs/
+eval_probes/standard_benchmarks/results/
+eval_probes/diagnostics_tulu_short_ablation/
+eval_probes/diagnostics_tulu_short_semantic_ce_w050_t030/
+eval_probes/tulu3_short_ablate_dp010/
+eval_probes/tulu3_short_ablate_dp050/
+eval_probes/tulu3_short_ablate_uniform_time/
+eval_probes/tulu3_short_semantic_ce_pmean_m3_dp025_w050_t030/
+eval_probes/tulu3_short_semantic_ce_pmean_m3_dp050_w050_t030/
+eval_probes/sft_eval_harness_config_tulu_short_ablation.json
+eval_probes/short_qa_overfit_probe.jsonl
+eval_probes/tulu3_mixed_length_clean_en_10k_probe.jsonl
+eval_probes/tulu3_short_answer_clean_en_10k_probe.jsonl
+
 # Submit / cluster runtime artifacts
 submit/hope_builtin_logs/
 submit/hope_builtin_logs2/
