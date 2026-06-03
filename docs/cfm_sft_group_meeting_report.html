@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CFM Language SFT 组会汇报</title>
+  <title>CFM Language SFT 实验报告</title>
   <style>
     :root {
       --bg: #f6f7f4;
@@ -145,6 +145,12 @@
       padding: 14px;
       margin: 16px 0 26px;
     }
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 16px 0 26px;
+    }
     .chart-title {
       display: flex;
       justify-content: space-between;
@@ -177,6 +183,88 @@
     .bar.red { background: var(--red); }
     .bar.amber { background: var(--amber); }
     .bar.violet { background: var(--violet); }
+    .delta-row {
+      display: grid;
+      grid-template-columns: 150px 1fr 70px;
+      gap: 10px;
+      align-items: center;
+      margin: 7px 0;
+      font-size: 13px;
+    }
+    .delta-track {
+      height: 18px;
+      background: linear-gradient(90deg, #f1d9d7 0 50%, #d9eadf 50% 100%);
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+    .delta-track::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: #7d858d;
+    }
+    .delta {
+      height: 100%;
+      position: absolute;
+      top: 0;
+      border-radius: 999px;
+      background: var(--green);
+    }
+    .delta.neg {
+      right: 50%;
+      background: var(--red);
+    }
+    .delta.pos {
+      left: 50%;
+    }
+    .matrix {
+      display: grid;
+      grid-template-columns: 1.1fr repeat(4, 1fr);
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 16px 0 26px;
+      font-size: 13px;
+    }
+    .matrix > div {
+      background: var(--panel);
+      padding: 10px;
+      min-height: 48px;
+    }
+    .matrix .head {
+      background: #eef0ec;
+      font-weight: 700;
+    }
+    .matrix .pass { background: #e8f6ee; color: #1d6043; font-weight: 700; }
+    .matrix .fail { background: #f8eaea; color: #8c3434; font-weight: 700; }
+    .matrix .partial { background: #fbf3e5; color: #7d541a; font-weight: 700; }
+    .architecture {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 0 26px;
+    }
+    .architecture img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+    .architecture .legacy-sketch { display: none; }
+    .architecture svg text {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      letter-spacing: 0;
+    }
     .stage-flow {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
@@ -214,34 +302,148 @@
     .tag.red { background: var(--red); }
     .tag.amber { background: var(--amber); }
     .tag.violet { background: var(--violet); }
+    .evidence-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 16px 0 26px;
+    }
+    .vqa-card {
+      margin: 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .vqa-card img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      object-fit: contain;
+      background: #eef0ec;
+    }
+    .vqa-body { padding: 14px; }
+    .vqa-body p { margin: 6px 0; }
+    .output-box {
+      max-height: 130px;
+      overflow: auto;
+      margin: 10px 0 0;
+      padding: 10px;
+      border-radius: 6px;
+      background: #f4f5f2;
+      border: 1px solid var(--line);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      color: #3c4043;
+      white-space: pre-wrap;
+    }
+    .failure-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin: 18px 0 24px;
+    }
+    .failure-step {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 14px;
+      min-height: 142px;
+    }
+    .failure-step b { display: block; margin: 5px 0 6px; }
     .small { font-size: 13px; }
     @media (max-width: 900px) {
-      .grid, .grid-2, .stage-flow { grid-template-columns: 1fr; }
+      .grid, .grid-2, .chart-grid, .stage-flow, .evidence-grid, .failure-strip { grid-template-columns: 1fr; }
       .stage::after { display: none; }
-      .bar-row { grid-template-columns: 1fr; gap: 4px; }
+      .bar-row, .delta-row { grid-template-columns: 1fr; gap: 4px; }
+      .matrix { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 <main>
   <header>
-    <h1>Continuous Flow Matching 语言模型：从失败诊断到可扩展 SFT</h1>
+    <h1>Continuous Language Flow Matching Project</h1>
     <p class="subtitle">
-      这是一份面向组会汇报的压缩版报告。它把当前 docs 中分散的多模态尝试、Full SFT 失败分析、recipe ablation、Semantic Target Supervision 以及最新 SFT benchmark 对比串成一条实验故事线。
+      目前实验结果，分析和发现。
     </p>
     <div class="meta">
-      <span class="pill">更新日期：2026-06-01</span>
+      <span class="pill">更新日期：2026-06-03</span>
       <span class="pill">Backbone：ELF-L 652M + frozen T5-small encoder</span>
       <span class="pill">Baseline checkpoint：OWT <code>checkpoint_57051</code></span>
       <span class="pill">Naive Full SFT control：<code>checkpoint_5402</code></span>
-      <span class="pill">Full SFT 20ep：HOPE run 50764964，截至 2026-06-01 12:38 CST 仍在运行</span>
+      <span class="pill">Full SFT 20ep：HOPE run 50764964，final <code>checkpoint_22660</code></span>
       <span class="pill">Interim eval：<code>checkpoint_16995</code>，约 15 epochs</span>
       <span class="pill">AR references：GPT-2 Large / GPT-2 Large Alpaca SFT</span>
     </div>
   </header>
 
   <section>
-    <h2>导师汇报版结论</h2>
+    <h2>项目 Scope 与 Motivation</h2>
+    <div class="callout blue">
+      <strong>核心研究问题：</strong>
+      Continuous Flow Matching 能不能不只做 unconditional text generation，而是像成熟 AR-LM 一样，稳定完成
+      <code>condition + Gaussian noise -> prompt-specific answer latent -> decoded tokens</code>？
+      如果这个问题成立，ELF 就不只是一个更快的 diffusion language model，而是一个可以继续接 instruction tuning、multimodal conditioning 和 few-step distillation 的通用连续生成框架。
+    </div>
+
+    <div class="grid-2">
+      <div class="tile">
+        <h3>Why？</h3>
+        <p>
+          Kaiming He 近几年的生成建模路线有一个很清晰的 taste：把离散 tokenization、复杂 pipeline 或过度工程化假设拿掉，让模型直接在连续空间里学习可扩展的生成机制。
+          <a href="https://arxiv.org/abs/2406.11838">Autoregressive Image Generation without Vector Quantization</a>
+          证明图像生成不一定依赖 VQ token；
+          <a href="https://arxiv.org/abs/2605.10938">ELF</a>
+          进一步把 flow matching 搬到语言 embedding space，展示连续 DLM 可以少步、高质量生成。
+        </p>
+      </div>
+      <div class="tile">
+        <h3>We are building on</h3>
+        <p>
+          ELF 原工作已经证明 continuous embedding flow 是一条有希望的语言生成路线，但它没有系统解决 instruction-style SFT 中最关键的
+          <strong>conditional binding</strong>：从纯噪声出发时，模型是否真的按当前 prompt 进入正确 answer basin。
+          本项目的 scope 就是把这个缺口补上，并用 clean decode、condition gap、pure-noise trajectory 和 benchmark gate 证明它。
+        </p>
+      </div>
+    </div>
+
+    <div class="matrix">
+      <div class="head">方向</div>
+      <div class="head">已有工作证明了什么</div>
+      <div class="head">还缺什么</div>
+      <div class="head">本项目要交付什么</div>
+      <div class="head">为什么有吸引力</div>
+
+      <div>Continuous generation</div>
+      <div class="pass">连续空间生成可以工作</div>
+      <div class="partial">语言里仍要处理离散 token 语义</div>
+      <div>Semantic CE 让 high-noise <code>x_pred</code> 直接对齐 token semantics</div>
+      <div>把 image-domain diffusion/flow 技术迁移到语言更可行</div>
+
+      <div>Conditional generation</div>
+      <div class="pass">ELF 支持传统条件任务和 CFG 类技术</div>
+      <div class="fail">instruction SFT 的 prompt binding 没有被系统打通</div>
+      <div>证明 <code>condition + pure noise</code> 能 rollout 到 prompt-specific target</div>
+      <div>这是从 base DLM 走向可用 assistant / multimodal model 的关键一步</div>
+
+      <div>Multimodal extension</div>
+      <div class="partial">视觉 condition 可以作为 prefix 接入 ELF latent sequence</div>
+      <div class="fail">Stage 2 VQA 表明“能输出文本”不等于“真的用图”</div>
+      <div>先修 text-only conditional flow，再用 image drop / shuffled-image gate 验证视觉条件</div>
+      <div>路线比一开始做统一多模态生成更稳，也更容易形成可信 baseline</div>
+    </div>
+
+    <div class="callout">
+      <strong>Scope 边界：</strong>
+      当前聚焦 text-only instruction conditional generation：先证明 CFM 可以被 SFT 成一个可靠的条件文本生成器。
+      多模态 Stage 1/2 必须建立在可靠 conditional trajectory 之后；否则只是把同一个 high-noise semantic routing 问题迁移到更多模态上。
+    </div>
+  </section>
+
+  <section>
+    <h2>结论摘要</h2>
     <div class="grid">
       <div class="tile">
         <span class="metric red">7.0%</span>
@@ -271,28 +473,395 @@
       加入 high-noise recipe 和 token-level semantic supervision 后，SFT 已经在 IFEval、BoolQ、SVAMP、Winogrande 等 benchmark 上出现稳定增益。
       当前问题不再是“CFM 语言模型能不能 SFT”，而是数据覆盖和目标函数如何继续把能力从会回答推到稳定可用。
     </div>
+    <div class="chart-grid">
+      <div class="chart">
+        <div class="chart-title">
+          <span>核心 benchmark 增益：pretrained -> Semantic CE SFT</span>
+          <span>accuracy %</span>
+        </div>
+        <div class="delta-row"><span>IFEval prompt</span><div class="delta-track"><div class="delta pos" style="width:3.15%"></div></div><span>+3.15 pp</span></div>
+        <div class="delta-row"><span>IFEval instruction</span><div class="delta-track"><div class="delta pos" style="width:4.91%"></div></div><span>+4.91 pp</span></div>
+        <div class="delta-row"><span>SVAMP</span><div class="delta-track"><div class="delta pos" style="width:3.66%"></div></div><span>+3.66 pp</span></div>
+        <div class="delta-row"><span>BoolQ</span><div class="delta-track"><div class="delta pos" style="width:40.63%"></div></div><span>+40.63 pp</span></div>
+        <div class="delta-row"><span>Winogrande</span><div class="delta-track"><div class="delta pos" style="width:6.25%"></div></div><span>+6.25 pp</span></div>
+      </div>
+      <div class="chart">
+        <div class="chart-title">
+          <span>失败定位与修复状态</span>
+          <span>gate view</span>
+        </div>
+        <div class="bar-row"><span>Clean decode</span><div class="track"><div class="bar green" style="width:100%"></div></div><span>pass</span></div>
+        <div class="bar-row"><span>Controlled denoise</span><div class="track"><div class="bar green" style="width:82%"></div></div><span>usable</span></div>
+        <div class="bar-row"><span>Pure-noise trajectory</span><div class="track"><div class="bar amber" style="width:55%"></div></div><span>partial</span></div>
+        <div class="bar-row"><span>Long-answer stability</span><div class="track"><div class="bar red" style="width:30%"></div></div><span>open</span></div>
+      </div>
+    </div>
   </section>
 
   <section>
-    <h2>信息来源 Review</h2>
+    <h2>早期探索的失败表现</h2>
+    <p>
+      当前算法路线不是从一开始就直接走 Semantic CE。前面先做过多模态 Stage 1/Stage 2 以及常规 language SFT，这几组结果共同指向同一个问题：
+      模型能学到局部 decode 或局部 denoise，但从高噪声起步时，condition 没有稳定把轨迹拉回当前样本的目标语义。
+    </p>
+    <div class="failure-strip">
+      <div class="failure-step">
+        <span class="tag">Stage 1</span>
+        <b>Vision projector warmup</b>
+        <p class="small">SigLIP2 frozen，T5 frozen，ELF frozen，只训练 projector。数据是 LLaVA pretrain caption，1 epoch，目标是把视觉 token 接进 ELF latent 序列。</p>
+      </div>
+      <div class="failure-step">
+        <span class="tag red">Stage 2</span>
+        <b>LLaVA instruct 仍不可用</b>
+        <p class="small">加载 Stage 1 warmup checkpoint，训练 projector + ELF。最终 VQA sanity 的 2 张图片都没有得到可用回答，说明图像条件没有稳定进入生成轨迹。</p>
+      </div>
+      <div class="failure-step">
+        <span class="tag violet">Naive SFT</span>
+        <b>Full Tulu3 SFT 没修好</b>
+        <p class="small">常规 SFT 后 clean decode 很强，但 IFEval prompt 从 7.02% 变成 6.47%，instruction following 没有真正建立。</p>
+      </div>
+      <div class="failure-step">
+        <span class="tag amber">Root Cause</span>
+        <b>High-noise trajectory gap</b>
+        <p class="small">t_start=0 pure-noise trajectory 基本失败；这解释了为什么先要回到 text-only CFM，把高噪声语义方向修稳定。</p>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart">
+        <div class="chart-title">
+          <span>多模态 Stage 2 VQA sanity：可用回答数</span>
+          <span>2-image manual probe</span>
+        </div>
+        <div class="bar-row"><span>可用 VQA 回答</span><div class="track"><div class="bar green" style="width:0%"></div></div><span>0/2</span></div>
+        <div class="bar-row"><span>没有回答图片问题</span><div class="track"><div class="bar red" style="width:100%"></div></div><span>2/2</span></div>
+        <div class="bar-row"><span>64-step cfg=2 仍失败</span><div class="track"><div class="bar red" style="width:100%"></div></div><span>yes</span></div>
+        <p class="small muted">
+          Checkpoint：<code>outputs/elf_l-llava-siglip2-instruct-1024-vt196-hope-8gpu/checkpoint_5770</code>。
+        </p>
+      </div>
+      <div class="chart">
+        <div class="chart-title">
+          <span>Naive language SFT：关键指标没有形成可靠提升</span>
+          <span>accuracy delta</span>
+        </div>
+        <div class="delta-row"><span>IFEval prompt</span><div class="delta-track"><div class="delta neg" style="width:0.55%"></div></div><span>-0.55 pp</span></div>
+        <div class="delta-row"><span>IFEval instruction</span><div class="delta-track"><div class="delta pos" style="width:0.24%"></div></div><span>+0.24 pp</span></div>
+        <div class="delta-row"><span>BoolQ quick</span><div class="delta-track"><div class="delta pos" style="width:7.03%"></div></div><span>+7.03 pp</span></div>
+        <div class="delta-row"><span>SVAMP</span><div class="delta-track"><div class="delta pos" style="width:1.66%"></div></div><span>+1.66 pp</span></div>
+        <div class="delta-row"><span>Winogrande</span><div class="delta-track"><div class="delta pos" style="width:1.57%"></div></div><span>+1.57 pp</span></div>
+      </div>
+    </div>
+
+    <h3>多模态 Stage 2 可视化失败样例</h3>
+    <div class="evidence-grid">
+      <figure class="vqa-card">
+        <img src="probes/2026-05-29-vqa-probe/images/000000033471.jpg" alt="COCO bus VQA sample">
+        <figcaption class="vqa-body">
+          <p><strong>Prompt：</strong>What are the colors of the bus in the image?</p>
+          <p><strong>Reference：</strong>The bus in the image is white and red.</p>
+          <p><strong>Model output：</strong></p>
+          <div class="output-box">Act. 1829, by Color of Congress (Omcopa) Color of the Congress (D A.C.) Executive Reform Act of 1959 ... The state House of Delegates shall nominate three members of Congress ...</div>
+        </figcaption>
+      </figure>
+      <figure class="vqa-card">
+        <img src="probes/2026-05-29-vqa-probe/images/000000052846.jpg" alt="COCO cat VQA sample">
+        <figcaption class="vqa-body">
+          <p><strong>Prompt：</strong>Where is the cat positioned in the image?</p>
+          <p><strong>Reference：</strong>The cat is positioned on top of the back of the couch in the living room.</p>
+          <p><strong>Model output：</strong></p>
+          <div class="output-box">Hold the button on the inside of a cat. on the right, turn on a cat. Hold the button and an option button in the center ...</div>
+        </figcaption>
+      </figure>
+    </div>
+
+    <div class="chart">
+      <div class="chart-title">
+        <span>Naive Full SFT 可视化：从 target 附近能修复，从纯噪声基本失败</span>
+        <span>final token accuracy</span>
+      </div>
+      <div class="bar-row"><span>t_start=0.95</span><div class="track"><div class="bar green" style="width:83.8%"></div></div><span>0.838</span></div>
+      <div class="bar-row"><span>t_start=0.70</span><div class="track"><div class="bar green" style="width:83.8%"></div></div><span>0.838</span></div>
+      <div class="bar-row"><span>t_start=0.50</span><div class="track"><div class="bar green" style="width:82.3%"></div></div><span>0.823</span></div>
+      <div class="bar-row"><span>t_start=0.30</span><div class="track"><div class="bar amber" style="width:68.7%"></div></div><span>0.687</span></div>
+      <div class="bar-row"><span>t_start=0.10</span><div class="track"><div class="bar red" style="width:30.4%"></div></div><span>0.304</span></div>
+      <div class="bar-row"><span>t_start=0.00</span><div class="track"><div class="bar red" style="width:0%"></div></div><span>0.000</span></div>
+      <p class="small muted">
+        数字来自 <code>checkpoint_5402</code> raw params 的 5 条英文指令 trajectory probe；这里使用 logit-tail final token accuracy，作为前置失败概览。
+      </p>
+    </div>
+
+    <div class="callout bad">
+      <strong>早期探索结论：</strong>
+      多模态失败不是单独的视觉问题，naive language SFT 失败也不是 decoder 完全不会读 latent。
+      更一致的解释是 early reverse steps 的语义方向没有被 token-level 目标约束住；因此后续报告才转向 high-noise recipe、decoder_prob sweep 和 Semantic CE。
+    </div>
+  </section>
+
+  <section>
+    <h2>为什么不能只看训练 loss</h2>
+    <p>
+      AR 语言模型的 teacher forcing loss 是在 gold prefix 下预测 next token，虽然也不能完全代表采样质量，但它和推理时的 token 条件分布更直接相关。
+      CFM/ELF 的训练目标不同：模型在 sampled bridge state 上做 latent endpoint / velocity matching，同时用 decoder CE 或 Semantic CE 约束部分 latent 的 token semantics。
+      因此 loss 下降只能说明训练分布上的局部目标变好，不能自动证明模型从 <code>z_0 ~ N(0, I)</code> rollout 时会按 prompt 进入正确答案的语义盆地。
+    </p>
+    <div class="callout warn">
+      <strong>关键结论：</strong>
+      loss 是训练健康指标，不是 generation capability 指标。对 CFM SFT 来说，必须同时看 decoder 是否还能读 latent、correct condition 是否明显强过 zero/shuffled condition、以及纯噪声 trajectory 是否真的变好。
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart">
+        <div class="chart-title">
+          <span>20ep 远端训练日志：loss 确实持续下降</span>
+          <span>lower is better</span>
+        </div>
+        <div class="bar-row"><span>step 50</span><div class="track"><div class="bar red" style="width:100%"></div></div><span>4.519</span></div>
+        <div class="bar-row"><span>step 1.15k</span><div class="track"><div class="bar amber" style="width:64.6%"></div></div><span>2.919</span></div>
+        <div class="bar-row"><span>step 5.65k</span><div class="track"><div class="bar amber" style="width:60.7%"></div></div><span>2.742</span></div>
+        <div class="bar-row"><span>step 11.35k</span><div class="track"><div class="bar green" style="width:58.5%"></div></div><span>2.645</span></div>
+        <div class="bar-row"><span>step 17.00k</span><div class="track"><div class="bar green" style="width:57.4%"></div></div><span>2.596</span></div>
+        <div class="bar-row"><span>step 22.65k</span><div class="track"><div class="bar green" style="width:56.4%"></div></div><span>2.549</span></div>
+        <p class="small muted">
+          同一 run 中 <code>sem_ce</code> 也从 8.222 降到 4.454，<code>ce</code> 从 0.151 降到 0.075；这说明优化在工作，但还不是能力结论。
+        </p>
+      </div>
+      <div class="chart">
+        <div class="chart-title">
+          <span>epoch sweep：能力指标不是 loss 的简单函数</span>
+          <span>accuracy delta</span>
+        </div>
+        <div class="delta-row"><span>BoolQ e1 -> e20</span><div class="delta-track"><div class="delta pos" style="width:30.9%"></div></div><span>+30.9 pp</span></div>
+        <div class="delta-row"><span>IFEval instr e1 -> e20</span><div class="delta-track"><div class="delta pos" style="width:5.9%"></div></div><span>+5.9 pp</span></div>
+        <div class="delta-row"><span>IFEval prompt e1 -> e20</span><div class="delta-track"><div class="delta pos" style="width:3.5%"></div></div><span>+3.5 pp</span></div>
+        <div class="delta-row"><span>Winogrande e1 -> e20</span><div class="delta-track"><div class="delta pos" style="width:3.2%"></div></div><span>+3.2 pp</span></div>
+        <div class="delta-row"><span>SVAMP e10 -> e20</span><div class="delta-track"><div class="delta neg" style="width:2.3%"></div></div><span>-2.3 pp</span></div>
+        <p class="small muted">
+          远端 <code>checkpoint_22660</code> final sweep 显示 BoolQ/IFEval 继续变好，但 SVAMP 在 epoch 10 后回落；因此需要按任务切片看 validation，而不是只看总 loss。
+        </p>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Validation 层级</th>
+          <th>频率</th>
+          <th>要看的指标</th>
+          <th>回答的问题</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>训练健康</td>
+          <td>log step</td>
+          <td><code>loss</code> / <code>l2</code> / <code>ce</code> / <code>sem_ce</code> / <code>sem_act</code>，以及 NaN、吞吐、学习率。</td>
+          <td>优化有没有正常进行；不能单独作为模型变好的证据。</td>
+        </tr>
+        <tr>
+          <td>Decoder gate</td>
+          <td>每个 checkpoint</td>
+          <td>clean target latent -> token accuracy，prompt/target span 分开看。</td>
+          <td>DLM head 是否还能读干净 latent；如果这里失败，后面的 trajectory 分数没有解释价值。</td>
+        </tr>
+        <tr>
+          <td>Condition gate</td>
+          <td>每个 checkpoint</td>
+          <td><code>t=0.1/0.3</code> controlled denoise，correct / zero / shuffled condition gap。</td>
+          <td>模型是否真的利用 prompt，而不是靠语言先验或训练集常见答案。</td>
+        </tr>
+        <tr>
+          <td>Rollout gate</td>
+          <td>每个 epoch 或保存点</td>
+          <td><code>t_start=0</code> ODE/SDE 32/64-step，uniform 和 logit-tail noise，exact match、token accuracy、semantic match。</td>
+          <td>训练目标是否转化成推理路径上的 generation quality。</td>
+        </tr>
+        <tr>
+          <td>Capability gate</td>
+          <td>里程碑 checkpoint</td>
+          <td>IFEval、BoolQ、SVAMP、Winogrande 等标准 generation-style benchmark。</td>
+          <td>模型是否在真实任务切片上变好；不同任务允许不同走势，但不能只报最好的一个。</td>
+        </tr>
+        <tr>
+          <td>Multimodal gate</td>
+          <td>text-only gate 通过后</td>
+          <td>VQA exact/semantic score，image drop、shuffled image、wrong caption control。</td>
+          <td>图像条件是否进入 flow；避免再次出现 Stage 2 那种能输出文本但不看图的失败。</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout blue">
+      <strong>建议的训练时判定规则：</strong>
+      checkpoint 只有在 clean decode 不退化、correct condition 明显强过 zero/shuffled、<code>t_start=0</code> trajectory 有提升、标准 benchmark 至少在目标任务上稳定上升时，才说“训练让模型变好了”。缺失的 gate 记为 incomplete，不默认通过。
+    </div>
+  </section>
+
+  <section>
+    <h2>模型架构草图</h2>
+    <p>
+      这张图强调 ELF 的训练与推理细节：训练时每条样本在 decoder CE 分支和 denoiser flow 分支之间随机切换；denoiser 分支做 x-prediction，并通过公式转成 velocity 训练；新增的 Semantic CE 只作用在早期高噪声时间段，把 <code>t in [0, 0.30]</code> 的 <code>x_pred</code> 送入 DLM head，直接监督 token 语义。推理时从 <code>t=0</code> Gaussian noise 出发，ODE/SDE 积分到 <code>t=1</code>，最后用 DLM head 解码文本。
+    </p>
+    <div class="architecture">
+      <img src="assets/cfm_sft_model_architecture.png" alt="ELF-L CFM training and inference architecture diagram">
+      <svg class="legacy-sketch" viewBox="0 0 1120 720" role="img" aria-label="CFM ELF training and inference architecture sketch">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#5f6368"/>
+          </marker>
+          <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.10"/>
+          </filter>
+        </defs>
+
+        <rect x="0" y="0" width="1120" height="720" fill="#fbfcfb"/>
+        <text x="40" y="40" font-size="24" font-weight="750" fill="#202124">ELF training and inference details</text>
+        <text x="40" y="68" font-size="14" fill="#666f7a">ELF predicts clean endpoint x_pred at every timestep; velocity is derived analytically for flow matching and sampling.</text>
+
+        <!-- Shared encoder path -->
+        <rect x="40" y="106" width="162" height="64" rx="8" fill="#eaf1f9" stroke="#9dbbd8" filter="url(#shadow)"/>
+        <text x="121" y="132" text-anchor="middle" font-size="15" font-weight="700" fill="#1f4f7a">Text tokens</text>
+        <text x="121" y="153" text-anchor="middle" font-size="12" fill="#3c5d78">prompt + target</text>
+
+        <rect x="258" y="106" width="170" height="64" rx="8" fill="#e8f6ee" stroke="#9ac9ad" filter="url(#shadow)"/>
+        <text x="343" y="132" text-anchor="middle" font-size="15" font-weight="700" fill="#246044">Frozen T5 encoder</text>
+        <text x="343" y="153" text-anchor="middle" font-size="12" fill="#3e765a">normalize latent</text>
+
+        <rect x="484" y="106" width="176" height="64" rx="8" fill="#e8f6ee" stroke="#9ac9ad" filter="url(#shadow)"/>
+        <text x="572" y="132" text-anchor="middle" font-size="15" font-weight="700" fill="#246044">Clean endpoint x0</text>
+        <text x="572" y="153" text-anchor="middle" font-size="12" fill="#3e765a">T5 latent sequence</text>
+
+        <line x1="202" y1="138" x2="258" y2="138" stroke="#5f6368" stroke-width="2" marker-end="url(#arrow)"/>
+        <line x1="428" y1="138" x2="484" y2="138" stroke="#5f6368" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <!-- Training panel -->
+        <rect x="40" y="214" width="1040" height="274" rx="12" fill="#ffffff" stroke="#d9ded7"/>
+        <text x="64" y="246" font-size="20" font-weight="750" fill="#202124">Training</text>
+        <text x="64" y="272" font-size="13" fill="#666f7a">Per-example mixed objective: decoder CE branch and denoiser flow branch are sampled independently inside each batch.</text>
+
+        <rect x="66" y="310" width="168" height="80" rx="8" fill="#f4ece0" stroke="#d8b77c" filter="url(#shadow)"/>
+        <text x="150" y="338" text-anchor="middle" font-size="15" font-weight="700" fill="#7b511c">Sample timestep</text>
+        <text x="150" y="360" text-anchor="middle" font-size="12" fill="#704d22">t ~ logit-normal</text>
+        <text x="150" y="379" text-anchor="middle" font-size="12" fill="#704d22">epsilon ~ N(0, I)</text>
+
+        <rect x="284" y="310" width="220" height="80" rx="8" fill="#fff8e8" stroke="#e1c37b" filter="url(#shadow)"/>
+        <text x="394" y="338" text-anchor="middle" font-size="15" font-weight="700" fill="#7b511c">Noisy bridge state z_t</text>
+        <text x="394" y="360" text-anchor="middle" font-size="12" fill="#6f5528">z_t = t x0 + (1 - t) eps</text>
+        <text x="394" y="379" text-anchor="middle" font-size="12" fill="#6f5528">restore clean condition span</text>
+
+        <rect x="554" y="290" width="228" height="120" rx="10" fill="#f0eef9" stroke="#b6acd8" filter="url(#shadow)"/>
+        <text x="668" y="324" text-anchor="middle" font-size="17" font-weight="750" fill="#51448b">ELF-L Transformer</text>
+        <text x="668" y="350" text-anchor="middle" font-size="12" fill="#5a527a">mode tokens: decoder vs denoiser</text>
+        <text x="668" y="370" text-anchor="middle" font-size="12" fill="#5a527a">time tokens + self-cond CFG tokens</text>
+        <text x="668" y="392" text-anchor="middle" font-size="14" font-weight="700" fill="#51448b">network output: x_pred</text>
+
+        <rect x="826" y="252" width="210" height="74" rx="8" fill="#eaf1f9" stroke="#9dbbd8" filter="url(#shadow)"/>
+        <text x="931" y="280" text-anchor="middle" font-size="15" font-weight="700" fill="#1f4f7a">Decoder branch</text>
+        <text x="931" y="302" text-anchor="middle" font-size="12" fill="#3c5d78">DLM(z_noisy) -> target CE</text>
+
+        <rect x="826" y="352" width="210" height="74" rx="8" fill="#f8eaea" stroke="#d9a1a1" filter="url(#shadow)"/>
+        <text x="931" y="380" text-anchor="middle" font-size="15" font-weight="700" fill="#8d3d3d">Denoiser branch</text>
+        <text x="931" y="402" text-anchor="middle" font-size="12" fill="#8d3d3d">v = (x_pred - z_t) / (1 - t)</text>
+
+        <rect x="554" y="434" width="228" height="48" rx="8" fill="#f8eaea" stroke="#d9a1a1"/>
+        <text x="668" y="462" text-anchor="middle" font-size="14" font-weight="700" fill="#8d3d3d">L2 / v loss on target tokens</text>
+
+        <rect x="826" y="446" width="210" height="58" rx="8" fill="#f8eaea" stroke="#d9a1a1"/>
+        <text x="931" y="469" text-anchor="middle" font-size="14" font-weight="700" fill="#8d3d3d">Semantic CE add-on</text>
+        <text x="931" y="491" text-anchor="middle" font-size="12" fill="#8d3d3d">only high noise: t in [0, 0.30]</text>
+
+        <line x1="660" y1="170" x2="660" y2="214" stroke="#5f6368" stroke-width="2" marker-end="url(#arrow)"/>
+        <path d="M 660 182 C 540 210, 455 240, 426 310" fill="none" stroke="#5f6368" stroke-width="2" marker-end="url(#arrow)"/>
+        <line x1="234" y1="350" x2="284" y2="350" stroke="#5f6368" stroke-width="2" marker-end="url(#arrow)"/>
+        <line x1="504" y1="350" x2="554" y2="350" stroke="#5f6368" stroke-width="2" marker-end="url(#arrow)"/>
+        <line x1="782" y1="330" x2="826" y2="290" stroke="#5f6368" stroke-width="2" marker-end="url(#arrow)"/>
+        <line x1="782" y1="370" x2="826" y2="390" stroke="#5f6368" stroke-width="2" marker-end="url(#arrow)"/>
+        <line x1="668" y1="410" x2="668" y2="434" stroke="#8d3d3d" stroke-width="2" marker-end="url(#arrow)"/>
+        <path d="M 746 410 C 825 414, 908 424, 931 446" fill="none" stroke="#8d3d3d" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <!-- Inference panel -->
+        <rect x="40" y="536" width="1040" height="154" rx="12" fill="#ffffff" stroke="#d9ded7"/>
+        <text x="64" y="568" font-size="20" font-weight="750" fill="#202124">Inference / sampling</text>
+        <text x="64" y="594" font-size="13" fill="#666f7a">Start from pure noise at t=0, repeatedly predict x_pred, convert to velocity, integrate to t=1, then decode.</text>
+
+        <rect x="68" y="620" width="142" height="52" rx="8" fill="#f4ece0" stroke="#d8b77c"/>
+        <text x="139" y="651" text-anchor="middle" font-size="14" font-weight="700" fill="#7b511c">z_0 noise</text>
+
+        <rect x="270" y="620" width="188" height="52" rx="8" fill="#f0eef9" stroke="#b6acd8"/>
+        <text x="364" y="641" text-anchor="middle" font-size="14" font-weight="700" fill="#51448b">ODE / SDE rollout</text>
+        <text x="364" y="661" text-anchor="middle" font-size="12" fill="#5a527a">32/64 denoising steps</text>
+
+        <rect x="518" y="620" width="158" height="52" rx="8" fill="#e8f6ee" stroke="#9ac9ad"/>
+        <text x="597" y="641" text-anchor="middle" font-size="14" font-weight="700" fill="#246044">x_final</text>
+        <text x="597" y="661" text-anchor="middle" font-size="12" fill="#3e765a">clean latent estimate</text>
+
+        <rect x="736" y="620" width="142" height="52" rx="8" fill="#eaf1f9" stroke="#9dbbd8"/>
+        <text x="807" y="641" text-anchor="middle" font-size="14" font-weight="700" fill="#1f4f7a">DLM head</text>
+        <text x="807" y="661" text-anchor="middle" font-size="12" fill="#3c5d78">logits</text>
+
+        <rect x="938" y="620" width="138" height="52" rx="8" fill="#e8f6ee" stroke="#9ac9ad"/>
+        <text x="1007" y="651" text-anchor="middle" font-size="14" font-weight="700" fill="#246044">Generated text</text>
+
+        <line x1="210" y1="646" x2="270" y2="646" stroke="#5f6368" stroke-width="2" marker-end="url(#arrow)"/>
+        <line x1="458" y1="646" x2="518" y2="646" stroke="#5f6368" stroke-width="2" marker-end="url(#arrow)"/>
+        <line x1="676" y1="646" x2="736" y2="646" stroke="#5f6368" stroke-width="2" marker-end="url(#arrow)"/>
+        <line x1="878" y1="646" x2="938" y2="646" stroke="#5f6368" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <!-- Key annotation -->
+        <rect x="708" y="106" width="344" height="72" rx="8" fill="#ffffff" stroke="#d9ded7"/>
+        <text x="728" y="133" font-size="13" font-weight="700" fill="#202124">Why Semantic CE is needed</text>
+        <text x="728" y="155" font-size="12" fill="#5f6368">Latent L2 can be small while DLM argmax is wrong; high-noise x_pred needs direct token supervision.</text>
+      </svg>
+    </div>
+    <div class="grid-2">
+      <div class="tile">
+        <h3>训练路径</h3>
+        <p>
+          训练 batch 内每条样本独立选择 decoder CE 或 denoiser flow 分支。decoder 分支让 DLM head 学会从 noisy latent 还原 token；denoiser 分支预测 clean endpoint <code>x_pred</code>，再换算成 velocity 做 flow matching。
+        </p>
+      </div>
+      <div class="tile">
+        <h3>Semantic CE 的位置</h3>
+        <p>
+          当前 <code>checkpoint_16995</code> 对应的主配置采用 range gate，而不是只固定 <code>t=0.30</code>：batch 内采样到的 denoiser rows 只要 <code>t in [0, 0.30]</code>，就把 <code>x_pred</code> 送入 DLM head 直接约束 token 语义。报告中的 <code>t=0.3</code> 是常用诊断点，不等同于唯一训练点。
+        </p>
+      </div>
+    </div>
+    <div class="callout blue">
+      <strong>推理路径：</strong>
+      推理时没有 target latent，也不走 CE loss；模型从 <code>z_0</code> Gaussian noise 开始，反复预测 <code>x_pred</code> 并换算 velocity，经过 ODE/SDE rollout 得到 <code>x_final</code>，最后用 DLM head 在 decoder mode 下输出文本。
+    </div>
+  </section>
+
+  <section>
+    <h2>证据来源与取舍</h2>
     <table>
       <thead>
         <tr>
           <th>文件</th>
-          <th>可用于汇报的内容</th>
+          <th>主报告保留内容</th>
           <th>需要压缩掉的内容</th>
         </tr>
       </thead>
       <tbody>
         <tr>
+          <td><code>arXiv:2406.11838</code> / <code>arXiv:2605.10938</code></td>
+          <td>Kaiming He 近期连续生成路线：去掉 VQ/discrete token 依赖，以及 ELF 在 embedding space 做 flow matching 的动机。</td>
+          <td>外部论文只作为 research framing，不把本项目结果包装成原论文已经证明的结论。</td>
+        </tr>
+        <tr>
           <td><code>elf_multimodal_research_plan.html</code></td>
           <td>最初多模态 Stage 1/2 方案、SigLIP2 projector 路线、shuffled-image control 的必要性。</td>
-          <td>大量未来 ablation 计划，适合保留为附录，不适合主汇报。</td>
+          <td>大量未来 ablation 计划，保留为附录，不进入主线图表。</td>
+        </tr>
+        <tr>
+          <td><code>docs/probes/2026-05-29-vqa-probe/</code></td>
+          <td>Stage 2 VQA sanity 的两张真实图片、prompt/reference、64-step cfg=2 raw generation 和 0/2 可用回答结论。</td>
+          <td>长 raw output 只截取失败特征片段，完整文本保留在 probe README 和 JSONL。</td>
         </tr>
         <tr>
           <td><code>elf_multimodal_scaling_plan.html</code></td>
           <td>Full Tulu3 SFT 失败诊断、short QA overfit、10K ablation、pmean / decoder_prob sweep 的核心数字。</td>
-          <td>数据资产调查和执行清单过长，应从主报告中移除。</td>
+          <td>数据资产调查和执行清单过长，只保留与结论直接相关的数字。</td>
         </tr>
         <tr>
           <td><code>flow_matching_teacher_forcing_notes.html</code></td>
@@ -300,14 +869,29 @@
           <td>参数化推导可作为口头解释，不放主视觉页。</td>
         </tr>
         <tr>
+          <td><code>remote outputs/.../worker_0_20260601_012701.log</code></td>
+          <td>20ep full SFT 的训练 loss、CE、Semantic CE 下降曲线，用来说明优化确实正常。</td>
+          <td>逐 step tqdm 日志太长，只保留首尾和几个中间采样点。</td>
+        </tr>
+        <tr>
+          <td><code>remote eval_probes/standard_benchmarks/results/sft_tulu3_english_semce_20ep_epoch_sweep_full_32step/</code></td>
+          <td>epoch 1/5/10/15/20 的 benchmark 走势，用来说明 loss 下降不等于所有能力单调变好。</td>
+          <td>完整 JSON 保留在远端目录，主报告只放 BoolQ、IFEval、SVAMP、Winogrande 的走势。</td>
+        </tr>
+        <tr>
+          <td><code>remote eval_probes/diagnostics_tulu_short_semantic_ce_w050_t030/</code></td>
+          <td>clean decode、t=0.1 correct/zero/shuffled、t_start=0 trajectory 等 CFM-specific gates。</td>
+          <td>逐样本 probe 输出过细，只保留 gate 级别结论和关键数值。</td>
+        </tr>
+        <tr>
           <td><code>elf_pro_research_plan.html</code></td>
           <td>项目主线从 NFE 加速降级为 reliable conditional flow 的逻辑。</td>
-          <td>NFE 方向池和长期路线太散，组会主线只保留“先修 SFT，再谈多模态/NFE”。</td>
+          <td>NFE 方向池和长期路线太散，主线只保留“先修 SFT，再谈多模态/NFE”。</td>
         </tr>
         <tr>
           <td><code>elf_code_review.html</code></td>
           <td>架构风险：T5-small encoder、decoder branch、bottleneck、采样目标等。</td>
-          <td>完整代码精读不适合作为本次实验汇报主体。</td>
+          <td>完整代码精读不作为本次实验报告主体。</td>
         </tr>
       </tbody>
     </table>
@@ -433,6 +1017,37 @@
         </tr>
       </tbody>
     </table>
+    <div class="matrix">
+      <div class="head">诊断 gate</div>
+      <div class="head">Naive Full SFT</div>
+      <div class="head">Synthetic 128 overfit</div>
+      <div class="head">pmean / dp sweep</div>
+      <div class="head">Semantic CE</div>
+
+      <div>Clean target latent -> token</div>
+      <div class="pass">pass</div>
+      <div class="pass">pass</div>
+      <div class="pass">pass</div>
+      <div class="pass">pass</div>
+
+      <div>Correct condition > zero / shuffled</div>
+      <div class="pass">pass</div>
+      <div class="pass">pass</div>
+      <div class="pass">pass</div>
+      <div class="pass">pass</div>
+
+      <div>t=0.1 high-noise endpoint</div>
+      <div class="fail">fail</div>
+      <div class="pass">pass</div>
+      <div class="partial">partial</div>
+      <div class="pass">pass</div>
+
+      <div>t_start=0 full trajectory</div>
+      <div class="fail">fail</div>
+      <div class="pass">pass</div>
+      <div class="partial">partial</div>
+      <div class="partial">improving</div>
+    </div>
   </section>
 
   <section>
@@ -561,9 +1176,9 @@
   </section>
 
   <section>
-    <h2>Pretrained Baseline Benchmark</h2>
+    <h2>预训练基线：标准生成式评测</h2>
     <p>
-      为了证明原始 pretrained checkpoint 本身没有 instruction-following 能力，已经建立了 generation-style benchmark runner。
+      用 generation-style benchmark runner 验证原始 pretrained checkpoint 是否具备 instruction-following 能力。
       因为 CFM 不提供 AR log-likelihood，这里统一让模型生成可解析答案，再按 benchmark-specific parser 或官方 IFEval scorer 打分。
     </p>
     <div class="chart">
@@ -593,7 +1208,7 @@
   <section>
     <h2>Benchmark 对比表：CFM Ablation 与 GPT-2 参照</h2>
     <div class="callout">
-      这版报告把旧的 naive Full SFT checkpoint 也纳入对比：<code>checkpoint_5402</code> 使用全量 SFT 数据，但没有 high-noise recipe、没有 decoder probability ablation 后的设置，也没有 semantic CE。
+      本轮对比把旧的 naive Full SFT checkpoint 也纳入：<code>checkpoint_5402</code> 使用全量 SFT 数据，但没有 high-noise recipe、没有 decoder probability ablation 后的设置，也没有 semantic CE。
       它在 IFEval prompt 上从 pretrained 的 7.02% 变成 6.47%，说明早期失败不是数据量不够，而是训练目标没有显式解决 high-noise semantic routing。
       当前 <code>checkpoint_16995</code> 约 15 epochs，使用 pmean=-3、decoder_prob=0.50 和 token-level semantic supervision。
     </div>
@@ -697,48 +1312,92 @@
   </section>
 
   <section>
-    <h2>汇报时建议怎么讲</h2>
+    <h2>报告结构模板</h2>
     <table>
       <thead>
         <tr>
-          <th>Slide</th>
-          <th>一句话</th>
-          <th>证据图</th>
+          <th>Section</th>
+          <th>核心结论</th>
+          <th>主证据图</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td>1. 问题定义</td>
+          <td>1. Scope 与 Motivation</td>
+          <td>本项目不是只复现 ELF，而是证明 continuous flow matching 可以做可靠 instruction-style conditional generation。</td>
+          <td>Kaiming continuous-generation framing + scope matrix。</td>
+        </tr>
+        <tr>
+          <td>2. 早期失败证据</td>
+          <td>多模态 Stage 2 VQA probe 和 naive language SFT 都失败，说明问题不是单一视觉 projector 或数据规模问题。</td>
+          <td>VQA image cards + naive SFT delta / trajectory chart。</td>
+        </tr>
+        <tr>
+          <td>3. 训练验证策略</td>
+          <td>CFM 的 loss 下降只能说明局部 bridge objective 在变好，不能证明纯噪声 rollout 的 generation quality 变好。</td>
+          <td>loss trend + epoch sweep + validation gate table。</td>
+        </tr>
+        <tr>
+          <td>4. 问题定义</td>
           <td>原始 ELF pretrained checkpoint 可以生成文本，但不能做 instruction following。</td>
           <td>Baseline benchmark bar chart。</td>
         </tr>
         <tr>
-          <td>2. 失败定位</td>
+          <td>5. 失败定位</td>
           <td>常规 Full SFT 不是完全没学，decoder 和低噪声修复都可用，真正崩在 high-noise semantic routing。</td>
           <td>Trajectory gap line chart。</td>
         </tr>
         <tr>
-          <td>3. 范式可行性</td>
+          <td>6. 范式可行性</td>
           <td>Short QA overfit 可以从纯噪声训通，所以不是 CFM 语言建模范式直接失败。</td>
           <td>Synthetic 128 vs Full SFT line chart。</td>
         </tr>
         <tr>
-          <td>4. Recipe 发现</td>
+          <td>7. Recipe 发现</td>
           <td>pmean=-3 和 decoder_prob=0.50 是当前最合理的主 recipe，dp=0.25 保留为 control。</td>
           <td>pmean / decoder_prob ablation bar chart。</td>
         </tr>
         <tr>
-          <td>5. 新算法贡献</td>
+          <td>8. 新算法贡献</td>
           <td>Semantic CE 直接监督 high-noise x_pred 的 token semantics，把 t=0.1 correct 从 0.53/0.67 拉到 0.99。</td>
           <td>Semantic CE gain bar chart。</td>
         </tr>
         <tr>
-          <td>6. 下一步</td>
-          <td>中间 checkpoint 已证明 SFT 策略有效；等 20ep final full benchmark 后，转向 data recipe 和 targeted objective 优化。</td>
+          <td>9. 下一步</td>
+          <td>20ep final checkpoint 已证明 SFT 策略有效；下一步转向 data recipe、targeted objective 和 multimodal gate 设计。</td>
           <td>Benchmark growth line chart + comparison table。</td>
         </tr>
       </tbody>
     </table>
+  </section>
+
+  <section>
+    <h2>当前正在跑的实验</h2>
+    <p>
+      当前主线在跑 <code>semantic CE schedule + multi-t</code> 变体。它不是换数据或扩大 batch，而是在已验证有效的 full English Tulu3 SFT recipe 上，只改 Semantic CE 的监督方式，用来判断“更密、更偏高噪声的语义监督”是否能继续改善 pure-noise trajectory 和标准 benchmark。
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>实验</th>
+          <th>当前状态</th>
+          <th>相对上一版 full SFT 的改进</th>
+          <th>希望验证什么</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>elf_l-tulu3-english-semce-sched-multit-pmean_m3-dp050-w050-t030-20ep-hope-32gpu</code></td>
+          <td>32GPU HOPE run，已到后段；截至 2026-06-03 检查，最新 checkpoint 为 <code>checkpoint_20394</code>，worker log 最新记录到 step 21350 / epoch 19，final <code>checkpoint_22660</code> 尚未出现。</td>
+          <td>保持数据、20 epochs、global batch 512、OWT init、<code>pmean=-3</code>、<code>decoder_prob=0.50</code>、<code>semantic_ce_weight=0.50</code> 不变；新增 time-dependent Semantic CE schedule，并显式加入 <code>t=0.05, 0.15, 0.30</code> 三个 semantic target。</td>
+          <td>上一版已经证明 Semantic CE 能打通 high-noise endpoint semantics；这一版要看更密的 early-time semantic supervision 是否进一步提升 trajectory 稳定性，并减少单一 sampled-t 监督带来的偶然性。</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout blue">
+      <strong>为什么这是下一步：</strong>
+      之前的主设置只在采样到 <code>t in [0, 0.30]</code> 的 denoiser rows 上做 Semantic CE；当前变体把早期关键时间点显式钉住，并让高噪声位置获得更高权重。日志中 <code>sem_act=1.000</code>、<code>sem_w≈0.619</code>，说明语义监督覆盖比上一版更密，目标更直接对准 early reverse steps。
+    </div>
   </section>
 </main>
 </body>
