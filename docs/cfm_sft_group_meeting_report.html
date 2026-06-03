@@ -1376,6 +1376,67 @@
     <p>
       当前主线在跑 <code>semantic CE schedule + multi-t</code> 变体。它不是换数据或扩大 batch，而是在已验证有效的 full English Tulu3 SFT recipe 上，只改 Semantic CE 的监督方式，用来判断“更密、更偏高噪声的语义监督”是否能继续改善 pure-noise trajectory 和标准 benchmark。
     </p>
+    <div class="chart">
+      <div class="chart-title">
+        <span>epoch15 interim eval：schedule + multi-t 相对上一版 Semantic CE 的 full benchmark delta</span>
+        <span>delta pp, y 轴 -8 到 +12</span>
+      </div>
+      <svg viewBox="0 0 760 340" role="img" aria-label="Semantic CE schedule multi-time epoch15 delta line chart">
+        <rect x="0" y="0" width="760" height="340" fill="#fff"/>
+        <g stroke="#e1e5df" stroke-width="1">
+          <line x1="70" y1="50" x2="700" y2="50"/>
+          <line x1="70" y1="94" x2="700" y2="94"/>
+          <line x1="70" y1="138" x2="700" y2="138"/>
+          <line x1="70" y1="182" x2="700" y2="182"/>
+          <line x1="70" y1="226" x2="700" y2="226"/>
+          <line x1="70" y1="270" x2="700" y2="270"/>
+        </g>
+        <line x1="70" y1="270" x2="700" y2="270" stroke="#9aa0a6"/>
+        <line x1="70" y1="50" x2="70" y2="270" stroke="#9aa0a6"/>
+        <line x1="70" y1="182" x2="700" y2="182" stroke="#2c66a4" stroke-width="1.5" stroke-dasharray="6 5"/>
+        <g font-size="12" fill="#666f7a">
+          <text x="35" y="54">+12</text>
+          <text x="42" y="98">+8</text>
+          <text x="42" y="142">+4</text>
+          <text x="50" y="186">0</text>
+          <text x="38" y="230">-4</text>
+          <text x="38" y="274">-8</text>
+        </g>
+        <polyline points="70,163.7 133,154.3 196,235.5 259,174.6 322,58.1 385,150.8 448,169.8 511,175.4 574,181.2 637,183.0 700,176.2" fill="none" stroke="#2f7d5c" stroke-width="3"/>
+        <g fill="#fff" stroke-width="2">
+          <circle cx="70" cy="163.7" r="4" stroke="#2f7d5c"/>
+          <circle cx="133" cy="154.3" r="4" stroke="#2f7d5c"/>
+          <circle cx="196" cy="235.5" r="4" stroke="#b65050"/>
+          <circle cx="259" cy="174.6" r="4" stroke="#2f7d5c"/>
+          <circle cx="322" cy="58.1" r="5" stroke="#2f7d5c"/>
+          <circle cx="385" cy="150.8" r="4" stroke="#2f7d5c"/>
+          <circle cx="448" cy="169.8" r="4" stroke="#2f7d5c"/>
+          <circle cx="511" cy="175.4" r="4" stroke="#2f7d5c"/>
+          <circle cx="574" cy="181.2" r="4" stroke="#2f7d5c"/>
+          <circle cx="637" cy="183.0" r="4" stroke="#b65050"/>
+          <circle cx="700" cy="176.2" r="4" stroke="#2f7d5c"/>
+        </g>
+        <g font-size="11" fill="#3c4043">
+          <text x="70" y="303" text-anchor="end" transform="rotate(-35 70 303)">IFEval-P</text>
+          <text x="133" y="303" text-anchor="end" transform="rotate(-35 133 303)">IFEval-I</text>
+          <text x="196" y="303" text-anchor="end" transform="rotate(-35 196 303)">BoolQ</text>
+          <text x="259" y="303" text-anchor="end" transform="rotate(-35 259 303)">SVAMP</text>
+          <text x="322" y="303" text-anchor="end" transform="rotate(-35 322 303)">TruthfulQA</text>
+          <text x="385" y="303" text-anchor="end" transform="rotate(-35 385 303)">Wino</text>
+          <text x="448" y="303" text-anchor="end" transform="rotate(-35 448 303)">ARC</text>
+          <text x="511" y="303" text-anchor="end" transform="rotate(-35 511 303)">OBQA</text>
+          <text x="574" y="303" text-anchor="end" transform="rotate(-35 574 303)">Hella</text>
+          <text x="637" y="303" text-anchor="end" transform="rotate(-35 637 303)">MMLU</text>
+          <text x="700" y="303" text-anchor="end" transform="rotate(-35 700 303)">GSM8K</text>
+        </g>
+        <g font-size="12" fill="#3c4043">
+          <rect x="470" y="24" width="12" height="12" fill="#2f7d5c"/><text x="488" y="35">new - old, epoch15</text>
+          <rect x="610" y="24" width="12" height="12" fill="#b65050"/><text x="628" y="35">regression</text>
+        </g>
+        <text x="330" y="72" font-size="12" font-weight="700" fill="#2f7d5c">TruthfulQA +11.26 pp</text>
+        <text x="210" y="250" font-size="12" font-weight="700" fill="#b65050">BoolQ -4.86 pp</text>
+      </svg>
+    </div>
     <table>
       <thead>
         <tr>
@@ -1388,15 +1449,41 @@
       <tbody>
         <tr>
           <td><code>elf_l-tulu3-english-semce-sched-multit-pmean_m3-dp050-w050-t030-20ep-hope-32gpu</code></td>
-          <td>32GPU HOPE run，已到后段；截至 2026-06-03 检查，最新 checkpoint 为 <code>checkpoint_20394</code>，worker log 最新记录到 step 21350 / epoch 19，final <code>checkpoint_22660</code> 尚未出现。</td>
+          <td>32GPU HOPE run 仍在继续；为了更早判断算法方向，已先取 epoch15 <code>checkpoint_16995</code> 跑完 full benchmark。结果路径：<code>eval_probes/standard_benchmarks/results/sft_tulu3_english_semce_sched_multit_epoch15_full_32step/epoch_15_checkpoint_16995/</code>。</td>
           <td>保持数据、20 epochs、global batch 512、OWT init、<code>pmean=-3</code>、<code>decoder_prob=0.50</code>、<code>semantic_ce_weight=0.50</code> 不变；新增 time-dependent Semantic CE schedule，并显式加入 <code>t=0.05, 0.15, 0.30</code> 三个 semantic target。</td>
-          <td>上一版已经证明 Semantic CE 能打通 high-noise endpoint semantics；这一版要看更密的 early-time semantic supervision 是否进一步提升 trajectory 稳定性，并减少单一 sampled-t 监督带来的偶然性。</td>
+          <td>同 epoch15 对比显示，新算法在 IFEval、TruthfulQA、Winogrande、ARC/OpenBookQA 上明显增益，但 BoolQ 回退；说明 multi-time semantic supervision 有实际收益，同时需要继续诊断 yes/no 校准和短答案格式偏置。</td>
         </tr>
       </tbody>
     </table>
+    <table>
+      <thead>
+        <tr>
+          <th>Benchmark</th>
+          <th>旧 Semantic CE epoch15</th>
+          <th>Schedule + Multi-t epoch15</th>
+          <th>Delta</th>
+          <th>旧 Semantic CE epoch20</th>
+          <th>备注</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>IFEval strict prompt</td><td>10.17%</td><td>11.83%</td><td>+1.66 pp</td><td>11.09%</td><td>epoch15 已超过旧版 final。</td></tr>
+        <tr><td>IFEval strict instruction</td><td>20.62%</td><td>23.14%</td><td>+2.52 pp</td><td>21.82%</td><td>instruction following 明确提升。</td></tr>
+        <tr><td>BoolQ</td><td>48.59%</td><td>43.73%</td><td>-4.86 pp</td><td>50.80%</td><td>主要回退项，需要检查 yes/no 输出校准。</td></tr>
+        <tr><td>SVAMP</td><td>5.33%</td><td>6.00%</td><td>+0.67 pp</td><td>4.00%</td><td>小幅增益。</td></tr>
+        <tr><td>TruthfulQA-MC</td><td>12.36%</td><td>23.62%</td><td>+11.26 pp</td><td>16.89%</td><td>最大增益，说明语义 target 更强。</td></tr>
+        <tr><td>Winogrande</td><td>7.58%</td><td>10.42%</td><td>+2.84 pp</td><td>8.45%</td><td>commonsense/choice parsing 有提升。</td></tr>
+        <tr><td>ARC-Challenge</td><td>4.27%</td><td>5.38%</td><td>+1.11 pp</td><td>4.52%</td><td>知识多选题小幅提升。</td></tr>
+        <tr><td>OpenBookQA</td><td>4.80%</td><td>5.40%</td><td>+0.60 pp</td><td>3.20%</td><td>相对旧版 final 也更好。</td></tr>
+        <tr><td>HellaSwag</td><td>3.51%</td><td>3.57%</td><td>+0.07 pp</td><td>3.01%</td><td>基本持平。</td></tr>
+        <tr><td>MMLU-Pro</td><td>2.75%</td><td>2.66%</td><td>-0.09 pp</td><td>2.38%</td><td>接近噪声区间。</td></tr>
+        <tr><td>GSM8K</td><td>0.83%</td><td>1.36%</td><td>+0.53 pp</td><td>1.36%</td><td>非主结论指标。</td></tr>
+      </tbody>
+    </table>
     <div class="callout blue">
-      <strong>为什么这是下一步：</strong>
-      之前的主设置只在采样到 <code>t in [0, 0.30]</code> 的 denoiser rows 上做 Semantic CE；当前变体把早期关键时间点显式钉住，并让高噪声位置获得更高权重。日志中 <code>sem_act=1.000</code>、<code>sem_w≈0.619</code>，说明语义监督覆盖比上一版更密，目标更直接对准 early reverse steps。
+      <strong>Interim 结论：</strong>
+      新算法不是简单地“全项变好”，但同 epoch15 已经在更能反映 instruction/semantic routing 的指标上取得明显增益，尤其是 IFEval instruction、TruthfulQA-MC、Winogrande。
+      BoolQ 的回退提示 multi-time semantic target 可能改变了短答案/Yes-No 的输出偏置；下一步应等待 epoch20 final 后，再对 BoolQ 做 prediction distribution 和 invalid rate 拆解。
     </div>
   </section>
 </main>
