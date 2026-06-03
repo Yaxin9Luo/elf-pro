@@ -32,7 +32,11 @@ def compact_ifeval_kwargs(kwargs_list: list[dict[str, Any]]) -> list[dict[str, A
     """Convert HF IFEval's wide kwargs dicts to official sparse kwargs."""
     compacted = []
     for kwargs in kwargs_list:
-        compacted.append({key: value for key, value in kwargs.items() if value is not None})
+        compacted.append({
+            key: value
+            for key, value in kwargs.items()
+            if value is not None and key != "prompt_to_repeat"
+        })
     return compacted
 
 

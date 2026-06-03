@@ -1206,11 +1206,12 @@
   </section>
 
   <section>
-    <h2>Benchmark 对比表：CFM Ablation 与 GPT-2 参照</h2>
+    <h2>Benchmark 对比表：CFM Ablation、LangFlow 与 GPT-2 参照</h2>
     <div class="callout">
       本轮对比把旧的 naive Full SFT checkpoint 也纳入：<code>checkpoint_5402</code> 使用全量 SFT 数据，但没有 high-noise recipe、没有 decoder probability ablation 后的设置，也没有 semantic CE。
       它在 IFEval prompt 上从 pretrained 的 7.02% 变成 6.47%，说明早期失败不是数据量不够，而是训练目标没有显式解决 high-noise semantic routing。
       当前 <code>checkpoint_16995</code> 约 15 epochs，使用 pmean=-3、decoder_prob=0.50 和 token-level semantic supervision。
+      新增 LangFlow OWT pretrained 作为连续 diffusion LM 外部参照：同样不是 instruction-tuned，使用 prefix-conditioned EDM decode 跑 full benchmark。
     </div>
     <div class="chart">
       <div class="chart-title">
@@ -1270,6 +1271,18 @@
       <div class="bar-row"><span>GPT-2 pretrained / Winogrande</span><div class="track"><div class="bar blue" style="width:14.1%"></div></div><span>14.06%</span></div>
       <div class="bar-row"><span>GPT-2 Alpaca-SFT / Winogrande</span><div class="track"><div class="bar green" style="width:43.0%"></div></div><span>42.97%</span></div>
     </div>
+    <div class="chart">
+      <div class="chart-title">
+        <span>LangFlow OWT pretrained：full benchmark prefix-conditioned EDM</span>
+        <span>accuracy %</span>
+      </div>
+      <div class="bar-row"><span>IFEval strict prompt</span><div class="track"><div class="bar violet" style="width:9.1%"></div></div><span>9.06%</span></div>
+      <div class="bar-row"><span>IFEval strict instruction</span><div class="track"><div class="bar violet" style="width:18.5%"></div></div><span>18.47%</span></div>
+      <div class="bar-row"><span>BoolQ</span><div class="track"><div class="bar violet" style="width:3.7%"></div></div><span>3.67%</span></div>
+      <div class="bar-row"><span>SVAMP</span><div class="track"><div class="bar violet" style="width:1.7%"></div></div><span>1.67%</span></div>
+      <div class="bar-row"><span>ARC-Challenge</span><div class="track"><div class="bar violet" style="width:0.6%"></div></div><span>0.60%</span></div>
+      <div class="bar-row"><span>Winogrande</span><div class="track"><div class="bar violet" style="width:1.2%"></div></div><span>1.18%</span></div>
+    </div>
     <table>
       <thead>
         <tr>
@@ -1277,34 +1290,37 @@
           <th>CFM Pretrained</th>
           <th>CFM Naive Full SFT</th>
           <th>CFM Semantic CE SFT</th>
+          <th>LangFlow OWT Pretrained</th>
           <th>GPT-2 Large Pretrained</th>
           <th>GPT-2 Large Alpaca SFT</th>
           <th>备注</th>
         </tr>
       </thead>
       <tbody>
-        <tr><td>IFEval strict prompt</td><td>7.02%</td><td>6.47%</td><td>10.17%</td><td>18.48%</td><td>10.17%</td><td>full 541 prompts；naive SFT 不升反降，Semantic CE 才开始恢复。</td></tr>
-        <tr><td>IFEval strict instruction</td><td>15.71%</td><td>15.95%</td><td>20.62%</td><td>28.78%</td><td>18.94%</td><td>full 834 instructions；当前 CFM SFT 相对 baseline +4.92 pp。</td></tr>
-        <tr><td>SVAMP</td><td>1.67%</td><td>3.33%</td><td>5.33%</td><td>2.33%</td><td>1.67%</td><td>full 300；CFM Semantic CE 在简单算术上高于 GPT-2 参照。</td></tr>
-        <tr><td>BoolQ</td><td>13.28%</td><td>20.31%</td><td>53.91%</td><td>63.28%</td><td>67.97%</td><td>objective128；短答案/Yes-No 是 SFT 最先变强的能力。</td></tr>
-        <tr><td>ARC-Challenge</td><td>3.12%</td><td>4.69%</td><td>3.12%</td><td>9.38%</td><td>33.59%</td><td>objective128；知识多选题仍主要是数据覆盖和格式能力差距。</td></tr>
-        <tr><td>OpenBookQA</td><td>0.78%</td><td>3.91%</td><td>2.34%</td><td>14.84%</td><td>27.34%</td><td>objective128；GPT-2 SFT 明显受益，CFM 仍未稳定。</td></tr>
-        <tr><td>HellaSwag</td><td>1.56%</td><td>7.81%</td><td>5.47%</td><td>1.56%</td><td>20.31%</td><td>objective128；naive SFT 可能学到局部选择格式，但 instruction following 不成立。</td></tr>
-        <tr><td>MMLU-Pro</td><td>0.78%</td><td>1.56%</td><td>3.12%</td><td>5.47%</td><td>7.03%</td><td>objective128；所有 600M 级模型都低，当前不是主结论指标。</td></tr>
-        <tr><td>TruthfulQA-MC</td><td>5.47%</td><td>11.72%</td><td>10.16%</td><td>3.12%</td><td>85.94%</td><td>objective128；GPT-2 SFT 异常高，需结合 parser/选项格式复核，暂作外部参照。</td></tr>
-        <tr><td>Winogrande</td><td>2.34%</td><td>3.91%</td><td>8.59%</td><td>14.06%</td><td>42.97%</td><td>objective128；CFM 有涨势，但 AR SFT 仍领先很多。</td></tr>
-        <tr><td>GSM8K</td><td>0.00%</td><td>1.56%</td><td>0.00%</td><td>2.34%</td><td>2.34%</td><td>objective128；没有 reasoning/post-training 时不应作为核心判断。</td></tr>
+        <tr><td>IFEval strict prompt</td><td>7.02%</td><td>6.47%</td><td>10.17%</td><td>9.06%</td><td>18.48%</td><td>10.17%</td><td>full 541 prompts；naive SFT 不升反降，Semantic CE 才开始恢复。</td></tr>
+        <tr><td>IFEval strict instruction</td><td>15.71%</td><td>15.95%</td><td>20.62%</td><td>18.47%</td><td>28.78%</td><td>18.94%</td><td>full 834 instructions；当前 CFM SFT 相对 baseline +4.92 pp。</td></tr>
+        <tr><td>SVAMP</td><td>1.67%</td><td>3.33%</td><td>5.33%</td><td>1.67%</td><td>2.33%</td><td>1.67%</td><td>full 300；CFM Semantic CE 在简单算术上高于 GPT-2 参照。</td></tr>
+        <tr><td>BoolQ</td><td>13.28%</td><td>20.31%</td><td>53.91%</td><td>3.67%</td><td>63.28%</td><td>67.97%</td><td>CFM/GPT-2 为 objective128，LangFlow 为 full 3270；短答案/Yes-No 是 SFT 最先变强的能力。</td></tr>
+        <tr><td>ARC-Challenge</td><td>3.12%</td><td>4.69%</td><td>3.12%</td><td>0.60%</td><td>9.38%</td><td>33.59%</td><td>CFM/GPT-2 为 objective128，LangFlow 为 full 1172；知识多选题仍主要是数据覆盖和格式能力差距。</td></tr>
+        <tr><td>OpenBookQA</td><td>0.78%</td><td>3.91%</td><td>2.34%</td><td>0.80%</td><td>14.84%</td><td>27.34%</td><td>CFM/GPT-2 为 objective128，LangFlow 为 full 500；GPT-2 SFT 明显受益，CFM 仍未稳定。</td></tr>
+        <tr><td>HellaSwag</td><td>1.56%</td><td>7.81%</td><td>5.47%</td><td>0.85%</td><td>1.56%</td><td>20.31%</td><td>CFM/GPT-2 为 objective128，LangFlow 为 full 10042；naive SFT 可能学到局部选择格式，但 instruction following 不成立。</td></tr>
+        <tr><td>MMLU-Pro</td><td>0.78%</td><td>1.56%</td><td>3.12%</td><td>0.69%</td><td>5.47%</td><td>7.03%</td><td>CFM/GPT-2 为 objective128，LangFlow 为 full 12032；所有 600M 级模型都低，当前不是主结论指标。</td></tr>
+        <tr><td>TruthfulQA-MC</td><td>5.47%</td><td>11.72%</td><td>10.16%</td><td>1.96%</td><td>3.12%</td><td>85.94%</td><td>CFM/GPT-2 为 objective128，LangFlow 为 full 817；GPT-2 SFT 异常高，需结合 parser/选项格式复核，暂作外部参照。</td></tr>
+        <tr><td>Winogrande</td><td>2.34%</td><td>3.91%</td><td>8.59%</td><td>1.18%</td><td>14.06%</td><td>42.97%</td><td>CFM/GPT-2 为 objective128，LangFlow 为 full 1267；CFM 有涨势，但 AR SFT 仍领先很多。</td></tr>
+        <tr><td>GSM8K</td><td>0.00%</td><td>1.56%</td><td>0.00%</td><td>0.30%</td><td>2.34%</td><td>2.34%</td><td>CFM/GPT-2 为 objective128，LangFlow 为 full 1319；没有 reasoning/post-training 时不应作为核心判断。</td></tr>
       </tbody>
     </table>
     <div class="callout blue">
       <strong>Benchmark 结论：</strong>
       对 CFM 自身而言，旧版 naive Full SFT 基本没有建立 instruction following；当前 Semantic CE SFT 才在 IFEval、BoolQ、SVAMP、Winogrande 上形成一致增益。
+      LangFlow OWT pretrained 在同一 harness 下也无法完成 QA/多选/数学类 instruction benchmark，说明连续 diffusion LM 的语言建模预训练 checkpoint 需要专门的 SFT/conditional generation adaptation 才能进入 instruction-following 区间。
       GPT-2 Large 的 AR baseline 说明同量级 GPT-style LM 在天然 autoregressive 解码和 Alpaca prompt 下，benchmark parser 更容易得到高分；这不是完全公平的建模范式比较，但能作为“600M 级英文 SFT 应该能到什么区域”的外部参考。
       下一轮 CFM 的重点应是继续补齐 data recipe、格式监督和 high-noise semantic objective，而不是回到纯 naive SFT。
     </div>
     <p class="small muted">
       CFM result paths：<code>eval_probes/standard_benchmarks/results/sft_tulu3_naive_ckpt5402_interim_quick_32step/</code>，
       <code>eval_probes/standard_benchmarks/results/sft_tulu3_english_semce_ckpt16995_interim_quick_32step/</code>。
+      LangFlow pretrained result path：<code>eval_probes/standard_benchmarks/results/langflow_owt_pretrained_full_32step/</code>，checkpoint <code>Continuous-Rivals-Discrete/langflow-owt</code>，raw prompt + BOS，prefix-conditioned EDM decode。
       GPT-2 result paths：<code>eval_probes/standard_benchmarks/results/ar_gpt2_large_pretrained_interim_quick_raw/</code>，
       <code>eval_probes/standard_benchmarks/results/ar_gpt2_large_alpaca_sft_interim_quick_alpaca/</code>。
       GPT-2 pretrained 使用 raw prompt，GPT-2 Alpaca-SFT 使用 Alpaca prompt template 和 slow tokenizer。
@@ -1485,6 +1501,184 @@
       新算法不是简单地“全项变好”，但同 epoch15 已经在更能反映 instruction/semantic routing 的指标上取得明显增益，尤其是 IFEval instruction、TruthfulQA-MC、Winogrande。
       BoolQ 的回退提示 multi-time semantic target 可能改变了短答案/Yes-No 的输出偏置；下一步应等待 epoch20 final 后，再对 BoolQ 做 prediction distribution 和 invalid rate 拆解。
     </div>
+  </section>
+  <section>
+    <h2>下一阶段：Scaling Up Pretraining</h2>
+    <p>
+      当前 SFT 实验已经证明 CFM/ELF 可以被训练成 instruction-style conditional generator。下一阶段的重点应从“小数据上修算法”切到“大规模 pretraining 上验证 scaling”：使用 FineWeb-Edu 子集、T5-large latent space、ELF-Huge backbone 和 2048 context，先得到一个更强的 base checkpoint，再把已经验证有效的 Semantic CE SFT recipe 接上去。
+    </p>
+    <div class="grid">
+      <div class="tile">
+        <span class="metric blue">1.074x</span>
+        <strong>T5-large token ratio</strong>
+        <span class="muted">FineWeb-Edu 自带 <code>token_count</code> 不是 T5 口径；sample 里 T5-large token 数约为它的 1.074 倍。</span>
+      </div>
+      <div class="tile">
+        <span class="metric green">107B</span>
+        <strong>raw T5 tokens</strong>
+        <span class="muted">如果 100BT 近似 100B FineWeb tokens，换成 T5-large 后约为 107B raw T5 tokens。</span>
+      </div>
+      <div class="tile">
+        <span class="metric amber">80B</span>
+        <strong>2048 retained tokens</strong>
+        <span class="muted">doc-wise 截断到 2048 后约保留 80B T5 tokens；1024 只约保留 63B。</span>
+      </div>
+      <div class="tile">
+        <span class="metric red">40.5%</span>
+        <strong>doc-wise efficiency</strong>
+        <span class="muted">如果不做 packing，2048 一文档一条样本的有效 token 率只有 40.5%，padding 浪费过大。</span>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart">
+        <div class="chart-title">
+          <span>FineWeb-Edu 100BT 到 T5-large token budget</span>
+          <span>tokens, B</span>
+        </div>
+        <div class="bar-row"><span>FineWeb token_count</span><div class="track"><div class="bar blue" style="width:93.5%"></div></div><span>100B</span></div>
+        <div class="bar-row"><span>T5-large raw</span><div class="track"><div class="bar green" style="width:100%"></div></div><span>107B</span></div>
+        <div class="bar-row"><span>T5 retained @1024</span><div class="track"><div class="bar amber" style="width:58.9%"></div></div><span>63B</span></div>
+        <div class="bar-row"><span>T5 retained @2048</span><div class="track"><div class="bar violet" style="width:74.8%"></div></div><span>80B</span></div>
+      </div>
+      <div class="chart">
+        <div class="chart-title">
+          <span>为什么 2048 + packing 是 launch gate</span>
+          <span>rate</span>
+        </div>
+        <div class="bar-row"><span>truncated docs @1024</span><div class="track"><div class="bar red" style="width:29.1%"></div></div><span>29.1%</span></div>
+        <div class="bar-row"><span>truncated docs @2048</span><div class="track"><div class="bar green" style="width:10.2%"></div></div><span>10.2%</span></div>
+        <div class="bar-row"><span>retained token gain</span><div class="track"><div class="bar green" style="width:15.8%"></div></div><span>+15.8pp</span></div>
+        <div class="bar-row"><span>doc-wise efficiency</span><div class="track"><div class="bar red" style="width:40.5%"></div></div><span>40.5%</span></div>
+      </div>
+    </div>
+    <div class="callout warn">
+      <strong>数据结论：</strong>
+      2048 明显比 1024 更值得，因为截断文档比例从 29.1% 降到 10.2%，并多保留约 15.8 个百分点的 T5 tokens。
+      但真正的大规模 pretraining 不应直接一文档一条样本 pad 到 2048；必须先构造 packed dataset，并在数据 manifest 里报告 packed token 数、padding token 数、packing efficiency、截断 token 数和样本数。
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>模块</th>
+          <th>计划配置</th>
+          <th>原因 / 风险控制</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>数据</td>
+          <td>FineWeb-Edu 100BT 子集；T5-large tokenizer；packed 2048 sequences；目标路径 <code>data/fineweb-edu-100b-t5-large-2048/main</code>。</td>
+          <td>sample 估计 raw T5 tokens 约 107B；doc-wise 2048 truncation 约保留 80B。最终以 preprocessing manifest 为准。</td>
+        </tr>
+        <tr>
+          <td>Encoder</td>
+          <td>Frozen T5-large encoder，<code>d_model=1024</code>，24 layers，16 heads；本地权重路径 <code>models/t5-large</code>。</td>
+          <td>把 ELF 从 T5-small latent space 升级到更强的 semantic latent space；encoder 冻结，训练主要压力在 ELF backbone。</td>
+        </tr>
+        <tr>
+          <td>Backbone</td>
+          <td><code>ELF-Huge</code>：depth 32，hidden 1792，heads 28，head dim 64；trainable ELF/DLM 本体约 1.28B 参数。</td>
+          <td>相对当前 ELF-L 约 652M，主干参数约翻倍；保持 head dim=64，避免改变 attention 的基本数值尺度。</td>
+        </tr>
+        <tr>
+          <td>Context</td>
+          <td><code>max_length=2048</code>，packed samples 尽量填满。</td>
+          <td>2048 能显著减少长文档截断；packing 是避免 59.5% padding waste 的必要条件。</td>
+        </tr>
+        <tr>
+          <td>Batch / LR</td>
+          <td>32 GPU HOPE；<code>global_batch_size=256</code>，<code>grad_accum_steps=2</code>，effective batch=512；<code>blr=1e-3</code>，effective LR=2e-3。</td>
+          <td>单 forward local batch=8，给 1.28B + 2048 context 留显存；grad accumulation 保持 ELF-L recipe 的 effective batch。</td>
+        </tr>
+        <tr>
+          <td>Objective</td>
+          <td>Base pretraining 先用 ELF 原始 denoiser + decoder mixture：<code>denoiser_p_mean=-1.5</code>，<code>decoder_prob=0.2</code>，<code>self_cond_prob=0.5</code>。</td>
+          <td>先得到稳定 base checkpoint；Semantic CE schedule + multi-t 作为后续 SFT/post-training recipe 接入，不先混入 base pretrain，降低变量数量。</td>
+        </tr>
+        <tr>
+          <td>Numerics</td>
+          <td><code>use_bf16=true</code>，<code>gradient_checkpointing=true</code>，Muon optimizer，EMA=0.9999。</td>
+          <td>H800/H100 上优先保证显存可跑；如果 step time 或 OOM 不可接受，先降 batch，不降 context。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="stage-flow">
+      <div class="stage">
+        <span class="tag">0</span>
+        <b>Data packing gate</b>
+        产出 packed Arrow 数据和 manifest；要求报告 raw T5 tokens、retained tokens、padding tokens、packing efficiency、截断比例。
+      </div>
+      <div class="stage">
+        <span class="tag amber">1</span>
+        <b>1B-token smoke</b>
+        用同一 config 跑短预算，验证 T5-large loading、ELF-Huge 显存、loss 曲线、checkpoint/save/eval 都正常。
+      </div>
+      <div class="stage">
+        <span class="tag violet">2</span>
+        <b>10B-token pilot</b>
+        观察 denoiser L2、decoder CE、rollout samples、GPT-2 PPL 和 high-noise semantic trajectory，决定 LR 是否需要下调。
+      </div>
+      <div class="stage">
+        <span class="tag green">3</span>
+        <b>Full 80B+ run</b>
+        跑完整 packed FineWeb-Edu 预算；按 5%、10%、20%、50%、100% 保存 eval checkpoints。
+      </div>
+      <div class="stage">
+        <span class="tag red">4</span>
+        <b>SFT transfer</b>
+        用最佳 base checkpoint 接 Tulu3 SFT，并复用 Semantic CE schedule + multi-t，跑 full benchmark 和 trajectory diagnostics。
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>实验</th>
+          <th>训练预算</th>
+          <th>主要观测</th>
+          <th>通过标准</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Packing QA</td>
+          <td>离线 preprocessing；不启动训练。</td>
+          <td>packing efficiency、2048 长度分布、截断 token/doc 比例、EOS 边界、样本数。</td>
+          <td>packing efficiency 明显高于 doc-wise 40.5%；manifest 数字和抽样复核一致。</td>
+        </tr>
+        <tr>
+          <td>ELF-Huge smoke</td>
+          <td>约 1B packed tokens；32GPU；2048 context。</td>
+          <td>step time、显存、NaN、loss 是否平滑下降、checkpoint 是否可恢复。</td>
+          <td>无 OOM/NaN；至少完成一次 save/resume；生成样本不是空白或重复模板。</td>
+        </tr>
+        <tr>
+          <td>Scale pilot</td>
+          <td>约 10B packed tokens。</td>
+          <td>decoder CE、denoiser L2、PPL、ODE rollout 文本质量、t=0.05/0.15/0.30 trajectory correct。</td>
+          <td>loss 下降同时 rollout 指标改善；如果只 loss 降而 rollout 不变，先调 noise schedule / decoder ratio。</td>
+        </tr>
+        <tr>
+          <td>Full pretrain</td>
+          <td>完整 FineWeb-Edu 100BT 子集；2048 packed；预计 doc-wise 2048 至少对应 80B retained T5 tokens，packing 后以 manifest 为准。</td>
+          <td>epoch checkpoints、PPL、unconditional samples、多时间点 denoise diagnostics。</td>
+          <td>base checkpoint 明显强于 OWT ELF-L baseline，并可作为 SFT init。</td>
+        </tr>
+        <tr>
+          <td>Post-train validation</td>
+          <td>Tulu3 English SFT；接 Semantic CE schedule + multi-t。</td>
+          <td>IFEval、BoolQ、TruthfulQA、Winogrande、SVAMP、trajectory gap。</td>
+          <td>确认 scaling 不只是降低 pretrain loss，而是让 conditional generation 和 instruction following 更强。</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="small muted">
+      当前本地配置草案：<code>src/configs/training_configs/train_fineweb_edu_100b_ELF-Huge_t5-large_2048_hope_32gpu.yml</code>。
+      数据处理完成后，优先更新 <code>data_path</code> 和 manifest 数字；如果实际 packed retained tokens 显著偏离 80B/107B 估计，再同步调整训练步数、warmup 和 checkpoint cadence。
+    </p>
   </section>
 </main>
 </body>
